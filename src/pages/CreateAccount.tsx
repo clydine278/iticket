@@ -6,6 +6,7 @@ import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video } from "lucid
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import Navbar from "@/components/Navbar";
 import concertImg from "@/assets/concert-crowd.jpg";
 
 const accountTypes = [
@@ -304,115 +305,118 @@ const CreateAccount = () => {
   );
 
   return (
-    <div className="min-h-screen bg-background flex">
-      {/* Left side - Form */}
-      <div className="flex-1 flex flex-col">
-        <div className="h-1 bg-primary" />
-        <div className="flex-1 px-4 sm:px-6 md:px-12 lg:px-20 py-6 sm:py-10 overflow-y-auto">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Create an Account</h1>
-            <p className="text-muted-foreground text-sm mb-8">Its free to create an account and get started with Iticket</p>
-          </motion.div>
+    <div className="min-h-screen bg-background flex flex-col">
+      <Navbar />
+      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+        {/* Left side - Form */}
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="h-1 bg-primary" />
+          <div className="flex-1 px-4 sm:px-6 md:px-12 lg:px-20 py-6 sm:py-10 overflow-y-auto">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+              <h1 className="font-display text-xl sm:text-2xl md:text-3xl font-bold mb-1">Create an Account</h1>
+              <p className="text-muted-foreground text-xs sm:text-sm mb-6 sm:mb-8">Its free to create an account and get started with Iticket</p>
+            </motion.div>
 
-          {/* Steps */}
-          <div className="flex items-center gap-2 mb-8">
-            {steps.map((s, i) => (
-              <div key={s} className="flex items-center gap-1.5">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] ${
-                  i <= step ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
-                }`}>
-                  {i < step ? <Check className="w-3 h-3" /> : ""}
+            {/* Steps */}
+            <div className="flex items-center gap-1 sm:gap-2 mb-6 sm:mb-8 flex-wrap">
+              {steps.map((s, i) => (
+                <div key={s} className="flex items-center gap-1">
+                  <div className={`w-4 h-4 sm:w-5 sm:h-5 rounded-full flex items-center justify-center text-[9px] sm:text-[10px] shrink-0 ${
+                    i <= step ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground"
+                  }`}>
+                    {i < step ? <Check className="w-2.5 h-2.5 sm:w-3 sm:h-3" /> : ""}
+                  </div>
+                  <span className={`text-[10px] sm:text-xs whitespace-nowrap ${i <= step ? "text-primary font-medium" : "text-muted-foreground"}`}>{s}</span>
+                  {i < steps.length - 1 && <div className={`w-4 sm:w-10 h-px shrink-0 ${i < step ? "bg-primary" : "bg-border"}`} />}
                 </div>
-                <span className={`text-xs ${i <= step ? "text-primary font-medium" : "text-muted-foreground"}`}>{s}</span>
-                {i < steps.length - 1 && <div className={`w-10 h-px ${i < step ? "bg-primary" : "bg-border"}`} />}
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <AnimatePresence mode="wait">
-            {step === 0 && (
-              <motion.div key="step0" {...fadeSlide}>
-                <h3 className="font-bold text-sm mb-4">Choose an account type</h3>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-                  {accountTypes.map((type) => (
-                    <motion.button
-                      key={type.id}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => setSelectedType(type.id)}
-                      className={`border rounded-xl p-3 sm:p-4 text-center transition-all ${
-                        selectedType === type.id
-                          ? "border-primary bg-accent"
-                          : "border-border hover:border-primary/50"
-                      }`}
-                    >
-                      <type.icon className={`w-6 h-6 mx-auto mb-2 ${selectedType === type.id ? "text-primary" : "text-muted-foreground"}`} />
-                      <p className="font-bold text-xs mb-1">{type.title}</p>
-                      <p className="text-muted-foreground text-[10px] leading-relaxed">{type.desc}</p>
-                      <div className={`w-4 h-4 rounded-full border mx-auto mt-3 flex items-center justify-center ${
-                        selectedType === type.id ? "border-primary bg-primary" : "border-border"
-                      }`}>
-                        {selectedType === type.id && <Check className="w-3 h-3 text-primary-foreground" />}
-                      </div>
-                    </motion.button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-
-            {step === 1 && (
-              <motion.div key="step1" {...fadeSlide}>
-                <h3 className="font-bold text-sm mb-4">Tell us about yourself</h3>
-                {selectedType === "personal" && renderPersonalForm()}
-                {selectedType === "artist" && renderOrganizerForm()}
-                {selectedType === "organizer" && renderArtistForm()}
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div key="step2" {...fadeSlide} className="text-center py-16">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                  className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4"
-                >
-                  <Check className="w-8 h-8 text-primary" />
+            <AnimatePresence mode="wait">
+              {step === 0 && (
+                <motion.div key="step0" {...fadeSlide}>
+                  <h3 className="font-bold text-sm mb-4">Choose an account type</h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+                    {accountTypes.map((type) => (
+                      <motion.button
+                        key={type.id}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => setSelectedType(type.id)}
+                        className={`border rounded-xl p-3 sm:p-4 text-center transition-all ${
+                          selectedType === type.id
+                            ? "border-primary bg-accent"
+                            : "border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <type.icon className={`w-6 h-6 mx-auto mb-2 ${selectedType === type.id ? "text-primary" : "text-muted-foreground"}`} />
+                        <p className="font-bold text-xs mb-1">{type.title}</p>
+                        <p className="text-muted-foreground text-[10px] leading-relaxed">{type.desc}</p>
+                        <div className={`w-4 h-4 rounded-full border mx-auto mt-3 flex items-center justify-center ${
+                          selectedType === type.id ? "border-primary bg-primary" : "border-border"
+                        }`}>
+                          {selectedType === type.id && <Check className="w-3 h-3 text-primary-foreground" />}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
                 </motion.div>
-                <h3 className="font-bold text-lg mb-2">Check your email</h3>
-                <p className="text-muted-foreground text-sm max-w-xs mx-auto">
-                  We've sent a confirmation link to your email address. Please click the link to verify your account.
-                </p>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              )}
 
-          <div className="flex gap-3 mt-8">
-            {step > 0 && (
-              <Button variant="outline" onClick={() => setStep(step - 1)} className="flex-1 rounded-full">
-                Cancel
+              {step === 1 && (
+                <motion.div key="step1" {...fadeSlide}>
+                  <h3 className="font-bold text-sm mb-4">Tell us about yourself</h3>
+                  {selectedType === "personal" && renderPersonalForm()}
+                  {selectedType === "artist" && renderOrganizerForm()}
+                  {selectedType === "organizer" && renderArtistForm()}
+                </motion.div>
+              )}
+
+              {step === 2 && (
+                <motion.div key="step2" {...fadeSlide} className="text-center py-16">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                    className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4"
+                  >
+                    <Check className="w-8 h-8 text-primary" />
+                  </motion.div>
+                  <h3 className="font-bold text-lg mb-2">Check your email</h3>
+                  <p className="text-muted-foreground text-sm max-w-xs mx-auto">
+                    We've sent a confirmation link to your email address. Please click the link to verify your account.
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            <div className="flex gap-3 mt-8 pb-6">
+              {step > 0 && (
+                <Button variant="outline" onClick={() => setStep(step - 1)} className="flex-1 rounded-full">
+                  Cancel
+                </Button>
+              )}
+              <Button
+                onClick={() => {
+                  if (step < 2) setStep(step + 1);
+                  else navigate("/");
+                }}
+                className="flex-1 rounded-full"
+              >
+                Continue
               </Button>
-            )}
-            <Button
-              onClick={() => {
-                if (step < 2) setStep(step + 1);
-                else navigate("/");
-              }}
-              className="flex-1 rounded-full"
-            >
-              Continue
-            </Button>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Right side - Concert image (hidden on mobile) */}
-      <div className="hidden lg:block w-[400px] xl:w-[480px] relative">
-        <img
-          src={concertImg}
-          alt="Concert crowd"
-          className="absolute inset-0 w-full h-full object-cover"
-        />
+        {/* Right side - Concert image (hidden on mobile) */}
+        <div className="hidden lg:block w-[400px] xl:w-[480px] relative shrink-0">
+          <img
+            src={concertImg}
+            alt="Concert crowd"
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+        </div>
       </div>
     </div>
   );
