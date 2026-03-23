@@ -4,19 +4,13 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index";
-import Landing from "./pages/Landing";
-import Login from "./pages/Login";
-import Signup from "./pages/Signup";
-import AuthEmail from "./pages/AuthEmail";
-import AuthPhone from "./pages/AuthPhone";
-import AuthOTP from "./pages/AuthOTP";
-import SignupForm from "./pages/SignupForm";
-import Categories from "./pages/Categories";
-import CelebrityProfile from "./pages/CelebrityProfile";
-import ArtistProfile from "./pages/ArtistProfile";
-import EventDetail from "./pages/EventDetail";
-import TicketSelection from "./pages/TicketSelection";
-import TrendingChallenge from "./pages/TrendingChallenge";
+import BuyTickets from "./pages/BuyTickets";
+import EventDetailPage from "./pages/EventDetailPage";
+import Checkout from "./pages/Checkout";
+import Challenges from "./pages/Challenges";
+import ChallengeDetail from "./pages/ChallengeDetail";
+import BookArtist from "./pages/BookArtist";
+import CreateAccount from "./pages/CreateAccount";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -29,19 +23,13 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/landing" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/auth/email" element={<AuthEmail />} />
-          <Route path="/auth/phone" element={<AuthPhone />} />
-          <Route path="/auth/otp" element={<AuthOTP />} />
-          <Route path="/signup/form" element={<SignupForm />} />
-          <Route path="/onboarding/categories" element={<Categories />} />
-          <Route path="/celebrity/:name" element={<CelebrityProfile />} />
-          <Route path="/artist/:name" element={<ArtistProfile />} />
-          <Route path="/event/:id" element={<EventDetail />} />
-          <Route path="/tickets/:id" element={<TicketSelection />} />
-          <Route path="/trending" element={<TrendingChallenge />} />
+          <Route path="/buy-tickets" element={<BuyTickets />} />
+          <Route path="/event/:id" element={<EventDetailPage />} />
+          <Route path="/checkout/:id" element={<Checkout />} />
+          <Route path="/challenges" element={<Challenges />} />
+          <Route path="/challenge/:id" element={<ChallengeDetail />} />
+          <Route path="/book-artist" element={<BookArtist />} />
+          <Route path="/create-account" element={<CreateAccount />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
