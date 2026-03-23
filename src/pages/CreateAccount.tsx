@@ -249,14 +249,14 @@ const CreateAccount = () => {
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="relative">
           <label className="text-xs text-muted-foreground mb-1 block">Password</label>
-          <Input placeholder="Password" type={showPw ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
+          <Input placeholder="Password" type={showPw ? "text" : "password"} value={formData.password} onChange={(e) => updateField("password", e.target.value)} className="h-10 text-sm pr-9 border-border/50" />
           <button onClick={() => setShowPw(!showPw)} className="absolute right-2.5 bottom-2.5 text-muted-foreground">
             {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
         </div>
         <div className="relative">
           <label className="text-xs text-muted-foreground mb-1 block">Retype Password</label>
-          <Input placeholder="Retype Password" type={showPw2 ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
+          <Input placeholder="Retype Password" type={showPw2 ? "text" : "password"} value={formData.password2} onChange={(e) => updateField("password2", e.target.value)} className="h-10 text-sm pr-9 border-border/50" />
           <button onClick={() => setShowPw2(!showPw2)} className="absolute right-2.5 bottom-2.5 text-muted-foreground">
             {showPw2 ? <EyeOff size={14} /> : <Eye size={14} />}
           </button>
