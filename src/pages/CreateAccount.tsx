@@ -443,13 +443,15 @@ const CreateAccount = () => {
                 </Button>
               )}
               <Button
+                disabled={loading}
                 onClick={() => {
-                  if (step < 2) setStep(step + 1);
+                  if (step === 0) setStep(1);
+                  else if (step === 1) handleSignUp();
                   else navigate("/");
                 }}
                 className="flex-1 rounded-full"
               >
-                Continue
+                {loading ? "Creating account..." : step === 1 ? "Create Account" : step === 2 ? "Go to Home" : "Continue"}
               </Button>
             </div>
           </div>
