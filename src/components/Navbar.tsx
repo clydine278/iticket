@@ -47,12 +47,25 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:block">
-          <Link to="/create-account">
-            <Button size="sm" className="rounded-full text-xs font-semibold px-5">
-              Create Account
+        <div className="hidden md:flex items-center gap-2">
+          {user ? (
+            <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1">
+              <LogOut size={14} /> Sign Out
             </Button>
-          </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/create-account">
+                <Button size="sm" className="rounded-full text-xs font-semibold px-5">
+                  Create Account
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}
