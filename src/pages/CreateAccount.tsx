@@ -364,8 +364,8 @@ const CreateAccount = () => {
               <motion.div key="step1" {...fadeSlide}>
                 <h3 className="font-bold text-sm mb-4">Tell us about yourself</h3>
                 {selectedType === "personal" && renderPersonalForm()}
-                {selectedType === "artist" && renderArtistForm()}
-                {selectedType === "organizer" && renderOrganizerForm()}
+                {selectedType === "artist" && renderOrganizerForm()}
+                {selectedType === "organizer" && renderArtistForm()}
               </motion.div>
             )}
 
