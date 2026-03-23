@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -13,7 +14,14 @@ const navLinks = [
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="bg-nav text-nav-foreground sticky top-0 z-50">
@@ -39,12 +47,25 @@ const Navbar = () => {
           ))}
         </div>
 
-        <div className="hidden md:block">
-          <Link to="/create-account">
-            <Button size="sm" className="rounded-full text-xs font-semibold px-5">
-              Create Account
+        <div className="hidden md:flex items-center gap-2">
+          {user ? (
+            <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1">
+              <LogOut size={14} /> Sign Out
             </Button>
-          </Link>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5">
+                  Login
+                </Button>
+              </Link>
+              <Link to="/create-account">
+                <Button size="sm" className="rounded-full text-xs font-semibold px-5">
+                  Create Account
+                </Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile menu button */}
@@ -76,11 +97,24 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/create-account" onClick={() => setOpen(false)}>
-                <Button size="sm" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
-                  Create Account
+              {user ? (
+                <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1">
+                  <LogOut size={14} /> Sign Out
                 </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/create-account" onClick={() => setOpen(false)}>
+                    <Button size="sm" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
+                      Create Account
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}

@@ -16,7 +16,7 @@ const Footer = () => {
               <Link to="/create-account">
                 <button className="text-xs bg-nav-foreground/10 px-3 py-1.5 rounded text-nav-foreground/70 hover:bg-nav-foreground/20 transition-colors">Sign Up</button>
               </Link>
-              <Link to="/create-account">
+              <Link to="/login">
                 <button className="text-xs bg-primary px-3 py-1.5 rounded text-primary-foreground hover:bg-primary/90 transition-colors">Log In</button>
               </Link>
             </div>
