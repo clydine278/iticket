@@ -98,7 +98,7 @@ const Navbar = () => {
                 </Link>
               ))}
               {user ? (
-                <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1">
+                <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1 border-nav-foreground/30 text-nav-foreground hover:bg-nav-foreground/10 hover:text-nav-foreground">
                   <LogOut size={14} /> Sign Out
                 </Button>
               ) : (
