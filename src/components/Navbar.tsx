@@ -4,6 +4,7 @@ import { Menu, X, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const navLinks = [
   { label: "Home", path: "/" },
@@ -48,10 +49,18 @@ const Navbar = () => {
         </div>
 
         <div className="hidden md:flex items-center gap-2">
+          <ThemeToggle className="text-nav-foreground hover:bg-nav-foreground/10" />
           {user ? (
-            <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
-              <LogOut size={14} /> Sign Out
-            </Button>
+            <>
+              <Link to="/dashboard">
+                <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
+                  Dashboard
+                </Button>
+              </Link>
+              <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
+                <LogOut size={14} /> Sign Out
+              </Button>
+            </>
           ) : (
             <>
               <Link to="/login">
@@ -69,9 +78,12 @@ const Navbar = () => {
         </div>
 
         {/* Mobile menu button */}
-        <button className="md:hidden" onClick={() => setOpen(!open)}>
-          {open ? <X size={22} /> : <Menu size={22} />}
-        </button>
+        <div className="flex md:hidden items-center gap-1">
+          <ThemeToggle className="text-nav-foreground hover:bg-nav-foreground/10" />
+          <button onClick={() => setOpen(!open)}>
+            {open ? <X size={22} /> : <Menu size={22} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile menu */}
@@ -98,9 +110,16 @@ const Navbar = () => {
                 </Link>
               ))}
               {user ? (
-                <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
-                  <LogOut size={14} /> Sign Out
-                </Button>
+                <>
+                  <Link to="/dashboard" onClick={() => setOpen(false)}>
+                    <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 w-full mt-2 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
+                    <LogOut size={14} /> Sign Out
+                  </Button>
+                </>
               ) : (
                 <>
                   <Link to="/login" onClick={() => setOpen(false)}>
