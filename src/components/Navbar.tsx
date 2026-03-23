@@ -104,7 +104,7 @@ const Navbar = () => {
               ) : (
                 <>
                   <Link to="/login" onClick={() => setOpen(false)}>
-                    <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
+                    <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 w-full mt-2 border-nav-foreground/30 text-nav-foreground hover:bg-nav-foreground/10 hover:text-nav-foreground">
                       Login
                     </Button>
                   </Link>
