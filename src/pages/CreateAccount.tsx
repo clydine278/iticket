@@ -308,7 +308,7 @@ const CreateAccount = () => {
       {/* Left side - Form */}
       <div className="flex-1 flex flex-col">
         <div className="h-1 bg-primary" />
-        <div className="flex-1 px-6 md:px-12 lg:px-20 py-10 overflow-y-auto">
+        <div className="flex-1 px-4 sm:px-6 md:px-12 lg:px-20 py-6 sm:py-10 overflow-y-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Create an Account</h1>
             <p className="text-muted-foreground text-sm mb-8">Its free to create an account and get started with Iticket</p>
