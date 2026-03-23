@@ -173,7 +173,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* Booking Price & Services */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-4">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Booking Price</label>
           <select className="w-full h-10 text-sm border border-border/50 rounded-md bg-background px-3">
