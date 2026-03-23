@@ -37,6 +37,7 @@ const App = () => (
             <Route path="/artist/:id" element={<ArtistDetail />} />
             <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
