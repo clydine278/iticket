@@ -17,18 +17,33 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import {
-  LayoutDashboard, Ticket, ShoppingCart, Receipt, Wallet,
-  User, Settings, LogOut, Sun, Moon, Music, CalendarPlus,
-  Users, BarChart3, Trophy, Heart, Shield, ChevronRight,
-  Sparkles, Zap
+  LayoutDashboard,
+  Ticket,
+  ShoppingCart,
+  Receipt,
+  Wallet,
+  User,
+  Settings,
+  LogOut,
+  Sun,
+  Moon,
+  Music,
+  CalendarPlus,
+  BarChart3,
+  Trophy,
+  Heart,
+  Shield,
+  ChevronRight,
+  Sparkles,
+  Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface NavItem {
   title: string;
   url: string;
-  icon: React.ElementType;
-  badge?: string;
+  icon: LucideIcon;
 }
 
 const personalLinks: NavItem[] = [
@@ -81,11 +96,14 @@ export function DashboardSidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   useEffect(() => {
-    if (user) {
-      supabase.rpc("has_role", { _user_id: user.id, _role: "admin" as const }).then(({ data }) => {
-        if (data) setIsAdmin(true);
-      });
+    if (!user) {
+      setIsAdmin(false);
+      return;
     }
+
+    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
+      setIsAdmin(Boolean(data));
+    });
   }, [user]);
 
   const handleSignOut = async () => {
@@ -93,82 +111,68 @@ export function DashboardSidebar() {
     navigate("/");
   };
 
-  const roleGradient = accountType === "artist"
-    ? "from-violet-500 to-fuchsia-500"
-    : accountType === "organizer"
-    ? "from-emerald-500 to-teal-500"
-    : "from-primary to-orange-500";
-
   const roleIcon = accountType === "artist" ? Sparkles : accountType === "organizer" ? Zap : User;
   const RoleIcon = roleIcon;
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
-      {/* Header / Logo */}
-      <SidebarHeader className="p-4 border-b border-sidebar-border/50">
-        <Link to="/" className="flex items-center gap-2.5 group">
-          <div className={`w-8 h-8 rounded-xl bg-gradient-to-br ${roleGradient} flex items-center justify-center shadow-lg transition-transform group-hover:scale-105`}>
-            <span className="text-white font-black text-xs">iT</span>
+      <SidebarHeader className="p-5 border-b border-sidebar-border/60">
+        <Link to="/" className="flex items-center gap-3 group">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
+            <span className="text-primary-foreground font-black text-xs">iT</span>
           </div>
-          {!collapsed && (
-            <span className="font-display font-bold text-base tracking-tight">iticket</span>
-          )}
+          {!collapsed && <span className="font-display font-bold text-base tracking-tight">iticket</span>}
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-2 py-2">
-        {/* User Card */}
-        {!collapsed && (
-          <div className="mx-2 mb-3 p-3 rounded-xl bg-gradient-to-br from-muted/80 to-muted/30 border border-border/30">
+      <SidebarContent className="px-3 py-4 gap-4">
+        {!collapsed ? (
+          <div className="mx-1 p-4 rounded-2xl bg-card border border-border/60">
             <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10 ring-2 ring-primary/20">
-                <AvatarFallback className={`bg-gradient-to-br ${roleGradient} text-white text-xs font-bold`}>
+              <Avatar className="h-11 w-11 ring-2 ring-border">
+                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xs font-bold">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold truncate">{displayName}</p>
-                <div className="flex items-center gap-1.5 mt-0.5">
-                  <RoleIcon className="w-3 h-3 text-muted-foreground" />
-                  <span className="text-[10px] text-muted-foreground capitalize font-medium">{accountType}</span>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <RoleIcon className="w-3.5 h-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground capitalize font-medium">{accountType} account</span>
                 </div>
               </div>
             </div>
           </div>
-        )}
-
-        {collapsed && (
-          <div className="flex justify-center mb-2 mt-1">
-            <Avatar className="h-8 w-8 ring-2 ring-primary/20">
-              <AvatarFallback className={`bg-gradient-to-br ${roleGradient} text-white text-[10px] font-bold`}>
+        ) : (
+          <div className="flex justify-center mb-1 mt-1">
+            <Avatar className="h-9 w-9 ring-2 ring-border">
+              <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-[10px] font-bold">
                 {initials}
               </AvatarFallback>
             </Avatar>
           </div>
         )}
 
-        {/* Main Nav */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70 px-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-[0.12em] font-semibold text-muted-foreground px-3 mb-2">
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {mainLinks.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
+                    size="lg"
                     isActive={isActive(item.url)}
-                    className="group/btn relative rounded-lg transition-all duration-200"
+                    className="rounded-xl px-3"
                   >
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="w-4 h-4 shrink-0" />
                       {!collapsed && (
                         <>
-                          <span className="flex-1 text-sm">{item.title}</span>
-                          {isActive(item.url) && (
-                            <ChevronRight className="w-3.5 h-3.5 text-primary opacity-70" />
-                          )}
+                          <span className="flex-1 text-sm font-medium">{item.title}</span>
+                          {isActive(item.url) && <ChevronRight className="w-3.5 h-3.5 text-primary" />}
                         </>
                       )}
                     </Link>
@@ -179,30 +183,21 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Admin Section */}
         {isAdmin && (
           <SidebarGroup>
-            <SidebarGroupLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70 px-3">
+            <SidebarGroupLabel className="text-[11px] uppercase tracking-[0.12em] font-semibold text-muted-foreground px-3 mb-2">
               Admin
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu>
+              <SidebarMenu className="gap-2">
                 <SidebarMenuItem>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive("/admin")}
-                    className="rounded-lg"
-                  >
+                  <SidebarMenuButton asChild size="lg" isActive={isActive("/admin")} className="rounded-xl px-3">
                     <Link to="/admin" className="flex items-center gap-3">
-                      <div className="w-4 h-4 rounded bg-gradient-to-br from-red-500 to-orange-500 flex items-center justify-center">
-                        <Shield className="w-2.5 h-2.5 text-white" />
-                      </div>
+                      <Shield className="w-4 h-4" />
                       {!collapsed && (
                         <>
-                          <span className="flex-1 text-sm font-medium">Admin Panel</span>
-                          <span className="text-[9px] bg-red-500/10 text-red-500 dark:text-red-400 px-1.5 py-0.5 rounded-full font-semibold">
-                            Admin
-                          </span>
+                          <span className="flex-1 text-sm font-semibold">Admin Panel</span>
+                          <span className="text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-semibold">Admin</span>
                         </>
                       )}
                     </Link>
@@ -213,23 +208,18 @@ export function DashboardSidebar() {
           </SidebarGroup>
         )}
 
-        {/* Account */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground/70 px-3">
+          <SidebarGroupLabel className="text-[11px] uppercase tracking-[0.12em] font-semibold text-muted-foreground px-3 mb-2">
             Account
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-2">
               {settingsLinks.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={isActive(item.url)}
-                    className="rounded-lg"
-                  >
+                  <SidebarMenuButton asChild size="lg" isActive={isActive(item.url)} className="rounded-xl px-3">
                     <Link to={item.url} className="flex items-center gap-3">
                       <item.icon className="w-4 h-4 shrink-0" />
-                      {!collapsed && <span className="text-sm">{item.title}</span>}
+                      {!collapsed && <span className="text-sm font-medium">{item.title}</span>}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -239,31 +229,19 @@ export function DashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      {/* Footer */}
-      <SidebarFooter className="p-3 border-t border-sidebar-border/50 space-y-1">
-        <SidebarMenuButton
-          onClick={toggleTheme}
-          className="w-full rounded-lg cursor-pointer"
-        >
-          <div className="flex items-center gap-3 w-full">
-            {theme === "light" ? (
-              <Moon className="w-4 h-4 shrink-0" />
-            ) : (
-              <Sun className="w-4 h-4 shrink-0" />
-            )}
-            {!collapsed && (
-              <span className="text-sm">{theme === "light" ? "Dark Mode" : "Light Mode"}</span>
-            )}
-          </div>
+      <SidebarFooter className="p-4 border-t border-sidebar-border/60 space-y-2">
+        <SidebarMenuButton onClick={toggleTheme} size="lg" className="w-full rounded-xl px-3 cursor-pointer">
+          {theme === "light" ? <Moon className="w-4 h-4 shrink-0" /> : <Sun className="w-4 h-4 shrink-0" />}
+          {!collapsed && <span className="text-sm font-medium">{theme === "light" ? "Dark Mode" : "Light Mode"}</span>}
         </SidebarMenuButton>
+
         <SidebarMenuButton
           onClick={handleSignOut}
-          className="w-full rounded-lg cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
+          size="lg"
+          className="w-full rounded-xl px-3 cursor-pointer text-destructive hover:text-destructive hover:bg-destructive/10"
         >
-          <div className="flex items-center gap-3 w-full">
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!collapsed && <span className="text-sm">Sign Out</span>}
-          </div>
+          <LogOut className="w-4 h-4 shrink-0" />
+          {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
         </SidebarMenuButton>
       </SidebarFooter>
     </Sidebar>
