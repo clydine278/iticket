@@ -268,7 +268,7 @@ const CreateAccount = () => {
           <span className="text-xs text-muted-foreground">Connect Socials</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 sm:flex gap-2">
           {socialPlatforms.map((p) => (
             <button key={p} className="flex-1 border border-border/50 rounded-full py-1.5 text-[10px] text-primary/60 hover:border-primary/50 transition-colors">
               {p}
