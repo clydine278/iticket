@@ -6,6 +6,7 @@ import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video } from "lucid
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import Navbar from "@/components/Navbar";
 import concertImg from "@/assets/concert-crowd.jpg";
 
 const accountTypes = [
