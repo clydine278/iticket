@@ -162,7 +162,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* Add Video slots */}
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="aspect-square rounded-xl bg-muted/50 border border-dashed border-border/50 flex flex-col items-center justify-center cursor-pointer hover:bg-muted transition-colors">
             <Video className="w-6 h-6 text-muted-foreground mb-1" />
