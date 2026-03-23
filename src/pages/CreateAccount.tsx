@@ -165,30 +165,30 @@ const CreateAccount = () => {
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
-          <Input placeholder="Full Name" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Full Name" value={formData.fullName} onChange={(e) => updateField("fullName", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Stage Name</label>
-          <Input placeholder="Stage Name" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Stage Name" value={formData.stageName} onChange={(e) => updateField("stageName", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Username</label>
-          <Input placeholder="Username" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Username" value={formData.username} onChange={(e) => updateField("username", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
       </motion.div>
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Email Address</label>
-          <Input placeholder="Email Address" type="email" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Email Address" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
-          <Input placeholder="Phone Number" type="tel" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Phone Number" type="tel" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">City</label>
-          <Input placeholder="City" className="h-10 text-sm border-border/50" />
+          <Input placeholder="City" value={formData.city} onChange={(e) => updateField("city", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
       </motion.div>
 
