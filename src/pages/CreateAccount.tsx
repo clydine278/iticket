@@ -45,6 +45,50 @@ const CreateAccount = () => {
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>(["Live Performance"]);
+  const [loading, setLoading] = useState(false);
+
+  // Form fields
+  const [formData, setFormData] = useState({
+    firstName: "", username: "", email: "", phone: "",
+    country: "", city: "", dob: "", password: "", password2: "",
+    fullName: "", stageName: "", aboutYou: "",
+  });
+
+  const updateField = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleSignUp = async () => {
+    if (formData.password !== formData.password2) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required");
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        emailRedirectTo: window.location.origin,
+        data: {
+          account_type: selectedType,
+          full_name: formData.fullName || formData.firstName,
+          username: formData.username,
+          stage_name: formData.stageName,
+        },
+      },
+    });
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Check your email for a confirmation link!");
+      setStep(2);
+    }
+  };
 
   const toggleService = (s: string) => {
     setSelectedServices((prev) =>
