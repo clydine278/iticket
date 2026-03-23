@@ -278,7 +278,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* About You & Password */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-4">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">About You</label>
           <Textarea placeholder="About you" className="text-sm border-border/50 min-h-[100px]" />
