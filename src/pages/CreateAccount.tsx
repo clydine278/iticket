@@ -340,7 +340,7 @@ const CreateAccount = () => {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedType(type.id)}
-                      className={`border rounded-xl p-4 text-center transition-all ${
+                      className={`border rounded-xl p-3 sm:p-4 text-center transition-all ${
                         selectedType === type.id
                           ? "border-primary bg-accent"
                           : "border-border hover:border-primary/50"
