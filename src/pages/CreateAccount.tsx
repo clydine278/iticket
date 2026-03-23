@@ -281,30 +281,30 @@ const CreateAccount = () => {
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
-          <Input placeholder="Full Name" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Full Name" value={formData.fullName} onChange={(e) => updateField("fullName", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Stage Name</label>
-          <Input placeholder="Stage Name" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Stage Name" value={formData.stageName} onChange={(e) => updateField("stageName", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Username</label>
-          <Input placeholder="Username" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Username" value={formData.username} onChange={(e) => updateField("username", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
       </motion.div>
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Email Address</label>
-          <Input placeholder="Email Address" type="email" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Email Address" type="email" value={formData.email} onChange={(e) => updateField("email", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
-          <Input placeholder="Phone Number" type="tel" className="h-10 text-sm border-border/50" />
+          <Input placeholder="Phone Number" type="tel" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">City</label>
-          <Input placeholder="City" className="h-10 text-sm border-border/50" />
+          <Input placeholder="City" value={formData.city} onChange={(e) => updateField("city", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
       </motion.div>
 
@@ -328,19 +328,19 @@ const CreateAccount = () => {
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">About You</label>
-          <Textarea placeholder="About you" className="text-sm border-border/50 min-h-[100px]" />
+          <Textarea placeholder="About you" value={formData.aboutYou} onChange={(e) => updateField("aboutYou", e.target.value)} className="text-sm border-border/50 min-h-[100px]" />
         </div>
         <div className="space-y-3">
           <div className="relative">
             <label className="text-xs text-muted-foreground mb-1 block">Password</label>
-            <Input placeholder="Password" type={showPw ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
+            <Input placeholder="Password" type={showPw ? "text" : "password"} value={formData.password} onChange={(e) => updateField("password", e.target.value)} className="h-10 text-sm pr-9 border-border/50" />
             <button onClick={() => setShowPw(!showPw)} className="absolute right-2.5 bottom-2.5 text-muted-foreground">
               {showPw ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
           </div>
           <div className="relative">
             <label className="text-xs text-muted-foreground mb-1 block">Retype Password</label>
-            <Input placeholder="Retype Password" type={showPw2 ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
+            <Input placeholder="Retype Password" type={showPw2 ? "text" : "password"} value={formData.password2} onChange={(e) => updateField("password2", e.target.value)} className="h-10 text-sm pr-9 border-border/50" />
             <button onClick={() => setShowPw2(!showPw2)} className="absolute right-2.5 bottom-2.5 text-muted-foreground">
               {showPw2 ? <EyeOff size={14} /> : <Eye size={14} />}
             </button>
