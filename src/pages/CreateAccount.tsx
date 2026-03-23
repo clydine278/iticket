@@ -333,7 +333,7 @@ const CreateAccount = () => {
             {step === 0 && (
               <motion.div key="step0" {...fadeSlide}>
                 <h3 className="font-bold text-sm mb-4">Choose an account type</h3>
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
                   {accountTypes.map((type) => (
                     <motion.button
                       key={type.id}
