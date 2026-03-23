@@ -75,7 +75,7 @@ const TrendingChallenge = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ delay: 0.2, type: "spring", damping: 20 }}
-        className="mx-4 rounded-2xl bg-gradient-to-b from-amber-900/30 to-background h-64 mb-4 flex items-end p-4 overflow-hidden"
+        className="mx-4 rounded-2xl bg-gradient-to-b from-primary/20 to-background h-64 mb-4 flex items-end p-4 overflow-hidden"
       >
         <p className="text-muted-foreground text-xs">Sunday 27th October 2025</p>
       </motion.div>
