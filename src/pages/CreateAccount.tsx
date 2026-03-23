@@ -83,7 +83,7 @@ const CreateAccount = () => {
         <label className="text-xs text-muted-foreground mb-1 block">Date of Birth</label>
         <Input type="date" className="h-10 text-sm border-border/50" />
       </motion.div>
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="relative">
           <label className="text-xs text-muted-foreground mb-1 block">Password</label>
           <Input placeholder="Password" type={showPw ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
