@@ -144,7 +144,7 @@ const Checkout = () => {
                         <p className="font-bold text-xs">Pay with Card</p>
                         <p className="text-[10px] text-muted-foreground">Pay with Mastercard, Visa, Verve or Bank Transfer.</p>
                       </div>
-                      <span className="ml-auto text-xs font-bold text-green-500">OPay</span>
+                      <span className="ml-auto text-xs font-bold text-accent-foreground">OPay</span>
                     </label>
                   </div>
                   <div className="mt-4 p-3 bg-accent/50 rounded-lg">
