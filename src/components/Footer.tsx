@@ -1,0 +1,55 @@
+import { Link } from "react-router-dom";
+
+const Footer = () => {
+  return (
+    <footer className="bg-nav text-nav-foreground pt-10 pb-6">
+      <div className="container">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-6 mb-8">
+          <div className="col-span-2 md:col-span-1">
+            <p className="font-display font-bold text-lg mb-2">
+              <span className="text-primary">●</span> iticket
+            </p>
+            <p className="text-nav-foreground/60 text-xs leading-relaxed mb-3">
+              iticket is an event ticketing platform for memorable experiences. Sign up to receive information about upcoming events.
+            </p>
+            <div className="flex gap-2">
+              <button className="text-xs bg-nav-foreground/10 px-3 py-1.5 rounded text-nav-foreground/70">Sign Up</button>
+              <button className="text-xs bg-primary px-3 py-1.5 rounded text-primary-foreground">Log In</button>
+            </div>
+          </div>
+          {[0, 1, 2].map((col) => (
+            <div key={col}>
+              <ul className="space-y-2 text-xs text-nav-foreground/60">
+                <li><Link to="/buy-tickets" className="hover:text-primary transition-colors">Buy Ticket</Link></li>
+                <li><Link to="/book-artist" className="hover:text-primary transition-colors">Book an Artist</Link></li>
+                <li><Link to="/challenges" className="hover:text-primary transition-colors">Join a Challenge</Link></li>
+                <li><Link to="/buy-tickets" className="hover:text-primary transition-colors">Sell a Ticket</Link></li>
+              </ul>
+            </div>
+          ))}
+          <div>
+            <ul className="space-y-2 text-xs text-nav-foreground/60">
+              <li>Partnerships</li>
+              <li>iticket Softwares</li>
+              <li>Join a Challenge</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom bar */}
+        <div className="border-t border-nav-foreground/10 pt-4 flex items-center justify-between">
+          <p className="font-display text-sm font-bold">
+            <span className="text-primary">●</span> iticket
+          </p>
+          <div className="hidden md:flex items-center gap-6 text-xs text-nav-foreground/60">
+            {["Home", "Buy Tickets", "Book Artist", "Join Challenge"].map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
