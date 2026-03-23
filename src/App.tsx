@@ -14,6 +14,7 @@ import BookArtist from "./pages/BookArtist";
 import ArtistDetail from "./pages/ArtistDetail";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
