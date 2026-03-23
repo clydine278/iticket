@@ -3,16 +3,37 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const AuthEmail = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const mode = searchParams.get("mode") || "signup";
   const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!email) return;
-    navigate(`/auth/otp?email=${encodeURIComponent(email)}&mode=${mode}`);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOtp({
+        email,
+        options: {
+          shouldCreateUser: mode === "signup",
+        },
+      });
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "OTP Sent", description: `Check your email ${email}` });
+        navigate(`/auth/otp?email=${encodeURIComponent(email)}&mode=${mode}`);
+      }
+    } catch (err) {
+      toast({ title: "Error", description: "Something went wrong", variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -60,9 +81,10 @@ const AuthEmail = () => {
       >
         <Button
           onClick={handleContinue}
+          disabled={loading}
           className="px-10 h-12 rounded-full text-base font-semibold transition-transform active:scale-95"
         >
-          Continue
+          {loading ? "Sending..." : "Continue"}
         </Button>
       </motion.div>
     </div>

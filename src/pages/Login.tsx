@@ -17,7 +17,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center px-6">
-      {/* X logo */}
       <motion.div
         initial={{ scale: 0, rotate: -180 }}
         animate={{ scale: 1, rotate: 0 }}
@@ -75,14 +74,6 @@ const Login = () => {
             className="w-full h-12 rounded-full text-base font-semibold text-foreground border-foreground/30 hover:bg-secondary transition-transform active:scale-95"
           >
             Continue with Google
-          </Button>
-        </motion.div>
-        <motion.div variants={item}>
-          <Button
-            variant="outline"
-            className="w-full h-12 rounded-full text-base font-semibold text-foreground border-foreground/30 hover:bg-secondary transition-transform active:scale-95"
-          >
-            Continue with Facebook
           </Button>
         </motion.div>
       </motion.div>
