@@ -49,7 +49,7 @@ const Navbar = () => {
 
         <div className="hidden md:flex items-center gap-2">
           {user ? (
-            <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1 border-nav-foreground/30 text-nav-foreground hover:bg-nav-foreground/10 hover:text-nav-foreground">
+            <Button size="sm" variant="outline" onClick={handleSignOut} className="rounded-full text-xs font-semibold px-5 gap-1 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
               <LogOut size={14} /> Sign Out
             </Button>
           ) : (
