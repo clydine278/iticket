@@ -51,7 +51,7 @@ const CreateAccount = () => {
 
   const renderPersonalForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">First name</label>
           <Input placeholder="First name" className="h-10 text-sm border-border/50" />
