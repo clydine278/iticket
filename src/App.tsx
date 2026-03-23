@@ -13,6 +13,10 @@ import AuthOTP from "./pages/AuthOTP";
 import SignupForm from "./pages/SignupForm";
 import Categories from "./pages/Categories";
 import CelebrityProfile from "./pages/CelebrityProfile";
+import ArtistProfile from "./pages/ArtistProfile";
+import EventDetail from "./pages/EventDetail";
+import TicketSelection from "./pages/TicketSelection";
+import TrendingChallenge from "./pages/TrendingChallenge";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -34,6 +38,10 @@ const App = () => (
           <Route path="/signup/form" element={<SignupForm />} />
           <Route path="/onboarding/categories" element={<Categories />} />
           <Route path="/celebrity/:name" element={<CelebrityProfile />} />
+          <Route path="/artist/:name" element={<ArtistProfile />} />
+          <Route path="/event/:id" element={<EventDetail />} />
+          <Route path="/tickets/:id" element={<TicketSelection />} />
+          <Route path="/trending" element={<TrendingChallenge />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
