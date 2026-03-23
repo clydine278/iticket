@@ -13,8 +13,12 @@ const Footer = () => {
               iticket is an event ticketing platform for memorable experiences. Sign up to receive information about upcoming events.
             </p>
             <div className="flex gap-2">
-              <button className="text-xs bg-nav-foreground/10 px-3 py-1.5 rounded text-nav-foreground/70">Sign Up</button>
-              <button className="text-xs bg-primary px-3 py-1.5 rounded text-primary-foreground">Log In</button>
+              <Link to="/create-account">
+                <button className="text-xs bg-nav-foreground/10 px-3 py-1.5 rounded text-nav-foreground/70 hover:bg-nav-foreground/20 transition-colors">Sign Up</button>
+              </Link>
+              <Link to="/create-account">
+                <button className="text-xs bg-primary px-3 py-1.5 rounded text-primary-foreground hover:bg-primary/90 transition-colors">Log In</button>
+              </Link>
             </div>
           </div>
           {[0, 1, 2].map((col) => (
@@ -31,20 +35,20 @@ const Footer = () => {
             <ul className="space-y-2 text-xs text-nav-foreground/60">
               <li>Partnerships</li>
               <li>iticket Softwares</li>
-              <li>Join a Challenge</li>
+              <li><Link to="/challenges" className="hover:text-primary transition-colors">Join a Challenge</Link></li>
             </ul>
           </div>
         </div>
 
-        {/* Bottom bar */}
         <div className="border-t border-nav-foreground/10 pt-4 flex items-center justify-between">
-          <p className="font-display text-sm font-bold">
+          <Link to="/" className="font-display text-sm font-bold">
             <span className="text-primary">●</span> iticket
-          </p>
+          </Link>
           <div className="hidden md:flex items-center gap-6 text-xs text-nav-foreground/60">
-            {["Home", "Buy Tickets", "Book Artist", "Join Challenge"].map((item) => (
-              <span key={item}>{item}</span>
-            ))}
+            <Link to="/" className="hover:text-primary transition-colors">Home</Link>
+            <Link to="/buy-tickets" className="hover:text-primary transition-colors">Buy Tickets</Link>
+            <Link to="/book-artist" className="hover:text-primary transition-colors">Book Artist</Link>
+            <Link to="/challenges" className="hover:text-primary transition-colors">Join Challenge</Link>
           </div>
         </div>
       </div>
