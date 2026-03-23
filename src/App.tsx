@@ -10,6 +10,7 @@ import Checkout from "./pages/Checkout";
 import Challenges from "./pages/Challenges";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import BookArtist from "./pages/BookArtist";
+import ArtistDetail from "./pages/ArtistDetail";
 import CreateAccount from "./pages/CreateAccount";
 import NotFound from "./pages/NotFound";
 
@@ -29,6 +30,7 @@ const App = () => (
           <Route path="/challenges" element={<Challenges />} />
           <Route path="/challenge/:id" element={<ChallengeDetail />} />
           <Route path="/book-artist" element={<BookArtist />} />
+          <Route path="/artist/:id" element={<ArtistDetail />} />
           <Route path="/create-account" element={<CreateAccount />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
