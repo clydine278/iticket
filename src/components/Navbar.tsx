@@ -97,11 +97,24 @@ const Navbar = () => {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/create-account" onClick={() => setOpen(false)}>
-                <Button size="sm" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
-                  Create Account
+              {user ? (
+                <Button size="sm" variant="outline" onClick={() => { setOpen(false); handleSignOut(); }} className="rounded-full text-xs font-semibold px-5 w-full mt-2 gap-1">
+                  <LogOut size={14} /> Sign Out
                 </Button>
-              </Link>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
+                      Login
+                    </Button>
+                  </Link>
+                  <Link to="/create-account" onClick={() => setOpen(false)}>
+                    <Button size="sm" className="rounded-full text-xs font-semibold px-5 w-full mt-2">
+                      Create Account
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}
