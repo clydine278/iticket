@@ -55,7 +55,7 @@ const Navbar = () => {
           ) : (
             <>
               <Link to="/login">
-                <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 border-nav-foreground/30 text-nav-foreground hover:bg-nav-foreground/10 hover:text-nav-foreground">
+                <Button size="sm" variant="outline" className="rounded-full text-xs font-semibold px-5 border-primary/50 text-primary hover:bg-primary/10 hover:text-primary">
                   Login
                 </Button>
               </Link>
