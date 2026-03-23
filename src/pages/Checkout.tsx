@@ -19,10 +19,18 @@ const steps = ["Ticket", "Contact Information", "Payment"];
 
 const Checkout = () => {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
   const [step, setStep] = useState(0);
   const [tickets, setTickets] = useState(ticketTypes);
   const [contact, setContact] = useState({ name: "", email: "", phone: "" });
   const [paymentMethod, setPaymentMethod] = useState("paystack");
+
+  useEffect(() => {
+    if (!loading && !user) {
+      toast.error("Please sign in to purchase tickets");
+      navigate("/login", { state: { from: window.location.pathname } });
+    }
+  }, [user, loading, navigate]);
 
   const updateQty = (id: number, delta: number) => {
     setTickets((prev) =>
