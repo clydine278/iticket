@@ -69,7 +69,7 @@ const CreateAccount = () => {
         <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
         <Input placeholder="Phone Number" type="tel" className="h-10 text-sm border-border/50" />
       </motion.div>
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country</label>
           <Input placeholder="Country" className="h-10 text-sm border-border/50" />
