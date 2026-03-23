@@ -14,7 +14,14 @@ const navLinks = [
 
 const Navbar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="bg-nav text-nav-foreground sticky top-0 z-50">
