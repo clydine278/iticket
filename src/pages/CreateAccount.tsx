@@ -246,7 +246,7 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Email Address</label>
           <Input placeholder="Email Address" type="email" className="h-10 text-sm border-border/50" />
