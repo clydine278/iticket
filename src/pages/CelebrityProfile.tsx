@@ -16,8 +16,8 @@ const CelebrityProfile = () => {
       </div>
 
       {/* Profile image */}
-      <div className="w-48 h-48 rounded-full bg-stone-800 mb-4 flex items-center justify-center overflow-hidden">
-        <div className="w-full h-full bg-gradient-to-b from-stone-700 to-stone-900" />
+      <div className="w-48 h-48 rounded-full bg-secondary mb-4 flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full bg-gradient-to-b from-muted to-background" />
       </div>
 
       {/* Verified badge */}
