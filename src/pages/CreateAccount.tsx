@@ -51,7 +51,7 @@ const CreateAccount = () => {
 
   const renderPersonalForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">First name</label>
           <Input placeholder="First name" className="h-10 text-sm border-border/50" />
@@ -69,7 +69,7 @@ const CreateAccount = () => {
         <label className="text-xs text-muted-foreground mb-1 block">Phone Number</label>
         <Input placeholder="Phone Number" type="tel" className="h-10 text-sm border-border/50" />
       </motion.div>
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country</label>
           <Input placeholder="Country" className="h-10 text-sm border-border/50" />
@@ -83,7 +83,7 @@ const CreateAccount = () => {
         <label className="text-xs text-muted-foreground mb-1 block">Date of Birth</label>
         <Input type="date" className="h-10 text-sm border-border/50" />
       </motion.div>
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="relative">
           <label className="text-xs text-muted-foreground mb-1 block">Password</label>
           <Input placeholder="Password" type={showPw ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
@@ -115,7 +115,7 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
           <Input placeholder="Full Name" className="h-10 text-sm border-border/50" />
@@ -130,7 +130,7 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Email Address</label>
           <Input placeholder="Email Address" type="email" className="h-10 text-sm border-border/50" />
@@ -152,7 +152,7 @@ const CreateAccount = () => {
           <span className="text-xs text-muted-foreground">Connect Socials</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 sm:flex gap-2">
           {socialPlatforms.map((p) => (
             <button key={p} className="flex-1 border border-border/50 rounded-full py-1.5 text-[10px] text-primary/60 hover:border-primary/50 transition-colors">
               {p}
@@ -162,7 +162,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* Add Video slots */}
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="aspect-square rounded-xl bg-muted/50 border border-dashed border-border/50 flex flex-col items-center justify-center cursor-pointer hover:bg-muted transition-colors">
             <Video className="w-6 h-6 text-muted-foreground mb-1" />
@@ -173,7 +173,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* Booking Price & Services */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-4">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Booking Price</label>
           <select className="w-full h-10 text-sm border border-border/50 rounded-md bg-background px-3">
@@ -199,7 +199,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* Password */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="relative">
           <label className="text-xs text-muted-foreground mb-1 block">Password</label>
           <Input placeholder="Password" type={showPw ? "text" : "password"} className="h-10 text-sm pr-9 border-border/50" />
@@ -231,7 +231,7 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Full Name</label>
           <Input placeholder="Full Name" className="h-10 text-sm border-border/50" />
@@ -246,7 +246,7 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade} className="grid grid-cols-3 gap-3">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Email Address</label>
           <Input placeholder="Email Address" type="email" className="h-10 text-sm border-border/50" />
@@ -268,7 +268,7 @@ const CreateAccount = () => {
           <span className="text-xs text-muted-foreground">Connect Socials</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-        <div className="flex gap-2">
+        <div className="grid grid-cols-2 sm:flex gap-2">
           {socialPlatforms.map((p) => (
             <button key={p} className="flex-1 border border-border/50 rounded-full py-1.5 text-[10px] text-primary/60 hover:border-primary/50 transition-colors">
               {p}
@@ -278,7 +278,7 @@ const CreateAccount = () => {
       </motion.div>
 
       {/* About You & Password */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 gap-4">
+      <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">About You</label>
           <Textarea placeholder="About you" className="text-sm border-border/50 min-h-[100px]" />
@@ -308,7 +308,7 @@ const CreateAccount = () => {
       {/* Left side - Form */}
       <div className="flex-1 flex flex-col">
         <div className="h-1 bg-primary" />
-        <div className="flex-1 px-6 md:px-12 lg:px-20 py-10 overflow-y-auto">
+        <div className="flex-1 px-4 sm:px-6 md:px-12 lg:px-20 py-6 sm:py-10 overflow-y-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <h1 className="font-display text-2xl md:text-3xl font-bold mb-1">Create an Account</h1>
             <p className="text-muted-foreground text-sm mb-8">Its free to create an account and get started with Iticket</p>
@@ -333,14 +333,14 @@ const CreateAccount = () => {
             {step === 0 && (
               <motion.div key="step0" {...fadeSlide}>
                 <h3 className="font-bold text-sm mb-4">Choose an account type</h3>
-                <div className="grid grid-cols-3 gap-3 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
                   {accountTypes.map((type) => (
                     <motion.button
                       key={type.id}
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => setSelectedType(type.id)}
-                      className={`border rounded-xl p-4 text-center transition-all ${
+                      className={`border rounded-xl p-3 sm:p-4 text-center transition-all ${
                         selectedType === type.id
                           ? "border-primary bg-accent"
                           : "border-border hover:border-primary/50"
