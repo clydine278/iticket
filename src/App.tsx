@@ -20,6 +20,15 @@ import MyTickets from "./pages/dashboard/MyTickets";
 import OrderHistory from "./pages/dashboard/OrderHistory";
 import Transactions from "./pages/dashboard/Transactions";
 import ProfileSettings from "./pages/dashboard/ProfileSettings";
+import CreateEvent from "./pages/dashboard/CreateEvent";
+import MyEvents from "./pages/dashboard/MyEvents";
+import CreateChallenge from "./pages/dashboard/CreateChallenge";
+import MyChallenges from "./pages/dashboard/MyChallenges";
+import MyBookings from "./pages/dashboard/MyBookings";
+import BrowseEvents from "./pages/dashboard/BrowseEvents";
+import BrowseChallenges from "./pages/dashboard/BrowseChallenges";
+import EventCheckout from "./pages/dashboard/EventCheckout";
+import HireArtist from "./pages/dashboard/HireArtist";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -50,12 +59,18 @@ const App = () => (
               <Route path="/dashboard/transactions" element={<Transactions />} />
               <Route path="/dashboard/profile" element={<ProfileSettings />} />
               <Route path="/dashboard/settings" element={<ProfileSettings />} />
-              <Route path="/dashboard/bookings" element={<Dashboard />} />
+              <Route path="/dashboard/create-event" element={<CreateEvent />} />
+              <Route path="/dashboard/events" element={<MyEvents />} />
+              <Route path="/dashboard/create-challenge" element={<CreateChallenge />} />
+              <Route path="/dashboard/challenges" element={<MyChallenges />} />
+              <Route path="/dashboard/bookings" element={<MyBookings />} />
+              <Route path="/dashboard/browse-events" element={<BrowseEvents />} />
+              <Route path="/dashboard/browse-challenges" element={<BrowseChallenges />} />
+              <Route path="/dashboard/event/:id" element={<EventCheckout />} />
+              <Route path="/dashboard/hire-artist" element={<HireArtist />} />
               <Route path="/dashboard/earnings" element={<Dashboard />} />
               <Route path="/dashboard/analytics" element={<Dashboard />} />
-              <Route path="/dashboard/challenges" element={<Dashboard />} />
               <Route path="/dashboard/favorites" element={<Dashboard />} />
-              <Route path="/dashboard/events" element={<Dashboard />} />
               <Route path="/dashboard/sales" element={<Dashboard />} />
               <Route path="/dashboard/revenue" element={<Dashboard />} />
               <Route path="/admin" element={<AdminDashboard />} />

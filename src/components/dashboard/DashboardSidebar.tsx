@@ -48,29 +48,32 @@ interface NavItem {
 
 const personalLinks: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Browse Events", url: "/dashboard/browse-events", icon: Ticket },
+  { title: "Browse Challenges", url: "/dashboard/browse-challenges", icon: Trophy },
   { title: "My Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
   { title: "Order History", url: "/dashboard/orders", icon: ShoppingCart },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
-  { title: "Challenges", url: "/dashboard/challenges", icon: Trophy },
-  { title: "Favorites", url: "/dashboard/favorites", icon: Heart },
 ];
 
 const artistLinks: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-  { title: "Bookings", url: "/dashboard/bookings", icon: CalendarPlus },
+  { title: "Booking Requests", url: "/dashboard/bookings", icon: CalendarPlus },
+  { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
+  { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
   { title: "Earnings", url: "/dashboard/earnings", icon: Wallet },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
-  { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
 ];
 
 const organizerLinks: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Create Event", url: "/dashboard/create-event", icon: CalendarPlus },
   { title: "My Events", url: "/dashboard/events", icon: CalendarPlus },
-  { title: "Ticket Sales", url: "/dashboard/sales", icon: Ticket },
+  { title: "Hire Artist", url: "/dashboard/hire-artist", icon: Music },
+  { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
   { title: "Bookings", url: "/dashboard/bookings", icon: Music },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
-  { title: "Revenue", url: "/dashboard/revenue", icon: Wallet },
 ];
 
 const settingsLinks: NavItem[] = [
