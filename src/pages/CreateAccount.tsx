@@ -85,8 +85,8 @@ const CreateAccount = () => {
     if (error) {
       toast.error(error.message);
     } else {
-      toast.success("Check your email for a confirmation link!");
-      setStep(2);
+      toast.success("Account created successfully!");
+      navigate("/dashboard");
     }
   };
 

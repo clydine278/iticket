@@ -14,6 +14,7 @@ import BookArtist from "./pages/BookArtist";
 import ArtistDetail from "./pages/ArtistDetail";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
             <Route path="/artist/:id" element={<ArtistDetail />} />
             <Route path="/create-account" element={<CreateAccount />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/dashboard" element={<Dashboard />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
