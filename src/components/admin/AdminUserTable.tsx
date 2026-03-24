@@ -108,7 +108,7 @@ export function AdminUserTable({ profiles, compact, onRefresh }: Props) {
 
           <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
             {(p.status || "active") !== "suspended" && (
-              <Button size="sm" variant="outline" className="gap-1.5 text-yellow-600" onClick={() => handleAction(p.id, "suspend")}>
+              <Button size="sm" variant="outline" className="gap-1.5 text-accent-foreground" onClick={() => handleAction(p.id, "suspend")}>
                 <ShieldOff className="w-3.5 h-3.5" /> Suspend
               </Button>
             )}
