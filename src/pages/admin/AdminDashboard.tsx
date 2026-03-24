@@ -29,6 +29,7 @@ const tabs = [
   { id: "users" as const, label: "Users", icon: Users },
   { id: "events" as const, label: "Events", icon: CalendarPlus },
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
+  { id: "partners" as const, label: "Partners", icon: Handshake },
 ];
 
 const AdminDashboard = () => {
