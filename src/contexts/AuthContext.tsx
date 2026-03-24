@@ -6,6 +6,7 @@ interface AuthContextType {
   user: User | null;
   session: Session | null;
   loading: boolean;
+  accountStatus: string | null;
   signOut: () => Promise<void>;
 }
 
@@ -13,6 +14,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
   loading: true,
+  accountStatus: null,
   signOut: async () => {},
 });
 
@@ -22,6 +24,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [accountStatus, setAccountStatus] = useState<string | null>(null);
+
+  const fetchStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("status")
+      .eq("id", userId)
+      .single();
+    setAccountStatus(data?.status || "active");
+  };
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -29,6 +41,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
+        if (session?.user) {
+          setTimeout(() => fetchStatus(session.user.id), 0);
+        } else {
+          setAccountStatus(null);
+        }
       }
     );
 
@@ -36,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      if (session?.user) fetchStatus(session.user.id);
     });
 
     return () => subscription.unsubscribe();
@@ -46,7 +64,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, accountStatus, signOut }}>
       {children}
     </AuthContext.Provider>
   );
