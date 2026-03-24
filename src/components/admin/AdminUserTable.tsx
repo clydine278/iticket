@@ -118,7 +118,7 @@ export function AdminUserTable({ profiles, compact, onRefresh }: Props) {
               </Button>
             )}
             {(p.status || "active") !== "active" && (
-              <Button size="sm" variant="outline" className="gap-1.5 text-green-600" onClick={() => handleAction(p.id, "activate")}>
+              <Button size="sm" variant="outline" className="gap-1.5 text-primary" onClick={() => handleAction(p.id, "activate")}>
                 <ShieldCheck className="w-3.5 h-3.5" /> Activate
               </Button>
             )}
