@@ -29,6 +29,7 @@ import BrowseEvents from "./pages/dashboard/BrowseEvents";
 import BrowseChallenges from "./pages/dashboard/BrowseChallenges";
 import EventCheckout from "./pages/dashboard/EventCheckout";
 import HireArtist from "./pages/dashboard/HireArtist";
+import Analytics from "./pages/dashboard/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
