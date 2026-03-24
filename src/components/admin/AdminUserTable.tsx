@@ -32,8 +32,8 @@ function TypeBadge({ type }: { type: string }) {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, string> = {
-    active: "bg-green-500/10 text-green-600",
-    suspended: "bg-yellow-500/10 text-yellow-600",
+    active: "bg-primary/10 text-primary",
+    suspended: "bg-accent/20 text-accent-foreground",
     banned: "bg-destructive/10 text-destructive",
   };
   return (
