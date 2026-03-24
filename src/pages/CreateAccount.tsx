@@ -78,6 +78,9 @@ const CreateAccount = () => {
           full_name: formData.fullName || formData.firstName,
           username: formData.username,
           stage_name: formData.stageName,
+          phone: formData.phone,
+          city: formData.city,
+          country: formData.country,
         },
       },
     });
@@ -413,8 +416,8 @@ const CreateAccount = () => {
                 <motion.div key="step1" {...fadeSlide}>
                   <h3 className="font-bold text-sm mb-4">Tell us about yourself</h3>
                   {selectedType === "personal" && renderPersonalForm()}
-                  {selectedType === "artist" && renderOrganizerForm()}
-                  {selectedType === "organizer" && renderArtistForm()}
+                  {selectedType === "artist" && renderArtistForm()}
+                  {selectedType === "organizer" && renderOrganizerForm()}
                 </motion.div>
               )}
 

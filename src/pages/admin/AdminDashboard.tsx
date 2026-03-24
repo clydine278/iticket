@@ -15,8 +15,11 @@ export interface AdminProfile {
   full_name: string | null;
   username: string | null;
   email: string | null;
+  phone: string | null;
   account_type: string;
   city: string | null;
+  country: string | null;
+  status: string | null;
   created_at: string;
 }
 
@@ -123,13 +126,13 @@ const AdminDashboard = () => {
         {activeTab === "overview" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <AdminStatsGrid profiles={profiles} events={events} orders={orders} totalRevenue={totalRevenue} />
-            <AdminUserTable profiles={profiles.slice(0, 5)} compact />
+            <AdminUserTable profiles={profiles.slice(0, 5)} compact onRefresh={fetchData} />
           </div>
         )}
 
         {activeTab === "users" && (
           <div className="animate-in fade-in duration-300">
-            <AdminUserTable profiles={profiles} />
+            <AdminUserTable profiles={profiles} onRefresh={fetchData} />
           </div>
         )}
 
