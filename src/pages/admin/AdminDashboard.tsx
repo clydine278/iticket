@@ -15,8 +15,11 @@ export interface AdminProfile {
   full_name: string | null;
   username: string | null;
   email: string | null;
+  phone: string | null;
   account_type: string;
   city: string | null;
+  country: string | null;
+  status: string | null;
   created_at: string;
 }
 
