@@ -330,6 +330,7 @@ export type Database = {
           services: string[] | null
           social_links: Json | null
           stage_name: string | null
+          status: string
           updated_at: string | null
           username: string | null
         }
@@ -348,6 +349,7 @@ export type Database = {
           services?: string[] | null
           social_links?: Json | null
           stage_name?: string | null
+          status?: string
           updated_at?: string | null
           username?: string | null
         }
@@ -366,6 +368,7 @@ export type Database = {
           services?: string[] | null
           social_links?: Json | null
           stage_name?: string | null
+          status?: string
           updated_at?: string | null
           username?: string | null
         }
