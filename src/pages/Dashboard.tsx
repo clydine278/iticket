@@ -66,6 +66,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        <ProfileCompletionNotice />
         {accountType === "artist" && <ArtistDashboard />}
         {accountType === "organizer" && <OrganizerDashboard />}
         {accountType !== "artist" && accountType !== "organizer" && <PersonalDashboard />}
