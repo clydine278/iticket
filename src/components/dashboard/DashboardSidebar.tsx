@@ -58,9 +58,11 @@ const personalLinks: NavItem[] = [
 
 const artistLinks: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Browse Events", url: "/dashboard/browse-events", icon: Ticket },
   { title: "Booking Requests", url: "/dashboard/bookings", icon: CalendarPlus },
   { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
   { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
+  { title: "My Tickets", url: "/dashboard/tickets", icon: Ticket },
   { title: "Earnings", url: "/dashboard/earnings", icon: Wallet },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },

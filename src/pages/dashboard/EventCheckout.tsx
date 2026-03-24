@@ -6,11 +6,12 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Minus, Plus, Ticket, ShieldCheck, CreditCard } from "lucide-react";
+import { Calendar, MapPin, Minus, Plus, Ticket, ShieldCheck, CreditCard, Share2, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const EventCheckout = () => {
   const { id } = useParams();
@@ -21,6 +22,7 @@ const EventCheckout = () => {
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const [loading, setLoading] = useState(true);
   const [purchasing, setPurchasing] = useState(false);
+  const [imageOpen, setImageOpen] = useState(false);
 
   useEffect(() => {
     const fetchEvent = async () => {
@@ -49,6 +51,18 @@ const EventCheckout = () => {
   const selectedTickets = ticketTypes.filter(t => (quantities[t.id] || 0) > 0);
   const total = ticketTypes.reduce((sum, t) => sum + (quantities[t.id] || 0) * t.price, 0);
   const hasItems = selectedTickets.length > 0;
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: event?.title, text: `Check out ${event?.title}!`, url });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Event link copied to clipboard." });
+    }
+  };
 
   const handlePurchase = async () => {
     if (!user || !event) return;
@@ -91,20 +105,49 @@ const EventCheckout = () => {
         {/* Event Hero */}
         <div className="relative rounded-2xl overflow-hidden mb-6">
           {event.banner_url ? (
-            <img src={event.banner_url} alt={event.title} className="w-full h-40 sm:h-56 object-cover" />
+            <img
+              src={event.banner_url}
+              alt={event.title}
+              className="w-full h-40 sm:h-56 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => setImageOpen(true)}
+            />
           ) : (
             <div className="w-full h-40 sm:h-56 bg-gradient-to-br from-primary/20 via-accent/10 to-muted" />
           )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
-          <div className="absolute bottom-4 left-4 right-4">
-            <Badge variant="secondary" className="capitalize mb-2">{event.category}</Badge>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{event.title}</h1>
+          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none" />
+          <div className="absolute bottom-4 left-4 right-4" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
+            <div className="flex items-center gap-2 mb-2">
+              <Badge variant="secondary" className="capitalize">{event.category}</Badge>
+              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full bg-background/40 backdrop-blur-sm hover:bg-background/60 ml-auto" onClick={handleShare}>
+                <Share2 className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground drop-shadow-lg">{event.title}</h1>
             <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
-              {event.venue && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
+              <span className="flex items-center gap-1 drop-shadow-sm"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
+              {event.venue && <span className="flex items-center gap-1 drop-shadow-sm"><MapPin className="w-3.5 h-3.5" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
             </div>
           </div>
         </div>
+
+        {/* Image Popup */}
+        <Dialog open={imageOpen} onOpenChange={setImageOpen}>
+          <DialogContent className="max-w-3xl p-0 bg-transparent border-none shadow-none [&>button]:hidden">
+            <div className="relative">
+              <img
+                src={event.banner_url}
+                alt={event.title}
+                className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
+              />
+              <button
+                onClick={() => setImageOpen(false)}
+                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors shadow-md"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* Ticket Selection */}
