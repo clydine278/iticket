@@ -2,11 +2,12 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Ticket, Music, Trophy, ArrowRight, Calendar, MapPin } from "lucide-react";
+import { Ticket, Music, Trophy, ArrowRight, Calendar, MapPin, Share2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import { toast } from "@/hooks/use-toast";
 
 const quickActions = [
   { title: "Buy Tickets", desc: "Explore upcoming events", icon: Ticket, to: "/dashboard/browse-events", gradient: "from-primary to-orange-600" },
@@ -36,6 +37,16 @@ const PersonalDashboard = () => {
   }, [user]);
 
   const activeTickets = orders.filter((o) => o.status === "confirmed").length;
+
+  const handleShare = async (event: any) => {
+    const url = `${window.location.origin}/dashboard/event/${event.id}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: event.title, text: `Check out ${event.title}!`, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!", description: "Event link copied to clipboard." });
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -114,26 +125,40 @@ const PersonalDashboard = () => {
             {events.map((event) => {
               const cheapest = event.ticket_types?.map((t: any) => t.price).filter((p: number) => p > 0).sort((a: number, b: number) => a - b)[0];
               return (
-                <Link key={event.id} to={`/dashboard/event/${event.id}`}>
-                  <Card className="border-border/40 hover:shadow-md transition-all duration-200 group cursor-pointer">
-                    <CardContent className="p-3 flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center shrink-0">
-                        <Calendar className="w-5 h-5 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-sm truncate">{event.title}</p>
-                        <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                          <span>{format(new Date(event.date), "MMM d, yyyy")}</span>
-                          {event.venue && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {event.venue}</span>}
+                <div key={event.id} className="flex items-center gap-3">
+                  <Link to={`/dashboard/event/${event.id}`} className="flex-1">
+                    <Card className="border-border/40 hover:shadow-md transition-all duration-200 group cursor-pointer">
+                      <CardContent className="p-3 flex items-center gap-3">
+                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
+                          {event.banner_url ? (
+                            <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center">
+                              <Calendar className="w-5 h-5 text-primary" />
+                            </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xs font-bold text-primary">{cheapest ? `₦${cheapest.toLocaleString()}` : "Free"}</p>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors ml-auto" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-sm truncate">{event.title}</p>
+                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                            <span>{format(new Date(event.date), "MMM d, yyyy")}</span>
+                            {event.venue && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {event.venue}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-xs font-bold text-primary">{cheapest ? `₦${cheapest.toLocaleString()}` : "Free"}</p>
+                          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors ml-auto" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </Link>
+                  <button
+                    onClick={() => handleShare(event)}
+                    className="shrink-0 w-8 h-8 rounded-full bg-muted hover:bg-muted-foreground/10 flex items-center justify-center transition-colors"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
+                  </button>
+                </div>
               );
             })}
           </div>
