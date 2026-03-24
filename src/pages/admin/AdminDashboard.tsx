@@ -8,7 +8,8 @@ import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { AdminUserTable } from "@/components/admin/AdminUserTable";
 import { AdminEventList } from "@/components/admin/AdminEventList";
 import { AdminTransactionList } from "@/components/admin/AdminTransactionList";
-import { Shield, BarChart3, Users, CalendarPlus, DollarSign } from "lucide-react";
+import { AdminPartnerList } from "@/components/admin/AdminPartnerList";
+import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake } from "lucide-react";
 
 export interface AdminProfile {
   id: string;
@@ -28,6 +29,7 @@ const tabs = [
   { id: "users" as const, label: "Users", icon: Users },
   { id: "events" as const, label: "Events", icon: CalendarPlus },
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
+  { id: "partners" as const, label: "Partners", icon: Handshake },
 ];
 
 const AdminDashboard = () => {
@@ -38,7 +40,7 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions" | "partners">("overview");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -145,6 +147,12 @@ const AdminDashboard = () => {
         {activeTab === "transactions" && (
           <div className="animate-in fade-in duration-300">
             <AdminTransactionList orders={orders} />
+          </div>
+        )}
+
+        {activeTab === "partners" && (
+          <div className="animate-in fade-in duration-300">
+            <AdminPartnerList />
           </div>
         )}
       </div>

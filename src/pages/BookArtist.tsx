@@ -90,7 +90,11 @@ const BookArtist = () => {
                     {artist.avatar_url ? (
                       <img src={artist.avatar_url} alt={artist.stage_name || artist.full_name} className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover" />
                     ) : (
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary/30 to-muted/20" />
+                      <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gradient-to-br from-primary/30 to-muted/20 flex items-center justify-center">
+                        <span className="font-bold text-xl text-primary/60">
+                          {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
                     )}
                   </div>
                   <div className="px-3 pb-3">

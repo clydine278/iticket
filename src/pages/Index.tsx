@@ -159,7 +159,11 @@ const Index = () => {
                     {artist.avatar_url ? (
                       <img src={artist.avatar_url} alt={artist.stage_name || artist.full_name} className="h-48 w-full object-cover" />
                     ) : (
-                      <div className="h-48 bg-gradient-to-br from-primary/30 to-muted/20" />
+                      <div className="h-48 bg-gradient-to-br from-primary/30 to-muted/20 flex items-center justify-center">
+                        <span className="font-bold text-4xl text-primary/60">
+                          {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
                     )}
                     <div className="p-3 bg-hero">
                       <div className="flex justify-between items-start">
