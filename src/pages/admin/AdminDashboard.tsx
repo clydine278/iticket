@@ -126,7 +126,7 @@ const AdminDashboard = () => {
         {activeTab === "overview" && (
           <div className="space-y-6 animate-in fade-in duration-300">
             <AdminStatsGrid profiles={profiles} events={events} orders={orders} totalRevenue={totalRevenue} />
-            <AdminUserTable profiles={profiles.slice(0, 5)} compact />
+            <AdminUserTable profiles={profiles.slice(0, 5)} compact onRefresh={fetchData} />
           </div>
         )}
 
