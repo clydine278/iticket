@@ -34,8 +34,7 @@ const Footer = () => {
           <div>
             <h4 className="font-bold text-xs mb-3 text-nav-foreground/80">Company</h4>
             <ul className="space-y-2 text-xs text-nav-foreground/60">
-              <li className="hover:text-primary transition-colors cursor-default">Partnerships</li>
-              <li className="hover:text-primary transition-colors cursor-default">iticket Softwares</li>
+              <li><Link to="/partnerships" className="hover:text-primary transition-colors">Partnerships</Link></li>
             </ul>
           </div>
 
