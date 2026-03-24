@@ -149,6 +149,12 @@ const AdminDashboard = () => {
             <AdminTransactionList orders={orders} />
           </div>
         )}
+
+        {activeTab === "partners" && (
+          <div className="animate-in fade-in duration-300">
+            <AdminPartnerList />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
