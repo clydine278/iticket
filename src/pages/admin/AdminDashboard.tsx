@@ -132,7 +132,7 @@ const AdminDashboard = () => {
 
         {activeTab === "users" && (
           <div className="animate-in fade-in duration-300">
-            <AdminUserTable profiles={profiles} />
+            <AdminUserTable profiles={profiles} onRefresh={fetchData} />
           </div>
         )}
 
