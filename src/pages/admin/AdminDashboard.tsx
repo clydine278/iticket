@@ -138,7 +138,7 @@ const AdminDashboard = () => {
 
         {activeTab === "events" && (
           <div className="animate-in fade-in duration-300">
-            <AdminEventList events={events} />
+            <AdminEventList events={events} onRefresh={fetchData} />
           </div>
         )}
 
