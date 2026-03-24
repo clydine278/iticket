@@ -1,18 +1,41 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CalendarPlus, MapPin, Clock } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarPlus, MapPin, Clock, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Props {
   events: any[];
+  onRefresh?: () => void;
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const cls = status === "published"
+function StatusBadge({ status, endDate }: { status: string; endDate?: string }) {
+  const now = new Date();
+  const end = endDate ? new Date(endDate) : null;
+  const isEnded = end && end < now;
+  const displayStatus = isEnded ? "ended" : status;
+
+  const cls = displayStatus === "published"
     ? "bg-primary/10 text-primary"
+    : displayStatus === "ended"
+    ? "bg-destructive/10 text-destructive"
     : "bg-muted text-muted-foreground";
-  return <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>{status}</span>;
+  return <span className={`text-[10px] sm:text-xs px-2 py-0.5 rounded-full font-medium ${cls}`}>{displayStatus}</span>;
 }
 
-export function AdminEventList({ events }: Props) {
+export function AdminEventList({ events, onRefresh }: Props) {
+  const handleDelete = async (eventId: string) => {
+    const { error } = await supabase.from("events").delete().eq("id", eventId);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Event deleted");
+    onRefresh?.();
+  };
+
   if (events.length === 0) {
     return (
       <Card className="border-border/50">
@@ -47,7 +70,26 @@ export function AdminEventList({ events }: Props) {
                   <span className="text-xs">{new Date(e.date).toLocaleDateString()}</span>
                 </div>
               </div>
-              <StatusBadge status={e.status} />
+              <div className="flex flex-col items-end gap-2">
+                <StatusBadge status={e.status} endDate={e.end_date || e.date} />
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-destructive hover:text-destructive">
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete event?</AlertDialogTitle>
+                      <AlertDialogDescription>This will permanently delete "{e.title}". This cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => handleDelete(e.id)} className="bg-destructive text-destructive-foreground">Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
             </div>
           ))}
         </div>
