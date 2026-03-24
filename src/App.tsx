@@ -29,6 +29,7 @@ import BrowseEvents from "./pages/dashboard/BrowseEvents";
 import BrowseChallenges from "./pages/dashboard/BrowseChallenges";
 import EventCheckout from "./pages/dashboard/EventCheckout";
 import HireArtist from "./pages/dashboard/HireArtist";
+import Analytics from "./pages/dashboard/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
@@ -69,7 +70,7 @@ const App = () => (
               <Route path="/dashboard/event/:id" element={<EventCheckout />} />
               <Route path="/dashboard/hire-artist" element={<HireArtist />} />
               <Route path="/dashboard/earnings" element={<Dashboard />} />
-              <Route path="/dashboard/analytics" element={<Dashboard />} />
+              <Route path="/dashboard/analytics" element={<Analytics />} />
               <Route path="/dashboard/favorites" element={<Dashboard />} />
               <Route path="/dashboard/sales" element={<Dashboard />} />
               <Route path="/dashboard/revenue" element={<Dashboard />} />
