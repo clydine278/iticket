@@ -6,7 +6,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Minus, Plus, Ticket, ShieldCheck, CreditCard, Share2, X } from "lucide-react";
+import { Calendar, MapPin, Minus, Plus, Ticket, ShieldCheck, CreditCard, Share2, X, Info } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
@@ -33,7 +33,14 @@ const EventCheckout = () => {
         .single();
       if (data) {
         setEvent(data);
-        setTicketTypes(data.ticket_types || []);
+        const types = data.ticket_types || [];
+        setTicketTypes(types);
+        // Default quantity to 1 for each ticket type
+        const defaultQty: Record<string, number> = {};
+        types.forEach((t: any) => {
+          defaultQty[t.id] = 1;
+        });
+        setQuantities(defaultQty);
       }
       setLoading(false);
     };
@@ -102,33 +109,37 @@ const EventCheckout = () => {
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
-        {/* Event Hero */}
-        <div className="relative rounded-2xl overflow-hidden mb-6">
-          {event.banner_url ? (
+        {/* Event Hero - image only */}
+        {event.banner_url && (
+          <div className="relative rounded-2xl overflow-hidden mb-4 cursor-pointer" onClick={() => setImageOpen(true)}>
             <img
               src={event.banner_url}
               alt={event.title}
-              className="w-full h-40 sm:h-56 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => setImageOpen(true)}
+              className="w-full h-40 sm:h-56 object-cover hover:scale-105 transition-transform duration-300"
             />
-          ) : (
-            <div className="w-full h-40 sm:h-56 bg-gradient-to-br from-primary/20 via-accent/10 to-muted" />
-          )}
-          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent pointer-events-none" />
-          <div className="absolute bottom-4 left-4 right-4" style={{ textShadow: "0 1px 4px rgba(0,0,0,0.5)" }}>
-            <div className="flex items-center gap-2 mb-2">
-              <Badge variant="secondary" className="capitalize">{event.category}</Badge>
-              <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full bg-background/40 backdrop-blur-sm hover:bg-background/60 ml-auto" onClick={handleShare}>
-                <Share2 className="w-3.5 h-3.5" />
+          </div>
+        )}
+
+        {/* Event Details - below the image for visibility */}
+        <Card className="mb-6 border-border/40">
+          <CardContent className="p-4 sm:p-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2 flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <Badge variant="secondary" className="capitalize text-xs">{event.category}</Badge>
+                </div>
+                <h1 className="text-xl sm:text-2xl font-bold">{event.title}</h1>
+                <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+                  <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
+                  {event.venue && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
+                </div>
+              </div>
+              <Button size="icon" variant="outline" className="h-9 w-9 rounded-full shrink-0" onClick={handleShare}>
+                <Share2 className="w-4 h-4" />
               </Button>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground drop-shadow-lg">{event.title}</h1>
-            <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground flex-wrap">
-              <span className="flex items-center gap-1 drop-shadow-sm"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
-              {event.venue && <span className="flex items-center gap-1 drop-shadow-sm"><MapPin className="w-3.5 h-3.5" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
-            </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
         {/* Image Popup */}
         <Dialog open={imageOpen} onOpenChange={setImageOpen}>
@@ -155,6 +166,9 @@ const EventCheckout = () => {
             <h2 className="font-display font-semibold text-base flex items-center gap-2">
               <Ticket className="w-4 h-4 text-primary" /> Choose your tickets
             </h2>
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <Info className="w-3 h-3" /> Use the + or − buttons to adjust the number of tickets you want to buy.
+            </p>
             {ticketTypes.length === 0 ? (
               <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No tickets available</CardContent></Card>
             ) : (

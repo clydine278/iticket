@@ -21,6 +21,7 @@ import OrderHistory from "./pages/dashboard/OrderHistory";
 import Transactions from "./pages/dashboard/Transactions";
 import ProfileSettings from "./pages/dashboard/ProfileSettings";
 import CreateEvent from "./pages/dashboard/CreateEvent";
+import EditEvent from "./pages/dashboard/EditEvent";
 import MyEvents from "./pages/dashboard/MyEvents";
 import CreateChallenge from "./pages/dashboard/CreateChallenge";
 import MyChallenges from "./pages/dashboard/MyChallenges";
@@ -62,6 +63,7 @@ const App = () => (
               <Route path="/dashboard/settings" element={<ProfileSettings />} />
               <Route path="/dashboard/create-event" element={<CreateEvent />} />
               <Route path="/dashboard/events" element={<MyEvents />} />
+              <Route path="/dashboard/edit-event/:id" element={<EditEvent />} />
               <Route path="/dashboard/create-challenge" element={<CreateChallenge />} />
               <Route path="/dashboard/challenges" element={<MyChallenges />} />
               <Route path="/dashboard/bookings" element={<MyBookings />} />

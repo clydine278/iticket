@@ -5,6 +5,7 @@ import PersonalDashboard from "@/components/dashboard/PersonalDashboard";
 import ArtistDashboard from "@/components/dashboard/ArtistDashboard";
 import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { ProfileCompletionNotice } from "@/components/dashboard/ProfileCompletionNotice";
 
 const container = {
   hidden: { opacity: 0 },
@@ -65,6 +66,7 @@ const Dashboard = () => {
           </div>
         </motion.div>
 
+        <ProfileCompletionNotice />
         {accountType === "artist" && <ArtistDashboard />}
         {accountType === "organizer" && <OrganizerDashboard />}
         {accountType !== "artist" && accountType !== "organizer" && <PersonalDashboard />}
