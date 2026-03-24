@@ -125,40 +125,39 @@ const PersonalDashboard = () => {
             {events.map((event) => {
               const cheapest = event.ticket_types?.map((t: any) => t.price).filter((p: number) => p > 0).sort((a: number, b: number) => a - b)[0];
               return (
-                <div key={event.id} className="flex items-center gap-3">
-                  <Link to={`/dashboard/event/${event.id}`} className="flex-1">
-                    <Card className="border-border/40 hover:shadow-md transition-all duration-200 group cursor-pointer">
-                      <CardContent className="p-3 flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0">
-                          {event.banner_url ? (
-                            <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center">
-                              <Calendar className="w-5 h-5 text-primary" />
-                            </div>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
+                <Card key={event.id} className="border-border/40 hover:shadow-md transition-all duration-200 group cursor-pointer overflow-hidden">
+                  <Link to={`/dashboard/event/${event.id}`}>
+                    {event.banner_url ? (
+                      <div className="h-28 sm:h-36 w-full overflow-hidden">
+                        <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                      </div>
+                    ) : (
+                      <div className="h-20 sm:h-28 w-full bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center">
+                        <Calendar className="w-8 h-8 text-primary/40" />
+                      </div>
+                    )}
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
                           <p className="font-semibold text-sm truncate">{event.title}</p>
-                          <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
-                            <span>{format(new Date(event.date), "MMM d, yyyy")}</span>
-                            {event.venue && <span className="flex items-center gap-0.5"><MapPin className="w-3 h-3" /> {event.venue}</span>}
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-muted-foreground mt-1">
+                            <span className="flex items-center gap-0.5"><Calendar className="w-3 h-3" /> {format(new Date(event.date), "MMM d, yyyy")}</span>
+                            {event.venue && <span className="flex items-center gap-0.5 truncate"><MapPin className="w-3 h-3 shrink-0" /> {event.venue}</span>}
                           </div>
                         </div>
-                        <div className="text-right shrink-0">
-                          <p className="text-xs font-bold text-primary">{cheapest ? `₦${cheapest.toLocaleString()}` : "Free"}</p>
-                          <ArrowRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors ml-auto" />
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <span className="text-xs font-bold text-primary">{cheapest ? `₦${cheapest.toLocaleString()}` : "Free"}</span>
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleShare(event); }}
+                            className="w-7 h-7 rounded-full bg-muted hover:bg-muted-foreground/10 flex items-center justify-center transition-colors"
+                          >
+                            <Share2 className="w-3 h-3 text-muted-foreground" />
+                          </button>
                         </div>
-                      </CardContent>
-                    </Card>
+                      </div>
+                    </CardContent>
                   </Link>
-                  <button
-                    onClick={() => handleShare(event)}
-                    className="shrink-0 w-8 h-8 rounded-full bg-muted hover:bg-muted-foreground/10 flex items-center justify-center transition-colors"
-                  >
-                    <Share2 className="w-3.5 h-3.5 text-muted-foreground" />
-                  </button>
-                </div>
+                </Card>
               );
             })}
           </div>
