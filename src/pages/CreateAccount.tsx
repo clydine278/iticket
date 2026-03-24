@@ -78,6 +78,9 @@ const CreateAccount = () => {
           full_name: formData.fullName || formData.firstName,
           username: formData.username,
           stage_name: formData.stageName,
+          phone: formData.phone,
+          city: formData.city,
+          country: formData.country,
         },
       },
     });
