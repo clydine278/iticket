@@ -3,13 +3,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Minus, Plus, Ticket } from "lucide-react";
+import { Calendar, MapPin, Minus, Plus, Ticket, ShieldCheck, CreditCard } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
+import { Separator } from "@/components/ui/separator";
 
 const EventCheckout = () => {
   const { id } = useParams();
@@ -45,8 +46,9 @@ const EventCheckout = () => {
     });
   };
 
+  const selectedTickets = ticketTypes.filter(t => (quantities[t.id] || 0) > 0);
   const total = ticketTypes.reduce((sum, t) => sum + (quantities[t.id] || 0) * t.price, 0);
-  const hasItems = Object.values(quantities).some((q) => q > 0);
+  const hasItems = selectedTickets.length > 0;
 
   const handlePurchase = async () => {
     if (!user || !event) return;
@@ -55,30 +57,17 @@ const EventCheckout = () => {
       for (const ticket of ticketTypes) {
         const qty = quantities[ticket.id] || 0;
         if (qty <= 0) continue;
-
         const { error } = await supabase.from("orders").insert({
-          user_id: user.id,
-          event_id: event.id,
-          ticket_type_id: ticket.id,
-          quantity: qty,
-          total_amount: qty * ticket.price,
-          status: "confirmed",
-          payment_method: "card",
-          qr_code: crypto.randomUUID(),
+          user_id: user.id, event_id: event.id, ticket_type_id: ticket.id,
+          quantity: qty, total_amount: qty * ticket.price,
+          status: "confirmed", payment_method: "card", qr_code: crypto.randomUUID(),
         });
         if (error) throw error;
       }
-
-      // Create a transaction record
       await supabase.from("transactions").insert({
-        user_id: user.id,
-        amount: total,
-        type: "ticket_purchase",
-        description: `Tickets for ${event.title}`,
-        reference_id: event.id,
-        status: "completed",
+        user_id: user.id, amount: total, type: "ticket_purchase",
+        description: `Tickets for ${event.title}`, reference_id: event.id, status: "completed",
       });
-
       toast({ title: "Purchase successful!", description: "Your tickets have been confirmed." });
       navigate("/dashboard/tickets");
     } catch (err: any) {
@@ -89,88 +78,122 @@ const EventCheckout = () => {
   };
 
   if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="flex justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      </DashboardLayout>
-    );
+    return <DashboardLayout><div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div></DashboardLayout>;
   }
 
   if (!event) {
-    return (
-      <DashboardLayout>
-        <div className="text-center py-12">
-          <h2 className="text-lg font-semibold">Event not found</h2>
-        </div>
-      </DashboardLayout>
-    );
+    return <DashboardLayout><div className="text-center py-12"><h2 className="text-lg font-semibold">Event not found</h2></div></DashboardLayout>;
   }
 
   return (
     <DashboardLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto space-y-6">
-        {event.banner_url && (
-          <div className="h-48 rounded-xl overflow-hidden">
-            <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
+        {/* Event Hero */}
+        <div className="relative rounded-2xl overflow-hidden mb-6">
+          {event.banner_url ? (
+            <img src={event.banner_url} alt={event.title} className="w-full h-40 sm:h-56 object-cover" />
+          ) : (
+            <div className="w-full h-40 sm:h-56 bg-gradient-to-br from-primary/20 via-accent/10 to-muted" />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/30 to-transparent" />
+          <div className="absolute bottom-4 left-4 right-4">
+            <Badge variant="secondary" className="capitalize mb-2">{event.category}</Badge>
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">{event.title}</h1>
+            <div className="flex items-center gap-3 mt-1.5 text-sm text-muted-foreground flex-wrap">
+              <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
+              {event.venue && <span className="flex items-center gap-1"><MapPin className="w-3.5 h-3.5" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
+            </div>
           </div>
-        )}
-
-        <div>
-          <h1 className="text-2xl font-bold">{event.title}</h1>
-          <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground flex-wrap">
-            <span className="flex items-center gap-1"><Calendar className="w-4 h-4" />{format(new Date(event.date), "MMM d, yyyy · h:mm a")}</span>
-            {event.venue && <span className="flex items-center gap-1"><MapPin className="w-4 h-4" />{event.venue}{event.city ? `, ${event.city}` : ""}</span>}
-            <Badge variant="secondary" className="capitalize">{event.category}</Badge>
-          </div>
-          {event.description && <p className="text-sm text-muted-foreground mt-3">{event.description}</p>}
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2"><Ticket className="w-5 h-5" /> Select Tickets</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Ticket Selection */}
+          <div className="lg:col-span-3 space-y-3">
+            <h2 className="font-display font-semibold text-base flex items-center gap-2">
+              <Ticket className="w-4 h-4 text-primary" /> Choose your tickets
+            </h2>
             {ticketTypes.length === 0 ? (
-              <p className="text-muted-foreground text-sm text-center py-4">No tickets available for this event</p>
+              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No tickets available</CardContent></Card>
             ) : (
               ticketTypes.map((ticket) => {
                 const available = ticket.quantity - (ticket.sold || 0);
+                const qty = quantities[ticket.id] || 0;
+                const isSelected = qty > 0;
                 return (
-                  <div key={ticket.id} className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
-                    <div>
-                      <h4 className="font-semibold text-sm">{ticket.name}</h4>
-                      {ticket.description && <p className="text-xs text-muted-foreground">{ticket.description}</p>}
-                      <p className="text-primary font-bold mt-1">${ticket.price}</p>
-                      <p className="text-xs text-muted-foreground">{available} remaining</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQty(ticket.id, -1)} disabled={(quantities[ticket.id] || 0) <= 0}>
-                        <Minus className="w-3 h-3" />
-                      </Button>
-                      <span className="w-8 text-center font-semibold">{quantities[ticket.id] || 0}</span>
-                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => updateQty(ticket.id, 1)} disabled={(quantities[ticket.id] || 0) >= available}>
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
+                  <Card key={ticket.id} className={`transition-all ${isSelected ? "border-primary/50 shadow-md" : "border-border/40"}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h3 className="font-semibold text-sm">{ticket.name}</h3>
+                            {available <= 10 && available > 0 && (
+                              <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full">{available} left</span>
+                            )}
+                          </div>
+                          {ticket.description && <p className="text-xs text-muted-foreground mb-2">{ticket.description}</p>}
+                          <p className="text-lg font-bold text-primary">₦{Number(ticket.price).toLocaleString()}</p>
+                        </div>
+                        <div className="flex items-center gap-1.5 bg-muted rounded-full p-1">
+                          <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQty(ticket.id, -1)} disabled={qty <= 0}>
+                            <Minus className="w-3 h-3" />
+                          </Button>
+                          <span className="w-6 text-center font-bold text-sm">{qty}</span>
+                          <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQty(ticket.id, 1)} disabled={qty >= available}>
+                            <Plus className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
                 );
               })
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {hasItems && (
-          <Card>
-            <CardContent className="p-5">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-lg font-bold">Total</span>
-                <span className="text-2xl font-bold text-primary">${total.toFixed(2)}</span>
-              </div>
-              <Button size="lg" className="w-full" onClick={handlePurchase} disabled={purchasing}>
-                {purchasing ? "Processing..." : "Confirm Purchase"}
-              </Button>
+          {/* Order Summary */}
+          <div className="lg:col-span-2">
+            <div className="sticky top-4">
+              <Card className="border-border/40">
+                <CardContent className="p-4 space-y-4">
+                  <h3 className="font-display font-semibold text-sm">Order Summary</h3>
+                  {!hasItems ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">Select tickets to continue</p>
+                  ) : (
+                    <>
+                      <div className="space-y-2">
+                        {selectedTickets.map(t => (
+                          <div key={t.id} className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">{quantities[t.id]}× {t.name}</span>
+                            <span className="font-medium">₦{(quantities[t.id] * t.price).toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-center">
+                        <span className="font-semibold">Total</span>
+                        <span className="text-xl font-bold text-primary">₦{total.toLocaleString()}</span>
+                      </div>
+                      <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
+                        <CreditCard className="w-4 h-4" />
+                        {purchasing ? "Processing..." : "Pay Now"}
+                      </Button>
+                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                        <ShieldCheck className="w-3 h-3" />
+                        Secure checkout
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {event.description && (
+          <Card className="mt-6 border-border/40">
+            <CardContent className="p-4">
+              <h3 className="font-semibold text-sm mb-2">About this event</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">{event.description}</p>
             </CardContent>
           </Card>
         )}

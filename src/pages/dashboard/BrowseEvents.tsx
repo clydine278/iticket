@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -12,7 +11,6 @@ import { motion } from "framer-motion";
 import { format } from "date-fns";
 
 const BrowseEvents = () => {
-  const { user } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -54,26 +52,17 @@ const BrowseEvents = () => {
 
         <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            placeholder="Search events, venues, cities..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10"
-          />
+          <Input placeholder="Search events, venues, cities..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
         </div>
 
         {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
+          <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
         ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Ticket className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-semibold text-lg">No events found</h3>
-              <p className="text-muted-foreground text-sm mt-1">Check back later for upcoming events</p>
-            </CardContent>
-          </Card>
+          <Card><CardContent className="py-12 text-center">
+            <Ticket className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+            <h3 className="font-semibold text-lg">No events found</h3>
+            <p className="text-muted-foreground text-sm mt-1">Check back later for upcoming events</p>
+          </CardContent></Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {filtered.map((event, i) => (
@@ -103,7 +92,7 @@ const BrowseEvents = () => {
                     </div>
                     <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
                       <span className="font-bold text-primary">
-                        {cheapestPrice(event) > 0 ? `From $${cheapestPrice(event)}` : "Free"}
+                        {cheapestPrice(event) > 0 ? `From ₦${cheapestPrice(event).toLocaleString()}` : "Free"}
                       </span>
                       <Button size="sm" asChild>
                         <Link to={`/dashboard/event/${event.id}`}>Buy Tickets</Link>
