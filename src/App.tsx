@@ -21,6 +21,7 @@ import OrderHistory from "./pages/dashboard/OrderHistory";
 import Transactions from "./pages/dashboard/Transactions";
 import ProfileSettings from "./pages/dashboard/ProfileSettings";
 import CreateEvent from "./pages/dashboard/CreateEvent";
+import EditEvent from "./pages/dashboard/EditEvent";
 import MyEvents from "./pages/dashboard/MyEvents";
 import CreateChallenge from "./pages/dashboard/CreateChallenge";
 import MyChallenges from "./pages/dashboard/MyChallenges";
