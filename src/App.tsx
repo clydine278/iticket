@@ -33,6 +33,7 @@ import HireArtist from "./pages/dashboard/HireArtist";
 import Analytics from "./pages/dashboard/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Partnerships from "./pages/Partnerships";
+import PaymentCallback from "./pages/dashboard/PaymentCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
