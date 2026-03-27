@@ -36,13 +36,38 @@ const PaymentCallback = () => {
 
         setStatus("success");
       } catch (err: any) {
-        setError(err.message);
-        setStatus("failed");
+        // Fallback: check if the webhook already created the order
+        const { data: existingOrders } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("payment_reference", reference)
+          .eq("status", "confirmed")
+          .limit(1);
+
+        if (existingOrders && existingOrders.length > 0) {
+          setStatus("success");
+        } else {
+          // Wait and retry once — webhook may still be processing
+          await new Promise((r) => setTimeout(r, 5000));
+          const { data: retryOrders } = await supabase
+            .from("orders")
+            .select("id")
+            .eq("payment_reference", reference)
+            .eq("status", "confirmed")
+            .limit(1);
+
+          if (retryOrders && retryOrders.length > 0) {
+            setStatus("success");
+          } else {
+            setError(err.message);
+            setStatus("failed");
+          }
+        }
       }
     };
 
-    // Small delay to let webhook process first
-    setTimeout(verify, 2000);
+    // Delay to let webhook process first
+    setTimeout(verify, 3000);
   }, [searchParams, user]);
 
   return (
