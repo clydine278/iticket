@@ -72,6 +72,7 @@ const App = () => (
               <Route path="/dashboard/browse-events" element={<BrowseEvents />} />
               <Route path="/dashboard/browse-challenges" element={<BrowseChallenges />} />
               <Route path="/dashboard/event/:id" element={<EventCheckout />} />
+              <Route path="/dashboard/payment-callback" element={<PaymentCallback />} />
               <Route path="/dashboard/hire-artist" element={<HireArtist />} />
               <Route path="/dashboard/earnings" element={<Dashboard />} />
               <Route path="/dashboard/analytics" element={<Analytics />} />
