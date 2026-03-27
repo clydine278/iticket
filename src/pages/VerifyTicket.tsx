@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -30,6 +30,7 @@ type VerifyStatus = "idle" | "loading" | "valid" | "used" | "invalid" | "unautho
 
 const VerifyTicket = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") || "");
   const [status, setStatus] = useState<VerifyStatus>("idle");
@@ -130,6 +131,13 @@ const VerifyTicket = () => {
         .slice(0, 2)
     : "??";
 
+  // Redirect non-staff users
+  useEffect(() => {
+    if (isAuthorized === false && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthorized, user, navigate]);
+
   if (isAuthorized === null) {
     return (
       <>
@@ -142,7 +150,7 @@ const VerifyTicket = () => {
     );
   }
 
-  if (!user || isAuthorized === false) {
+  if (!user) {
     return (
       <>
         <Navbar />
@@ -152,9 +160,7 @@ const VerifyTicket = () => {
               <ShieldCheck className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
               <p className="font-semibold text-sm mb-1">Authorized Personnel Only</p>
               <p className="text-xs text-muted-foreground">
-                {!user
-                  ? "Please log in with an admin or moderator account to verify tickets."
-                  : "Your account does not have permission to verify tickets."}
+                Please log in with an admin or moderator account to verify tickets.
               </p>
             </CardContent>
           </Card>
@@ -163,6 +169,8 @@ const VerifyTicket = () => {
       </>
     );
   }
+
+  if (isAuthorized === false) return null;
 
   return (
     <>
