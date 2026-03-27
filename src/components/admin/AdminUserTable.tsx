@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Search, Users, Ban, Trash2, ShieldOff, ShieldCheck, X } from "lucide-react";
+import { Search, Users, Ban, Trash2, ShieldOff, ShieldCheck, ShieldPlus, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -43,6 +43,19 @@ function StatusBadge({ status }: { status: string }) {
 export function AdminUserTable({ profiles, compact, onRefresh }: Props) {
   const [q, setQ] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminProfile | null>(null);
+  const [modIds, setModIds] = useState<Set<string>>(new Set());
+
+  // Fetch which users are moderators
+  useEffect(() => {
+    const fetchMods = async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("user_id")
+        .eq("role", "moderator");
+      if (data) setModIds(new Set(data.map((r: any) => r.user_id)));
+    };
+    fetchMods();
+  }, [profiles]);
 
   const filtered = profiles.filter(
     (p) =>
@@ -105,6 +118,26 @@ export function AdminUserTable({ profiles, compact, onRefresh }: Props) {
                   </div>
 
                   <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
+                    {/* Moderator toggle */}
+                    {modIds.has(p.id) ? (
+                      <Button size="sm" variant="outline" className="gap-1.5 text-primary border-primary/20 hover:bg-primary/5" onClick={async () => {
+                        const { error } = await supabase.from("user_roles").delete().eq("user_id", p.id).eq("role", "moderator");
+                        if (error) { toast.error(error.message); return; }
+                        setModIds((prev) => { const next = new Set(prev); next.delete(p.id); return next; });
+                        toast.success("Moderator role removed");
+                      }}>
+                        <ShieldOff className="w-3.5 h-3.5" /> Remove Mod
+                      </Button>
+                    ) : (
+                      <Button size="sm" variant="outline" className="gap-1.5 text-primary border-primary/20 hover:bg-primary/5" onClick={async () => {
+                        const { error } = await supabase.from("user_roles").insert({ user_id: p.id, role: "moderator" });
+                        if (error) { toast.error(error.message); return; }
+                        setModIds((prev) => new Set(prev).add(p.id));
+                        toast.success("User is now a moderator");
+                      }}>
+                        <ShieldPlus className="w-3.5 h-3.5" /> Make Mod
+                      </Button>
+                    )}
                     {(p.status || "active") !== "suspended" && (
                       <Button size="sm" variant="outline" className="gap-1.5 text-amber-600 border-amber-200 hover:bg-amber-50" onClick={() => handleAction(p.id, "suspend")}>
                         <ShieldOff className="w-3.5 h-3.5" /> Suspend
