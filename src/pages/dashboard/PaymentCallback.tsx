@@ -41,7 +41,8 @@ const PaymentCallback = () => {
       }
     };
 
-    verify();
+    // Small delay to let webhook process first
+    setTimeout(verify, 2000);
   }, [searchParams, user]);
 
   return (
