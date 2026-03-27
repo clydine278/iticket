@@ -111,53 +111,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      const payment = paystackData.data;
-      const meta = payment.metadata || {};
-
-      // Use service role to insert orders
-      const adminSupabase = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
-
-      // Generate a unique ticket code
-      const generateTicketCode = () => {
-        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-        let code = "TKT-";
-        for (let i = 0; i < 8; i++) {
-          code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        return code;
-      };
-
-      // Insert orders from metadata
-      const tickets = meta.tickets || [];
-      for (const ticket of tickets) {
-        const ticketCode = generateTicketCode();
-        await adminSupabase.from("orders").insert({
-          user_id: userId,
-          event_id: meta.event_id,
-          ticket_type_id: ticket.ticket_type_id,
-          quantity: ticket.quantity,
-          total_amount: ticket.total,
-          status: "confirmed",
-          payment_method: "paystack",
-          payment_reference: reference,
-          qr_code: crypto.randomUUID(),
-          ticket_code: ticketCode,
-        });
-      }
-
-      // Insert transaction record
-      await adminSupabase.from("transactions").insert({
-        user_id: userId,
-        amount: payment.amount / 100, // Convert kobo back to naira
-        type: "ticket_purchase",
-        description: `Tickets for ${meta.event_title || "event"}`,
-        reference_id: meta.event_id,
-        status: "completed",
-      });
-
+      // The webhook handles order creation — verify endpoint only checks payment status
       return new Response(JSON.stringify({ success: true, payment }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
