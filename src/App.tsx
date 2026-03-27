@@ -34,6 +34,7 @@ import Analytics from "./pages/dashboard/Analytics";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import Partnerships from "./pages/Partnerships";
 import PaymentCallback from "./pages/dashboard/PaymentCallback";
+import VerifyTicket from "./pages/VerifyTicket";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -80,7 +81,9 @@ const App = () => (
               <Route path="/dashboard/sales" element={<Dashboard />} />
               <Route path="/dashboard/revenue" element={<Dashboard />} />
               <Route path="/partnerships" element={<Partnerships />} />
+              <Route path="/verify-ticket" element={<VerifyTicket />} />
               <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="*" element={<NotFound />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

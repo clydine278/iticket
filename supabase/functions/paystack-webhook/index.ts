@@ -73,9 +73,20 @@ Deno.serve(async (req) => {
       return new Response("Already processed", { status: 200 });
     }
 
+    // Generate a unique ticket code (e.g., TKT-A1B2C3D4)
+    const generateTicketCode = () => {
+      const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      let code = "TKT-";
+      for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return code;
+    };
+
     // Insert orders for each ticket type
     const tickets = meta.tickets || [];
     for (const ticket of tickets) {
+      const ticketCode = generateTicketCode();
       const { error } = await adminSupabase.from("orders").insert({
         user_id: userId,
         event_id: meta.event_id,
@@ -86,6 +97,7 @@ Deno.serve(async (req) => {
         payment_method: `paystack_${channel}`,
         payment_reference: reference,
         qr_code: crypto.randomUUID(),
+        ticket_code: ticketCode,
       });
       if (error) console.error("Order insert error:", error);
     }

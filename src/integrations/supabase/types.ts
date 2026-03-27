@@ -260,8 +260,10 @@ export type Database = {
           qr_code: string | null
           quantity: number
           status: string | null
+          ticket_code: string | null
           ticket_type_id: string
           total_amount: number
+          used_at: string | null
           user_id: string
         }
         Insert: {
@@ -273,8 +275,10 @@ export type Database = {
           qr_code?: string | null
           quantity?: number
           status?: string | null
+          ticket_code?: string | null
           ticket_type_id: string
           total_amount?: number
+          used_at?: string | null
           user_id: string
         }
         Update: {
@@ -286,8 +290,10 @@ export type Database = {
           qr_code?: string | null
           quantity?: number
           status?: string | null
+          ticket_code?: string | null
           ticket_type_id?: string
           total_amount?: number
+          used_at?: string | null
           user_id?: string
         }
         Relationships: [

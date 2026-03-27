@@ -120,9 +120,20 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
 
+      // Generate a unique ticket code
+      const generateTicketCode = () => {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "TKT-";
+        for (let i = 0; i < 8; i++) {
+          code += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return code;
+      };
+
       // Insert orders from metadata
       const tickets = meta.tickets || [];
       for (const ticket of tickets) {
+        const ticketCode = generateTicketCode();
         await adminSupabase.from("orders").insert({
           user_id: userId,
           event_id: meta.event_id,
@@ -133,6 +144,7 @@ Deno.serve(async (req) => {
           payment_method: "paystack",
           payment_reference: reference,
           qr_code: crypto.randomUUID(),
+          ticket_code: ticketCode,
         });
       }
 
