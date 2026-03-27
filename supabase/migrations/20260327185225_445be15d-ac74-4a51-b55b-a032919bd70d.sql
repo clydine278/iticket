@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX orders_payment_reference_ticket_uidx ON public.orders(payment_reference, ticket_type_id) WHERE payment_reference IS NOT NULL;
