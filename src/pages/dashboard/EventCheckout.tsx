@@ -75,25 +75,44 @@ const EventCheckout = () => {
     if (!user || !event) return;
     setPurchasing(true);
     try {
-      for (const ticket of ticketTypes) {
-        const qty = quantities[ticket.id] || 0;
-        if (qty <= 0) continue;
-        const { error } = await supabase.from("orders").insert({
-          user_id: user.id, event_id: event.id, ticket_type_id: ticket.id,
-          quantity: qty, total_amount: qty * ticket.price,
-          status: "confirmed", payment_method: "card", qr_code: crypto.randomUUID(),
-        });
-        if (error) throw error;
-      }
-      await supabase.from("transactions").insert({
-        user_id: user.id, amount: total, type: "ticket_purchase",
-        description: `Tickets for ${event.title}`, reference_id: event.id, status: "completed",
+      // Get user email
+      const { data: { session } } = await supabase.auth.getSession();
+      const email = session?.user?.email;
+      if (!email) throw new Error("No email found for your account");
+
+      const tickets = selectedTickets.map(t => ({
+        ticket_type_id: t.id,
+        quantity: quantities[t.id],
+        total: quantities[t.id] * t.price,
+      }));
+
+      // Initialize Paystack transaction via edge function
+      const funcUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`;
+      const res = await fetch(funcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          email,
+          amount: total,
+          callback_url: `${window.location.origin}/dashboard/payment-callback`,
+          metadata: {
+            event_id: event.id,
+            event_title: event.title,
+            tickets,
+          },
+        }),
       });
-      toast({ title: "Purchase successful!", description: "Your tickets have been confirmed." });
-      navigate("/dashboard/tickets");
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to initialize payment");
+
+      // Redirect to Paystack checkout
+      window.location.href = data.authorization_url;
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
       setPurchasing(false);
     }
   };
@@ -232,11 +251,11 @@ const EventCheckout = () => {
                       </div>
                       <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
                         <CreditCard className="w-4 h-4" />
-                        {purchasing ? "Processing..." : "Pay Now"}
+                        {purchasing ? "Redirecting to Paystack..." : "Pay with Paystack"}
                       </Button>
                       <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                         <ShieldCheck className="w-3 h-3" />
-                        Secure checkout
+                        Secured by Paystack
                       </div>
                     </>
                   )}
