@@ -56,15 +56,36 @@ const MyTickets = () => {
 
     try {
       const { default: html2canvas } = await import("html2canvas");
-      const canvas = await html2canvas(ticketRef.current, {
-        backgroundColor: "#ffffff",
-        scale: 3,
+      const clone = ticketRef.current.cloneNode(true) as HTMLElement;
+      Object.assign(clone.style, {
+        width: '1200px',
+        maxWidth: '1200px',
+        minWidth: '1200px',
+        height: 'auto',
+        transform: 'none',
+        zoom: '1',
+        position: 'fixed',
+        left: '-99999px',
+        top: '0',
+        margin: '0',
+        padding: '0',
+        boxSizing: 'border-box',
+        overflow: 'hidden',
+        background: '#ffffff',
+      });
+      document.body.appendChild(clone);
+      const canvas = await html2canvas(clone, {
+        backgroundColor: '#ffffff',
+        scale: 2,
         useCORS: true,
         logging: false,
+        width: 1200,
+        windowWidth: 1200,
       });
+      document.body.removeChild(clone);
       const link = document.createElement("a");
       link.download = `ticket-${selectedOrder.ticket_code || "download"}.png`;
-      link.href = canvas.toDataURL("image/png");
+      link.href = canvas.toDataURL("image/png", 1);
       link.click();
     } catch (err) {
       console.error("Download failed", err);
