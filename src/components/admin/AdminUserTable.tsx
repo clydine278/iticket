@@ -204,7 +204,8 @@ export function AdminUserTable({ profiles, compact, onRefresh }: Props) {
                 </div>
                 <div className="hidden sm:block text-xs text-muted-foreground">{p.phone || "—"}</div>
                 <div className="hidden md:block text-xs text-muted-foreground">{p.city ? `${p.city}, ${p.country || ""}` : "—"}</div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  {modIds.has(p.id) && <span className="text-[9px] bg-primary/15 text-primary px-1.5 py-0.5 rounded-full font-semibold">Mod</span>}
                   <TypeBadge type={p.account_type} />
                   <StatusBadge status={p.status || "active"} />
                 </div>
