@@ -36,6 +36,7 @@ import {
   ChevronRight,
   Sparkles,
   Zap,
+  ScanLine,
   type LucideIcon,
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -91,6 +92,7 @@ export function DashboardSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isMod, setIsMod] = useState(false);
 
   const accountType = user?.user_metadata?.account_type || "personal";
   const displayName = user?.user_metadata?.full_name || user?.user_metadata?.username || user?.email?.split("@")[0] || "User";
@@ -103,11 +105,16 @@ export function DashboardSidebar() {
   useEffect(() => {
     if (!user) {
       setIsAdmin(false);
+      setIsMod(false);
       return;
     }
 
-    supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }).then(({ data }) => {
-      setIsAdmin(Boolean(data));
+    Promise.all([
+      supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
+      supabase.rpc("has_role", { _user_id: user.id, _role: "moderator" }),
+    ]).then(([adminRes, modRes]) => {
+      setIsAdmin(Boolean(adminRes.data));
+      setIsMod(Boolean(modRes.data));
     });
   }, [user]);
 
@@ -188,26 +195,41 @@ export function DashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {isAdmin && (
+        {(isAdmin || isMod) && (
           <SidebarGroup>
             <SidebarGroupLabel className="text-[11px] uppercase tracking-[0.12em] font-semibold text-muted-foreground px-3 mb-2">
-              Admin
+              Staff
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu className="gap-2">
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild size="lg" isActive={isActive("/admin")} className="rounded-xl px-3">
-                    <Link to="/admin" className="flex items-center gap-3">
-                      <Shield className="w-4 h-4" />
+                  <SidebarMenuButton asChild size="lg" isActive={isActive("/verify-ticket")} className="rounded-xl px-3">
+                    <Link to="/verify-ticket" className="flex items-center gap-3">
+                      <ScanLine className="w-4 h-4" />
                       {!collapsed && (
                         <>
-                          <span className="flex-1 text-sm font-semibold">Admin Panel</span>
-                          <span className="text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-semibold">Admin</span>
+                          <span className="flex-1 text-sm font-medium">Verify Tickets</span>
+                          <span className="text-[10px] bg-accent/15 text-accent-foreground px-2 py-0.5 rounded-full font-semibold">Staff</span>
                         </>
                       )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
+                {isAdmin && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton asChild size="lg" isActive={isActive("/admin")} className="rounded-xl px-3">
+                      <Link to="/admin" className="flex items-center gap-3">
+                        <Shield className="w-4 h-4" />
+                        {!collapsed && (
+                          <>
+                            <span className="flex-1 text-sm font-semibold">Admin Panel</span>
+                            <span className="text-[10px] bg-primary/15 text-primary px-2 py-0.5 rounded-full font-semibold">Admin</span>
+                          </>
+                        )}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
