@@ -29,7 +29,7 @@ type TicketInfo = {
 type VerifyStatus = "idle" | "loading" | "valid" | "used" | "invalid" | "unauthorized";
 
 const VerifyTicket = () => {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") || "");
   const [status, setStatus] = useState<VerifyStatus>("idle");
