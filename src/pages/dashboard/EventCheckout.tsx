@@ -75,25 +75,60 @@ const EventCheckout = () => {
     if (!user || !event) return;
     setPurchasing(true);
     try {
-      for (const ticket of ticketTypes) {
-        const qty = quantities[ticket.id] || 0;
-        if (qty <= 0) continue;
-        const { error } = await supabase.from("orders").insert({
-          user_id: user.id, event_id: event.id, ticket_type_id: ticket.id,
-          quantity: qty, total_amount: qty * ticket.price,
-          status: "confirmed", payment_method: "card", qr_code: crypto.randomUUID(),
-        });
-        if (error) throw error;
-      }
-      await supabase.from("transactions").insert({
-        user_id: user.id, amount: total, type: "ticket_purchase",
-        description: `Tickets for ${event.title}`, reference_id: event.id, status: "completed",
+      // Get user email
+      const { data: { session } } = await supabase.auth.getSession();
+      const email = session?.user?.email;
+      if (!email) throw new Error("No email found for your account");
+
+      const tickets = selectedTickets.map(t => ({
+        ticket_type_id: t.id,
+        quantity: quantities[t.id],
+        total: quantities[t.id] * t.price,
+      }));
+
+      // Initialize Paystack transaction via edge function
+      const { data: initData, error: initError } = await supabase.functions.invoke("paystack", {
+        body: {
+          email,
+          amount: total,
+          callback_url: `${window.location.origin}/dashboard/tickets`,
+          metadata: {
+            event_id: event.id,
+            event_title: event.title,
+            tickets,
+          },
+        },
+        headers: { "Content-Type": "application/json" },
+        method: "POST",
       });
-      toast({ title: "Purchase successful!", description: "Your tickets have been confirmed." });
-      navigate("/dashboard/tickets");
+
+      // Add action query param
+      const funcUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`;
+      const res = await fetch(funcUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session?.access_token}`,
+        },
+        body: JSON.stringify({
+          email,
+          amount: total,
+          callback_url: `${window.location.origin}/dashboard/payment-callback`,
+          metadata: {
+            event_id: event.id,
+            event_title: event.title,
+            tickets,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to initialize payment");
+
+      // Redirect to Paystack checkout
+      window.location.href = data.authorization_url;
     } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
       setPurchasing(false);
     }
   };
