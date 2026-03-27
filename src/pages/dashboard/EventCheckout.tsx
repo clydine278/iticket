@@ -87,22 +87,6 @@ const EventCheckout = () => {
       }));
 
       // Initialize Paystack transaction via edge function
-      const { data: initData, error: initError } = await supabase.functions.invoke("paystack", {
-        body: {
-          email,
-          amount: total,
-          callback_url: `${window.location.origin}/dashboard/tickets`,
-          metadata: {
-            event_id: event.id,
-            event_title: event.title,
-            tickets,
-          },
-        },
-        headers: { "Content-Type": "application/json" },
-        method: "POST",
-      });
-
-      // Add action query param
       const funcUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`;
       const res = await fetch(funcUrl, {
         method: "POST",
