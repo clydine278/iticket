@@ -1,18 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Ticket, Calendar, MapPin, ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import {
+  Ticket,
+  Calendar,
+  MapPin,
+  CheckCircle2,
+  Download,
+  Clock,
+  ChevronRight,
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
 
 const MyTickets = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     if (user) fetchOrders();
@@ -29,9 +41,192 @@ const MyTickets = () => {
     setLoading(false);
   };
 
+  const isExpired = (order: any) => {
+    const eventEnd = order.events?.end_date || order.events?.date;
+    if (!eventEnd) return false;
+    return new Date(eventEnd) < new Date();
+  };
+
   const verifyUrl = (order: any) =>
     `${window.location.origin}/verify-ticket?code=${order.ticket_code}`;
 
+  const downloadTicket = useCallback(async () => {
+    if (!ticketRef.current || !selectedOrder) return;
+    setDownloading(true);
+
+    try {
+      const { default: html2canvas } = await import("html2canvas");
+      const canvas = await html2canvas(ticketRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 3,
+        useCORS: true,
+        logging: false,
+      });
+      const link = document.createElement("a");
+      link.download = `ticket-${selectedOrder.ticket_code || "download"}.png`;
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    } catch (err) {
+      console.error("Download failed", err);
+    }
+    setDownloading(false);
+  }, [selectedOrder]);
+
+  // Ticket detail view
+  if (selectedOrder) {
+    const order = selectedOrder;
+    const expired = isExpired(order);
+    const eventDate = order.events?.date ? new Date(order.events.date) : null;
+
+    return (
+      <DashboardLayout>
+        <div className="max-w-md mx-auto">
+          <button
+            onClick={() => setSelectedOrder(null)}
+            className="text-xs text-muted-foreground mb-4 hover:text-foreground transition-colors flex items-center gap-1"
+          >
+            ← Back to My Tickets
+          </button>
+
+          {/* Downloadable ticket card */}
+          <div
+            ref={ticketRef}
+            className="rounded-2xl overflow-hidden border border-border/50 bg-white text-black"
+          >
+            {/* Banner */}
+            <div className="relative h-36 overflow-hidden">
+              {order.events?.banner_url ? (
+                <img
+                  src={order.events.banner_url}
+                  alt={order.events?.title}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center">
+                  <Ticket className="w-12 h-12 text-white/30" />
+                </div>
+              )}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+              <div className="absolute bottom-3 left-4 right-4">
+                <p className="font-bold text-white text-base leading-tight truncate">
+                  {order.events?.title || "Event"}
+                </p>
+                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/80">
+                  {eventDate && (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      {eventDate.toLocaleDateString("en-NG", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </span>
+                  )}
+                  {order.events?.venue && (
+                    <span className="flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      {order.events.venue}
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              {/* Status badges */}
+              {expired && (
+                <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <Clock className="w-3 h-3" /> Expired
+                </div>
+              )}
+              {order.used_at && !expired && (
+                <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3" /> Used
+                </div>
+              )}
+            </div>
+
+            {/* Perforated divider */}
+            <div className="relative">
+              <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-background" />
+              <div className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-background" />
+              <div className="border-t-2 border-dashed border-gray-200 mx-6" />
+            </div>
+
+            {/* Ticket info */}
+            <div className="p-5">
+              <div className="grid grid-cols-2 gap-3 text-xs mb-5">
+                <div>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                    Ticket Type
+                  </p>
+                  <p className="font-semibold">{order.ticket_types?.name || "General"}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                    Quantity
+                  </p>
+                  <p className="font-semibold">{order.quantity}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                    Amount Paid
+                  </p>
+                  <p className="font-semibold">₦{Number(order.total_amount).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                    Status
+                  </p>
+                  <p className={`font-semibold ${expired ? "text-red-600" : "text-emerald-600"}`}>
+                    {expired ? "Expired" : order.used_at ? "Used" : "Active"}
+                  </p>
+                </div>
+              </div>
+
+              {/* QR Code + Ticket Code — hidden if expired */}
+              {!expired ? (
+                <div className="flex flex-col items-center">
+                  <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                    <QRCodeSVG value={verifyUrl(order)} size={180} level="H" includeMargin={false} />
+                  </div>
+                  <p className="font-mono text-sm mt-3 tracking-[0.2em] font-bold text-gray-800">
+                    {order.ticket_code || "—"}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    Present this QR code at the venue entrance
+                  </p>
+                </div>
+              ) : (
+                <div className="text-center py-6">
+                  <Clock className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                  <p className="text-sm font-medium text-gray-400">Event has ended</p>
+                  <p className="text-[10px] text-gray-300 mt-0.5">
+                    This ticket is no longer valid
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Download button — outside the captured area */}
+          {!expired && (
+            <Button
+              onClick={downloadTicket}
+              disabled={downloading}
+              className="w-full mt-4"
+              variant="outline"
+              size="sm"
+            >
+              <Download className="w-4 h-4 mr-2" />
+              {downloading ? "Generating…" : "Download Ticket as PNG"}
+            </Button>
+          )}
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // List view
   return (
     <DashboardLayout>
       <div className="max-w-md mx-auto">
@@ -51,151 +246,93 @@ const MyTickets = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-3">
             {orders.map((order) => {
+              const expired = isExpired(order);
               const isUsed = !!order.used_at;
-              const isExpanded = expandedId === order.id;
-              const eventDate = order.events?.date
-                ? new Date(order.events.date)
-                : null;
+              const eventDate = order.events?.date ? new Date(order.events.date) : null;
 
               return (
                 <motion.div
                   key={order.id}
-                  initial={{ opacity: 0, y: 12 }}
+                  initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
-                  {/* Ticket Card */}
-                  <div
-                    className={`relative rounded-2xl overflow-hidden border ${
-                      isUsed
-                        ? "border-muted-foreground/20 opacity-60"
-                        : "border-border/50"
-                    } bg-card shadow-sm`}
+                  <button
+                    onClick={() => setSelectedOrder(order)}
+                    className="w-full text-left"
                   >
-                    {/* Top: Event Banner + Info */}
-                    <div className="relative h-28 overflow-hidden">
-                      {order.events?.banner_url ? (
-                        <img
-                          src={order.events.banner_url}
-                          alt={order.events?.title}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                          <Ticket className="w-10 h-10 text-primary/30" />
-                        </div>
-                      )}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
-                      <div className="absolute bottom-3 left-4 right-4">
-                        <p className="font-bold text-white text-sm leading-tight truncate">
-                          {order.events?.title || "Event"}
-                        </p>
-                        <div className="flex items-center gap-3 mt-1 text-[11px] text-white/80">
-                          {eventDate && (
-                            <span className="flex items-center gap-1">
-                              <Calendar className="w-3 h-3" />
-                              {eventDate.toLocaleDateString("en-NG", {
-                                weekday: "short",
-                                month: "short",
-                                day: "numeric",
-                              })}
-                            </span>
-                          )}
-                          {order.events?.venue && (
-                            <span className="flex items-center gap-1">
-                              <MapPin className="w-3 h-3" />
-                              {order.events.venue}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                      {isUsed && (
-                        <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-semibold px-2 py-0.5 rounded-full flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" /> Used
-                        </div>
-                      )}
-                    </div>
+                    <Card
+                      className={`border-border/40 transition-all hover:shadow-md hover:border-border/70 ${
+                        expired ? "opacity-50" : ""
+                      }`}
+                    >
+                      <CardContent className="p-0">
+                        <div className="flex items-stretch">
+                          {/* Left: mini banner */}
+                          <div className="w-20 shrink-0 relative overflow-hidden rounded-l-xl">
+                            {order.events?.banner_url ? (
+                              <img
+                                src={order.events.banner_url}
+                                alt=""
+                                className="w-full h-full object-cover min-h-[80px]"
+                              />
+                            ) : (
+                              <div className="w-full h-full min-h-[80px] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                                <Ticket className="w-5 h-5 text-primary/30" />
+                              </div>
+                            )}
+                          </div>
 
-                    {/* Perforated divider */}
-                    <div className="relative">
-                      <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-background" />
-                      <div className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-background" />
-                      <div className="border-t border-dashed border-border/60 mx-6" />
-                    </div>
-
-                    {/* Bottom: Ticket Details */}
-                    <div className="p-4 pt-3">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-[11px] text-muted-foreground uppercase tracking-wider">
-                            {order.ticket_types?.name || "General"}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Qty: {order.quantity} · ₦
-                            {Number(order.total_amount).toLocaleString()}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() =>
-                            setExpandedId(isExpanded ? null : order.id)
-                          }
-                          className="text-xs text-primary flex items-center gap-1 font-medium"
-                        >
-                          {isExpanded ? "Hide" : "Show"} QR
-                          {isExpanded ? (
-                            <ChevronUp className="w-3.5 h-3.5" />
-                          ) : (
-                            <ChevronDown className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </div>
-
-                      <AnimatePresence>
-                        {isExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-4 flex flex-col items-center">
-                              <Dialog>
-                                <DialogTrigger asChild>
-                                  <div className="cursor-pointer bg-white p-3 rounded-xl shadow-sm border border-border/30">
-                                    <QRCodeSVG
-                                      value={verifyUrl(order)}
-                                      size={160}
-                                      level="H"
-                                      includeMargin={false}
-                                    />
-                                  </div>
-                                </DialogTrigger>
-                                <DialogContent className="max-w-xs flex flex-col items-center p-6">
-                                  <div className="bg-white p-4 rounded-xl">
-                                    <QRCodeSVG
-                                      value={verifyUrl(order)}
-                                      size={240}
-                                      level="H"
-                                    />
-                                  </div>
-                                  <p className="text-sm font-mono mt-3 tracking-widest font-bold">
-                                    {order.ticket_code || "—"}
-                                  </p>
-                                </DialogContent>
-                              </Dialog>
-                              <p className="text-xs font-mono mt-2 tracking-widest text-muted-foreground">
-                                {order.ticket_code || "—"}
+                          {/* Right: info */}
+                          <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
+                            <div className="flex items-start justify-between gap-2">
+                              <p className="font-semibold text-sm truncate">
+                                {order.events?.title || "Event"}
                               </p>
-                              <p className="text-[10px] text-muted-foreground/60 mt-1">
-                                Tap QR code to enlarge
-                              </p>
+                              <div className="shrink-0 flex items-center gap-1">
+                                {expired ? (
+                                  <span className="text-[9px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-semibold">
+                                    Expired
+                                  </span>
+                                ) : isUsed ? (
+                                  <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">
+                                    Used
+                                  </span>
+                                ) : (
+                                  <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
+                                    Active
+                                  </span>
+                                )}
+                                <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                              </div>
                             </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  </div>
+                            <div className="flex items-center gap-3 mt-1 text-[10px] text-muted-foreground">
+                              {eventDate && (
+                                <span className="flex items-center gap-1">
+                                  <Calendar className="w-3 h-3" />
+                                  {eventDate.toLocaleDateString("en-NG", {
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </span>
+                              )}
+                              {order.events?.venue && (
+                                <span className="flex items-center gap-1 truncate">
+                                  <MapPin className="w-3 h-3 shrink-0" />
+                                  {order.events.venue}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[10px] text-muted-foreground mt-1">
+                              {order.ticket_types?.name} × {order.quantity} · ₦
+                              {Number(order.total_amount).toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </button>
                 </motion.div>
               );
             })}

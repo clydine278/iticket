@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,8 +17,6 @@ import {
   ShieldCheck,
   AlertTriangle,
 } from "lucide-react";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 
 type TicketInfo = {
   order: any;
@@ -26,10 +25,10 @@ type TicketInfo = {
   holder: any;
 };
 
-type VerifyStatus = "idle" | "loading" | "valid" | "used" | "invalid" | "unauthorized";
+type VerifyStatus = "idle" | "loading" | "valid" | "used" | "invalid";
 
 const VerifyTicket = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") || "");
@@ -54,6 +53,15 @@ const VerifyTicket = () => {
     };
     checkRole();
   }, [user]);
+
+  // Redirect non-staff users or unauthenticated
+  useEffect(() => {
+    if (!authLoading && !user) {
+      navigate("/login", { replace: true });
+    } else if (isAuthorized === false && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [isAuthorized, user, authLoading, navigate]);
 
   // Auto-verify if code is in URL
   useEffect(() => {
@@ -80,7 +88,6 @@ const VerifyTicket = () => {
 
     const order = orders[0];
 
-    // Fetch holder info
     const { data: holder } = await supabase
       .from("profiles")
       .select("full_name, email, avatar_url, username")
@@ -114,9 +121,7 @@ const VerifyTicket = () => {
     if (!error) {
       setStatus("used");
       setTicketInfo((prev) =>
-        prev
-          ? { ...prev, order: { ...prev.order, used_at: new Date().toISOString() } }
-          : prev
+        prev ? { ...prev, order: { ...prev.order, used_at: new Date().toISOString() } } : prev
       );
     }
     setMarkingUsed(false);
@@ -131,255 +136,183 @@ const VerifyTicket = () => {
         .slice(0, 2)
     : "??";
 
-  // Redirect non-staff users
-  useEffect(() => {
-    if (isAuthorized === false && user) {
-      navigate("/dashboard", { replace: true });
-    }
-  }, [isAuthorized, user, navigate]);
-
-  if (isAuthorized === null) {
+  if (authLoading || isAuthorized === null) {
     return (
-      <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center">
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
           <Loader2 className="w-6 h-6 animate-spin text-primary" />
         </div>
-        <Footer />
-      </>
+      </DashboardLayout>
     );
   }
 
-  if (!user) {
-    return (
-      <>
-        <Navbar />
-        <div className="min-h-screen flex items-center justify-center px-4">
-          <Card className="max-w-sm w-full">
+  if (!isAuthorized) return null;
+
+  return (
+    <DashboardLayout>
+      <div className="max-w-md mx-auto">
+        <div className="text-center mb-6">
+          <ShieldCheck className="w-8 h-8 text-primary mx-auto mb-2" />
+          <h1 className="font-display text-xl font-bold">Ticket Verification</h1>
+          <p className="text-xs text-muted-foreground mt-1">
+            Scan QR code or enter ticket code manually
+          </p>
+        </div>
+
+        {/* Manual code entry */}
+        <div className="flex gap-2 mb-6">
+          <Input
+            placeholder="Enter ticket code (e.g. TKT-A1B2C3D4)"
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            className="font-mono text-sm tracking-wider"
+            onKeyDown={(e) => e.key === "Enter" && verifyTicket(code)}
+          />
+          <Button
+            onClick={() => verifyTicket(code)}
+            disabled={!code.trim() || status === "loading"}
+            size="sm"
+          >
+            {status === "loading" ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <Search className="w-4 h-4" />
+            )}
+          </Button>
+        </div>
+
+        {status === "loading" && (
+          <Card>
             <CardContent className="p-8 text-center">
-              <ShieldCheck className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-              <p className="font-semibold text-sm mb-1">Authorized Personnel Only</p>
+              <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
+              <p className="text-sm mt-3">Verifying ticket…</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {status === "invalid" && (
+          <Card className="border-destructive/40">
+            <CardContent className="p-8 text-center">
+              <XCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
+              <p className="font-semibold text-sm mb-1">Invalid Ticket</p>
               <p className="text-xs text-muted-foreground">
-                Please log in with an admin or moderator account to verify tickets.
+                This ticket code was not found or the order is not confirmed.
               </p>
             </CardContent>
           </Card>
-        </div>
-        <Footer />
-      </>
-    );
-  }
+        )}
 
-  if (isAuthorized === false) return null;
-
-  return (
-    <>
-      <Navbar />
-      <div className="min-h-screen bg-background px-4 py-8">
-        <div className="max-w-md mx-auto">
-          <div className="text-center mb-6">
-            <ShieldCheck className="w-8 h-8 text-primary mx-auto mb-2" />
-            <h1 className="font-display text-xl font-bold">Ticket Verification</h1>
-            <p className="text-xs text-muted-foreground mt-1">
-              Scan QR code or enter ticket code manually
-            </p>
-          </div>
-
-          {/* Manual code entry */}
-          <div className="flex gap-2 mb-6">
-            <Input
-              placeholder="Enter ticket code (e.g. TKT-A1B2C3D4)"
-              value={code}
-              onChange={(e) => setCode(e.target.value.toUpperCase())}
-              className="font-mono text-sm tracking-wider"
-              onKeyDown={(e) => e.key === "Enter" && verifyTicket(code)}
-            />
-            <Button
-              onClick={() => verifyTicket(code)}
-              disabled={!code.trim() || status === "loading"}
-              size="sm"
-            >
-              {status === "loading" ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Search className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-
-          {/* Result */}
-          {status === "loading" && (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
-                <p className="text-sm mt-3">Verifying ticket…</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {status === "invalid" && (
-            <Card className="border-destructive/40">
-              <CardContent className="p-8 text-center">
-                <XCircle className="w-12 h-12 text-destructive mx-auto mb-3" />
-                <p className="font-semibold text-sm mb-1">Invalid Ticket</p>
-                <p className="text-xs text-muted-foreground">
-                  This ticket code was not found or the order is not confirmed.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
-          {(status === "valid" || status === "used") && ticketInfo && (
-            <Card
-              className={`overflow-hidden ${
-                status === "used" ? "border-amber-500/40" : "border-emerald-500/40"
+        {(status === "valid" || status === "used") && ticketInfo && (
+          <Card
+            className={`overflow-hidden ${
+              status === "used" ? "border-amber-500/40" : "border-emerald-500/40"
+            }`}
+          >
+            <div
+              className={`px-4 py-2.5 flex items-center gap-2 text-white text-sm font-semibold ${
+                status === "used" ? "bg-amber-600" : "bg-emerald-600"
               }`}
             >
-              {/* Status Banner */}
-              <div
-                className={`px-4 py-2.5 flex items-center gap-2 text-white text-sm font-semibold ${
-                  status === "used" ? "bg-amber-600" : "bg-emerald-600"
-                }`}
-              >
-                {status === "used" ? (
-                  <>
-                    <AlertTriangle className="w-4 h-4" /> Ticket Already Used
-                  </>
+              {status === "used" ? (
+                <>
+                  <AlertTriangle className="w-4 h-4" /> Ticket Already Used
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-4 h-4" /> Valid Ticket
+                </>
+              )}
+            </div>
+
+            <CardContent className="p-4 space-y-4">
+              <div className="flex gap-3">
+                {ticketInfo.event?.banner_url ? (
+                  <img
+                    src={ticketInfo.event.banner_url}
+                    alt=""
+                    className="w-16 h-16 rounded-lg object-cover shrink-0"
+                  />
                 ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" /> Valid Ticket
-                  </>
+                  <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                    <Ticket className="w-6 h-6 text-primary/40" />
+                  </div>
                 )}
+                <div className="min-w-0">
+                  <p className="font-bold text-sm truncate">
+                    {ticketInfo.event?.title || "Event"}
+                  </p>
+                  <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-muted-foreground">
+                    {ticketInfo.event?.date && (
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3" />
+                        {new Date(ticketInfo.event.date).toLocaleDateString("en-NG", {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    )}
+                    {ticketInfo.event?.venue && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {ticketInfo.event.venue}
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
 
-              <CardContent className="p-4 space-y-4">
-                {/* Event info */}
-                <div className="flex gap-3">
-                  {ticketInfo.event?.banner_url ? (
-                    <img
-                      src={ticketInfo.event.banner_url}
-                      alt=""
-                      className="w-16 h-16 rounded-lg object-cover shrink-0"
-                    />
-                  ) : (
-                    <div className="w-16 h-16 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                      <Ticket className="w-6 h-6 text-primary/40" />
-                    </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-bold text-sm truncate">
-                      {ticketInfo.event?.title || "Event"}
-                    </p>
-                    <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-muted-foreground">
-                      {ticketInfo.event?.date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          {new Date(ticketInfo.event.date).toLocaleDateString("en-NG", {
-                            weekday: "short",
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </span>
-                      )}
-                      {ticketInfo.event?.venue && (
-                        <span className="flex items-center gap-1">
-                          <MapPin className="w-3 h-3" />
-                          {ticketInfo.event.venue}
-                        </span>
-                      )}
-                    </div>
-                  </div>
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Ticket Type</p>
+                  <p className="font-medium">{ticketInfo.ticketType?.name || "General"}</p>
                 </div>
-
-                {/* Ticket details */}
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                      Ticket Type
-                    </p>
-                    <p className="font-medium">{ticketInfo.ticketType?.name || "General"}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                      Quantity
-                    </p>
-                    <p className="font-medium">{ticketInfo.order.quantity}</p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                      Code
-                    </p>
-                    <p className="font-mono font-medium tracking-wider">
-                      {ticketInfo.order.ticket_code}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-muted-foreground text-[10px] uppercase tracking-wider">
-                      Amount
-                    </p>
-                    <p className="font-medium">
-                      ₦{Number(ticketInfo.order.total_amount).toLocaleString()}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Quantity</p>
+                  <p className="font-medium">{ticketInfo.order.quantity}</p>
                 </div>
-
-                {/* Holder */}
-                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
-                  {ticketInfo.holder?.avatar_url ? (
-                    <img
-                      src={ticketInfo.holder.avatar_url}
-                      alt=""
-                      className="w-9 h-9 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {holderInitials}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-xs font-medium">
-                      {ticketInfo.holder?.full_name || "Unknown"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {ticketInfo.holder?.email || ""}
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Code</p>
+                  <p className="font-mono font-medium tracking-wider">{ticketInfo.order.ticket_code}</p>
                 </div>
+                <div>
+                  <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Amount</p>
+                  <p className="font-medium">₦{Number(ticketInfo.order.total_amount).toLocaleString()}</p>
+                </div>
+              </div>
 
-                {status === "used" && ticketInfo.order.used_at && (
-                  <p className="text-[10px] text-amber-600 text-center">
-                    Used on{" "}
-                    {new Date(ticketInfo.order.used_at).toLocaleString("en-NG", {
-                      dateStyle: "medium",
-                      timeStyle: "short",
-                    })}
-                  </p>
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border/30">
+                {ticketInfo.holder?.avatar_url ? (
+                  <img src={ticketInfo.holder.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                ) : (
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                    {holderInitials}
+                  </div>
                 )}
+                <div>
+                  <p className="text-xs font-medium">{ticketInfo.holder?.full_name || "Unknown"}</p>
+                  <p className="text-[10px] text-muted-foreground">{ticketInfo.holder?.email || ""}</p>
+                </div>
+              </div>
 
-                {/* Mark as used button */}
-                {status === "valid" && (
-                  <Button
-                    onClick={markAsUsed}
-                    disabled={markingUsed}
-                    className="w-full"
-                    size="sm"
-                  >
-                    {markingUsed ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : (
-                      <CheckCircle2 className="w-4 h-4 mr-2" />
-                    )}
-                    Admit — Mark as Used
-                  </Button>
-                )}
-              </CardContent>
-            </Card>
-          )}
-        </div>
+              {status === "used" && ticketInfo.order.used_at && (
+                <p className="text-[10px] text-amber-600 text-center">
+                  Used on {new Date(ticketInfo.order.used_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+                </p>
+              )}
+
+              {status === "valid" && (
+                <Button onClick={markAsUsed} disabled={markingUsed} className="w-full" size="sm">
+                  {markingUsed ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <CheckCircle2 className="w-4 h-4 mr-2" />}
+                  Admit — Mark as Used
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
       </div>
-      <Footer />
-    </>
+    </DashboardLayout>
   );
 };
 
