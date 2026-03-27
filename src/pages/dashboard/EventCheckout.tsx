@@ -251,11 +251,11 @@ const EventCheckout = () => {
                       </div>
                       <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
                         <CreditCard className="w-4 h-4" />
-                        {purchasing ? "Processing..." : "Pay Now"}
+                        {purchasing ? "Redirecting to Paystack..." : "Pay with Paystack"}
                       </Button>
                       <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                         <ShieldCheck className="w-3 h-3" />
-                        Secure checkout
+                        Secured by Paystack
                       </div>
                     </>
                   )}
