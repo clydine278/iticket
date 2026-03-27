@@ -15,11 +15,9 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react";
-import { useNavigate } from "react-router-dom";
 
 const MyTickets = () => {
   const { user } = useAuth();
-  const navigate = useNavigate();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
@@ -56,33 +54,12 @@ const MyTickets = () => {
 
     try {
       const { default: html2canvas } = await import("html2canvas");
-      const clone = ticketRef.current.cloneNode(true) as HTMLElement;
-      Object.assign(clone.style, {
-        width: '1200px',
-        maxWidth: '1200px',
-        minWidth: '1200px',
-        height: 'auto',
-        transform: 'none',
-        zoom: '1',
-        position: 'fixed',
-        left: '-99999px',
-        top: '0',
-        margin: '0',
-        padding: '0',
-        boxSizing: 'border-box',
-        overflow: 'hidden',
-        background: '#ffffff',
-      });
-      document.body.appendChild(clone);
-      const canvas = await html2canvas(clone, {
-        backgroundColor: '#ffffff',
-        scale: 2,
+      const canvas = await html2canvas(ticketRef.current, {
+        backgroundColor: "#ffffff",
+        scale: 3,
         useCORS: true,
         logging: false,
-        width: 1200,
-        windowWidth: 1200,
       });
-      document.body.removeChild(clone);
       const link = document.createElement("a");
       link.download = `ticket-${selectedOrder.ticket_code || "download"}.png`;
       link.href = canvas.toDataURL("image/png", 1);
@@ -109,119 +86,151 @@ const MyTickets = () => {
             ← Back to My Tickets
           </button>
 
-          {/* Downloadable ticket card */}
+          {/* Downloadable ticket card — uses inline styles for html2canvas consistency */}
           <div
             ref={ticketRef}
-            className="rounded-2xl overflow-hidden border border-border/50 bg-white text-black"
+            style={{
+              borderRadius: "16px",
+              overflow: "hidden",
+              border: "1px solid #e5e7eb",
+              backgroundColor: "#ffffff",
+              color: "#000000",
+              fontFamily: "system-ui, -apple-system, sans-serif",
+            }}
           >
             {/* Banner */}
-            <div className="relative h-36 overflow-hidden">
+            <div style={{ position: "relative", height: "160px", overflow: "hidden" }}>
               {order.events?.banner_url ? (
                 <img
                   src={order.events.banner_url}
                   alt={order.events?.title}
-                  className="w-full h-full object-cover"
+                  crossOrigin="anonymous"
+                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                 />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-violet-400 to-indigo-600 flex items-center justify-center">
-                  <Ticket className="w-12 h-12 text-white/30" />
+                <div style={{
+                  width: "100%", height: "100%",
+                  background: "linear-gradient(135deg, #8b5cf6, #4f46e5)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <Ticket style={{ width: 48, height: 48, color: "rgba(255,255,255,0.3)" }} />
                 </div>
               )}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-              <div className="absolute bottom-3 left-4 right-4">
-                <p className="font-bold text-white text-base leading-tight truncate">
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.1), transparent)",
+              }} />
+              <div style={{ position: "absolute", bottom: 12, left: 16, right: 16 }}>
+                <p style={{
+                  fontWeight: 700, color: "#fff", fontSize: 16,
+                  lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                }}>
                   {order.events?.title || "Event"}
                 </p>
-                <div className="flex items-center gap-3 mt-1.5 text-[11px] text-white/80">
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginTop: 6, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
                   {eventDate && (
-                    <span className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Calendar style={{ width: 12, height: 12 }} />
                       {eventDate.toLocaleDateString("en-NG", {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
+                        weekday: "short", month: "short", day: "numeric", year: "numeric",
                       })}
                     </span>
                   )}
                   {order.events?.venue && (
-                    <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
+                    <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <MapPin style={{ width: 12, height: 12 }} />
                       {order.events.venue}
                     </span>
                   )}
                 </div>
               </div>
 
-              {/* Status badges */}
               {expired && (
-                <div className="absolute top-3 right-3 bg-red-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> Expired
+                <div style={{
+                  position: "absolute", top: 12, right: 12,
+                  backgroundColor: "#dc2626", color: "#fff", fontSize: 10,
+                  fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+                  display: "flex", alignItems: "center", gap: 4,
+                }}>
+                  <Clock style={{ width: 12, height: 12 }} /> Expired
                 </div>
               )}
               {order.used_at && !expired && (
-                <div className="absolute top-3 right-3 bg-emerald-600 text-white text-[10px] font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
-                  <CheckCircle2 className="w-3 h-3" /> Used
+                <div style={{
+                  position: "absolute", top: 12, right: 12,
+                  backgroundColor: "#059669", color: "#fff", fontSize: 10,
+                  fontWeight: 600, padding: "4px 10px", borderRadius: 999,
+                  display: "flex", alignItems: "center", gap: 4,
+                }}>
+                  <CheckCircle2 style={{ width: 12, height: 12 }} /> Used
                 </div>
               )}
             </div>
 
             {/* Perforated divider */}
-            <div className="relative">
-              <div className="absolute -left-3 -top-3 w-6 h-6 rounded-full bg-background" />
-              <div className="absolute -right-3 -top-3 w-6 h-6 rounded-full bg-background" />
-              <div className="border-t-2 border-dashed border-gray-200 mx-6" />
+            <div style={{ position: "relative", height: 1 }}>
+              <div style={{
+                position: "absolute", left: -12, top: -12,
+                width: 24, height: 24, borderRadius: "50%", backgroundColor: "#f3f4f6",
+              }} />
+              <div style={{
+                position: "absolute", right: -12, top: -12,
+                width: 24, height: 24, borderRadius: "50%", backgroundColor: "#f3f4f6",
+              }} />
+              <div style={{ borderTop: "2px dashed #e5e7eb", margin: "0 24px" }} />
             </div>
 
             {/* Ticket info */}
-            <div className="p-5">
-              <div className="grid grid-cols-2 gap-3 text-xs mb-5">
+            <div style={{ padding: 20 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, fontSize: 12, marginBottom: 20 }}>
                 <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                  <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                     Ticket Type
                   </p>
-                  <p className="font-semibold">{order.ticket_types?.name || "General"}</p>
+                  <p style={{ fontWeight: 600 }}>{order.ticket_types?.name || "General"}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                  <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                     Quantity
                   </p>
-                  <p className="font-semibold">{order.quantity}</p>
+                  <p style={{ fontWeight: 600 }}>{order.quantity}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                  <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                     Amount Paid
                   </p>
-                  <p className="font-semibold">₦{Number(order.total_amount).toLocaleString()}</p>
+                  <p style={{ fontWeight: 600 }}>₦{Number(order.total_amount).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5">
+                  <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 2 }}>
                     Status
                   </p>
-                  <p className={`font-semibold ${expired ? "text-red-600" : "text-emerald-600"}`}>
+                  <p style={{ fontWeight: 600, color: expired ? "#dc2626" : "#059669" }}>
                     {expired ? "Expired" : order.used_at ? "Used" : "Active"}
                   </p>
                 </div>
               </div>
 
-              {/* QR Code + Ticket Code — hidden if expired */}
               {!expired ? (
-                <div className="flex flex-col items-center">
-                  <div className="bg-white p-3 rounded-xl border border-gray-100 shadow-sm">
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+                  <div style={{
+                    backgroundColor: "#fff", padding: 12, borderRadius: 12,
+                    border: "1px solid #f3f4f6", boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                  }}>
                     <QRCodeSVG value={verifyUrl(order)} size={180} level="H" includeMargin={false} />
                   </div>
-                  <p className="font-mono text-sm mt-3 tracking-[0.2em] font-bold text-gray-800">
+                  <p style={{ fontFamily: "monospace", fontSize: 14, marginTop: 12, letterSpacing: "0.2em", fontWeight: 700, color: "#1f2937" }}>
                     {order.ticket_code || "—"}
                   </p>
-                  <p className="text-[10px] text-gray-400 mt-1">
+                  <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 4 }}>
                     Present this QR code at the venue entrance
                   </p>
                 </div>
               ) : (
-                <div className="text-center py-6">
-                  <Clock className="w-10 h-10 text-gray-300 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-gray-400">Event has ended</p>
-                  <p className="text-[10px] text-gray-300 mt-0.5">
+                <div style={{ textAlign: "center", padding: "24px 0" }}>
+                  <Clock style={{ width: 40, height: 40, color: "#d1d5db", margin: "0 auto 8px" }} />
+                  <p style={{ fontSize: 14, fontWeight: 500, color: "#9ca3af" }}>Event has ended</p>
+                  <p style={{ fontSize: 10, color: "#d1d5db", marginTop: 2 }}>
                     This ticket is no longer valid
                   </p>
                 </div>
@@ -290,7 +299,6 @@ const MyTickets = () => {
                     >
                       <CardContent className="p-0">
                         <div className="flex items-stretch">
-                          {/* Left: mini banner */}
                           <div className="w-20 shrink-0 relative overflow-hidden rounded-l-xl">
                             {order.events?.banner_url ? (
                               <img
@@ -304,8 +312,6 @@ const MyTickets = () => {
                               </div>
                             )}
                           </div>
-
-                          {/* Right: info */}
                           <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-semibold text-sm truncate">

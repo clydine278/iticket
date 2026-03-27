@@ -112,7 +112,7 @@ Deno.serve(async (req) => {
       }
 
       // The webhook handles order creation — verify endpoint only checks payment status
-      return new Response(JSON.stringify({ success: true, payment }), {
+      return new Response(JSON.stringify({ success: true, data: paystackData.data }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
