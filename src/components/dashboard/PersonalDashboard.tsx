@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Ticket, Music, Trophy, ArrowRight, Calendar, MapPin, Share2 } from "lucide-react";
+import { Ticket, Music, Trophy, ArrowRight, Calendar, MapPin, Share2, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -89,18 +89,23 @@ const PersonalDashboard = () => {
         ) : (
           <div className="space-y-2">
             {orders.map((order) => (
-              <Card key={order.id} className="border-border/40">
-                <CardContent className="p-3 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center shrink-0">
-                    <Ticket className="w-5 h-5 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm truncate">{(order.events as any)?.title || "Event"}</p>
-                    <p className="text-[11px] text-muted-foreground">{order.quantity} ticket(s) · ₦{Number(order.total_amount).toLocaleString()}</p>
-                  </div>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${order.status === "confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}>{order.status}</span>
-                </CardContent>
-              </Card>
+              <Link key={order.id} to="/dashboard/tickets">
+                <Card className="border-border/40 hover:shadow-md hover:border-border/70 transition-all cursor-pointer">
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/10 to-accent flex items-center justify-center shrink-0">
+                      <Ticket className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-sm truncate">{(order.events as any)?.title || "Event"}</p>
+                      <p className="text-[11px] text-muted-foreground">{order.quantity} ticket(s) · ₦{Number(order.total_amount).toLocaleString()}</p>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${order.status === "confirmed" ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}>{order.status}</span>
+                      <ChevronRight className="w-3.5 h-3.5 text-muted-foreground" />
+                    </div>
+                  </CardContent>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
