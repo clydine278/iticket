@@ -18,20 +18,22 @@ import {
   Lock,
 } from "lucide-react";
 
-type TicketInfo = {
-  order: any;
-  event: any;
-  ticketType: any;
-  holder: any;
+type TicketData = {
+  order: { id: string; ticket_code: string; quantity: number; total_amount: number; used_at: string | null };
+  event: { title: string; date: string; end_date: string | null; venue: string; banner_url: string | null };
+  ticketType: { name: string };
+  holder: { full_name: string; email: string; avatar_url: string | null } | null;
 };
 
 type VerifyStatus = "idle" | "loading" | "valid" | "used" | "invalid" | "expired";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
 
 const VerifyTicket = () => {
   const [searchParams] = useSearchParams();
   const [code, setCode] = useState(searchParams.get("code") || "");
   const [status, setStatus] = useState<VerifyStatus>("idle");
-  const [ticketInfo, setTicketInfo] = useState<TicketInfo | null>(null);
+  const [ticketData, setTicketData] = useState<TicketData | null>(null);
   const [markingUsed, setMarkingUsed] = useState(false);
   const [isStaff, setIsStaff] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
@@ -61,64 +63,77 @@ const VerifyTicket = () => {
   const verifyTicket = async (ticketCode: string) => {
     if (!ticketCode.trim()) return;
     setStatus("loading");
-    setTicketInfo(null);
+    setTicketData(null);
 
-    const { data: orders, error } = await supabase
-      .from("orders")
-      .select("*, events(*), ticket_types(*)")
-      .eq("ticket_code", ticketCode.trim().toUpperCase())
-      .limit(1);
+    try {
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-ticket`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: ticketCode.trim().toUpperCase() }),
+      });
 
-    if (error || !orders || orders.length === 0) {
-      setStatus("invalid");
-      return;
-    }
+      const data = await res.json();
 
-    const order = orders[0];
+      if (data.status === "invalid") {
+        setStatus("invalid");
+        return;
+      }
 
-    const eventEnd = order.events?.end_date || order.events?.date;
-    if (eventEnd && new Date(eventEnd) < new Date()) {
-      setTicketInfo({ order, event: order.events, ticketType: order.ticket_types, holder: null });
-      setStatus("expired");
-      return;
-    }
+      if (data.status === "expired") {
+        setTicketData({ order: {} as any, event: data.event, ticketType: { name: "" }, holder: null });
+        setStatus("expired");
+        return;
+      }
 
-    const { data: holder } = await supabase
-      .from("profiles")
-      .select("full_name, email, avatar_url, username")
-      .eq("id", order.user_id)
-      .single();
+      setTicketData({
+        order: data.order,
+        event: data.event,
+        ticketType: data.ticketType,
+        holder: data.holder,
+      });
 
-    setTicketInfo({ order, event: order.events, ticketType: order.ticket_types, holder });
-
-    if (order.used_at) {
-      setStatus("used");
-    } else if (order.status === "confirmed") {
-      setStatus("valid");
-    } else {
+      setStatus(data.status === "used" ? "used" : data.status === "valid" ? "valid" : "invalid");
+    } catch {
       setStatus("invalid");
     }
   };
 
   const markAsUsed = async () => {
-    if (!ticketInfo) return;
+    if (!ticketData) return;
     setMarkingUsed(true);
-    const { error } = await supabase
-      .from("orders")
-      .update({ used_at: new Date().toISOString() })
-      .eq("id", ticketInfo.order.id);
 
-    if (!error) {
-      setStatus("used");
-      setTicketInfo((prev) =>
-        prev ? { ...prev, order: { ...prev.order, used_at: new Date().toISOString() } } : prev
-      );
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        setMarkingUsed(false);
+        return;
+      }
+
+      const res = await fetch(`${SUPABASE_URL}/functions/v1/verify-ticket`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ code: ticketData.order.ticket_code, action: "mark_used" }),
+      });
+
+      const result = await res.json();
+      if (result.status === "used") {
+        setStatus("used");
+        setTicketData((prev) =>
+          prev ? { ...prev, order: { ...prev.order, used_at: result.used_at } } : prev
+        );
+      }
+    } catch {
+      // silent
     }
     setMarkingUsed(false);
   };
 
-  const holderInitials = ticketInfo?.holder?.full_name
-    ? ticketInfo.holder.full_name
+  const holderInitials = ticketData?.holder?.full_name
+    ? ticketData.holder.full_name
         .split(" ")
         .map((n: string) => n[0])
         .join("")
@@ -179,19 +194,19 @@ const VerifyTicket = () => {
           </Card>
         )}
 
-        {status === "expired" && ticketInfo && (
+        {status === "expired" && ticketData && (
           <Card className="border-muted-foreground/20">
             <CardContent className="p-8 text-center">
               <Clock className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
               <p className="font-semibold text-sm text-foreground mb-1">Event Ended</p>
               <p className="text-xs text-muted-foreground">
-                {ticketInfo.event?.title || "This event"} has already ended. This ticket is no longer valid.
+                {ticketData.event?.title || "This event"} has already ended. This ticket is no longer valid.
               </p>
             </CardContent>
           </Card>
         )}
 
-        {(status === "valid" || status === "used") && ticketInfo && (
+        {(status === "valid" || status === "used") && ticketData && (
           <Card className="overflow-hidden">
             <div
               className={`px-4 py-2.5 flex items-center gap-2 text-white text-sm font-semibold ${
@@ -211,9 +226,9 @@ const VerifyTicket = () => {
 
             <CardContent className="p-4 space-y-4">
               <div className="flex gap-3">
-                {ticketInfo.event?.banner_url ? (
+                {ticketData.event?.banner_url ? (
                   <img
-                    src={ticketInfo.event.banner_url}
+                    src={ticketData.event.banner_url}
                     alt=""
                     className="w-16 h-16 rounded-lg object-cover shrink-0"
                   />
@@ -224,13 +239,13 @@ const VerifyTicket = () => {
                 )}
                 <div className="min-w-0">
                   <p className="font-bold text-sm text-foreground truncate">
-                    {ticketInfo.event?.title || "Event"}
+                    {ticketData.event?.title || "Event"}
                   </p>
                   <div className="flex flex-col gap-0.5 mt-1 text-[11px] text-muted-foreground">
-                    {ticketInfo.event?.date && (
+                    {ticketData.event?.date && (
                       <span className="flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        {new Date(ticketInfo.event.date).toLocaleDateString("en-NG", {
+                        {new Date(ticketData.event.date).toLocaleDateString("en-NG", {
                           weekday: "short",
                           month: "short",
                           day: "numeric",
@@ -238,10 +253,10 @@ const VerifyTicket = () => {
                         })}
                       </span>
                     )}
-                    {ticketInfo.event?.venue && (
+                    {ticketData.event?.venue && (
                       <span className="flex items-center gap-1">
                         <MapPin className="w-3 h-3" />
-                        {ticketInfo.event.venue}
+                        {ticketData.event.venue}
                       </span>
                     )}
                   </div>
@@ -251,39 +266,41 @@ const VerifyTicket = () => {
               <div className="grid grid-cols-2 gap-3 text-xs">
                 <div>
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Ticket Type</p>
-                  <p className="font-medium text-foreground">{ticketInfo.ticketType?.name || "General"}</p>
+                  <p className="font-medium text-foreground">{ticketData.ticketType?.name || "General"}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Quantity</p>
-                  <p className="font-medium text-foreground">{ticketInfo.order.quantity}</p>
+                  <p className="font-medium text-foreground">{ticketData.order.quantity}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Code</p>
-                  <p className="font-mono font-medium tracking-wider text-foreground">{ticketInfo.order.ticket_code}</p>
+                  <p className="font-mono font-medium tracking-wider text-foreground">{ticketData.order.ticket_code}</p>
                 </div>
                 <div>
                   <p className="text-muted-foreground text-[10px] uppercase tracking-wider">Amount</p>
-                  <p className="font-medium text-foreground">₦{Number(ticketInfo.order.total_amount).toLocaleString()}</p>
+                  <p className="font-medium text-foreground">₦{Number(ticketData.order.total_amount).toLocaleString()}</p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
-                {ticketInfo.holder?.avatar_url ? (
-                  <img src={ticketInfo.holder.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
-                ) : (
-                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                    {holderInitials}
+              {ticketData.holder && (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50 border border-border">
+                  {ticketData.holder.avatar_url ? (
+                    <img src={ticketData.holder.avatar_url} alt="" className="w-9 h-9 rounded-full object-cover" />
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                      {holderInitials}
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-xs font-medium text-foreground">{ticketData.holder.full_name || "Unknown"}</p>
+                    <p className="text-[10px] text-muted-foreground">{ticketData.holder.email || ""}</p>
                   </div>
-                )}
-                <div>
-                  <p className="text-xs font-medium text-foreground">{ticketInfo.holder?.full_name || "Unknown"}</p>
-                  <p className="text-[10px] text-muted-foreground">{ticketInfo.holder?.email || ""}</p>
                 </div>
-              </div>
+              )}
 
-              {status === "used" && ticketInfo.order.used_at && (
+              {status === "used" && ticketData.order.used_at && (
                 <p className="text-[10px] text-amber-500 text-center">
-                  Used on {new Date(ticketInfo.order.used_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+                  Used on {new Date(ticketData.order.used_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
                 </p>
               )}
 
