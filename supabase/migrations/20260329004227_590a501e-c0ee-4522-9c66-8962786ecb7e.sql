@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.orders_payment_reference_ticket_uidx;

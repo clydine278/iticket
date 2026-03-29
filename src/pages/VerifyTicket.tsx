@@ -215,7 +215,7 @@ const VerifyTicket = () => {
             >
               {status === "used" ? (
                 <>
-                  <AlertTriangle className="w-4 h-4" /> Ticket Already Used
+                  <CheckCircle2 className="w-4 h-4" /> Approved
                 </>
               ) : (
                 <>
