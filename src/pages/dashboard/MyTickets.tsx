@@ -45,6 +45,8 @@ const MyTickets = () => {
     return new Date(eventEnd) < new Date();
   };
 
+  const isApproved = (order: any) => !!order.used_at;
+
   const verifyUrl = (order: any) => {
     const origin = window.location.origin;
     return `${origin}/verify-ticket?code=${order.ticket_code}`;
@@ -57,7 +59,6 @@ const MyTickets = () => {
     try {
       const { default: html2canvas } = await import("html2canvas");
 
-      // Clone the ticket element for off-screen rendering at fixed width
       const clone = ticketRef.current.cloneNode(true) as HTMLElement;
       Object.assign(clone.style, {
         position: "fixed",
@@ -95,6 +96,7 @@ const MyTickets = () => {
   if (selectedOrder) {
     const order = selectedOrder;
     const expired = isExpired(order);
+    const approved = isApproved(order);
     const eventDate = order.events?.date ? new Date(order.events.date) : null;
 
     return (
@@ -176,14 +178,14 @@ const MyTickets = () => {
                   <Clock style={{ width: 12, height: 12 }} /> Expired
                 </div>
               )}
-              {order.used_at && !expired && (
+              {approved && !expired && (
                 <div style={{
                   position: "absolute", top: 12, right: 12,
                   backgroundColor: "#059669", color: "#fff", fontSize: 11,
                   fontWeight: 600, padding: "4px 12px", borderRadius: 999,
                   display: "flex", alignItems: "center", gap: 4,
                 }}>
-                  <CheckCircle2 style={{ width: 12, height: 12 }} /> Used
+                  <CheckCircle2 style={{ width: 12, height: 12 }} /> Approved
                 </div>
               )}
             </div>
@@ -212,12 +214,6 @@ const MyTickets = () => {
                 </div>
                 <div>
                   <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
-                    Quantity
-                  </p>
-                  <p style={{ fontWeight: 600 }}>{order.quantity}</p>
-                </div>
-                <div>
-                  <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
                     Amount Paid
                   </p>
                   <p style={{ fontWeight: 600 }}>₦{Number(order.total_amount).toLocaleString()}</p>
@@ -226,13 +222,33 @@ const MyTickets = () => {
                   <p style={{ color: "#9ca3af", fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>
                     Status
                   </p>
-                  <p style={{ fontWeight: 600, color: expired ? "#dc2626" : "#059669" }}>
-                    {expired ? "Expired" : order.used_at ? "Used" : "Active"}
+                  <p style={{ fontWeight: 600, color: expired ? "#dc2626" : approved ? "#059669" : "#059669" }}>
+                    {expired ? "Expired" : approved ? "Approved" : "Active"}
                   </p>
                 </div>
               </div>
 
-              {!expired ? (
+              {approved && !expired ? (
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "24px 0" }}>
+                  <div style={{
+                    width: 100, height: 100, borderRadius: "50%",
+                    backgroundColor: "#059669", display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <CheckCircle2 style={{ width: 56, height: 56, color: "#ffffff" }} />
+                  </div>
+                  <p style={{ fontWeight: 700, fontSize: 18, marginTop: 14, color: "#059669" }}>
+                    Approved
+                  </p>
+                  <p style={{ fontSize: 11, color: "#9ca3af", marginTop: 4 }}>
+                    This ticket has been verified and admitted
+                  </p>
+                  {order.used_at && (
+                    <p style={{ fontSize: 10, color: "#9ca3af", marginTop: 2 }}>
+                      {new Date(order.used_at).toLocaleString("en-NG", { dateStyle: "medium", timeStyle: "short" })}
+                    </p>
+                  )}
+                </div>
+              ) : !expired ? (
                 <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
                   <div style={{
                     backgroundColor: "#fff", padding: 16, borderRadius: 12,
@@ -259,7 +275,7 @@ const MyTickets = () => {
             </div>
           </div>
 
-          {!expired && (
+          {!expired && !approved && (
             <Button
               onClick={downloadTicket}
               disabled={downloading}
@@ -299,7 +315,7 @@ const MyTickets = () => {
           <div className="space-y-3">
             {orders.map((order) => {
               const expired = isExpired(order);
-              const isUsed = !!order.used_at;
+              const approved = isApproved(order);
               const eventDate = order.events?.date ? new Date(order.events.date) : null;
 
               return (
@@ -342,9 +358,9 @@ const MyTickets = () => {
                                   <span className="text-[9px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full font-semibold">
                                     Expired
                                   </span>
-                                ) : isUsed ? (
+                                ) : approved ? (
                                   <span className="text-[9px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full font-semibold">
-                                    Used
+                                    Approved
                                   </span>
                                 ) : (
                                   <span className="text-[9px] bg-primary/10 text-primary px-1.5 py-0.5 rounded-full font-semibold">
@@ -372,7 +388,7 @@ const MyTickets = () => {
                               )}
                             </div>
                             <p className="text-[10px] text-muted-foreground mt-1">
-                              {order.ticket_types?.name} × {order.quantity} · ₦
+                              {order.ticket_types?.name} · ₦
                               {Number(order.total_amount).toLocaleString()}
                             </p>
                           </div>
