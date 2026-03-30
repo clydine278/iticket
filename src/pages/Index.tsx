@@ -74,7 +74,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-b from-hero/80 to-hero opacity-90" />
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="relative z-10 container">
           <p className="text-primary text-sm font-semibold mb-2">All in One Place.</p>
-          <h1 className="font-display text-3xl md:text-5xl font-bold mb-3">Ticket . Music. Challenges</h1>
+          <h1 className="font-display text-3xl md:text-5xl font-bold mb-3">Ticket . Artist. Challenges</h1>
           <p className="text-hero-foreground/60 text-sm mb-6 max-w-md mx-auto">Discover events, book artists, and join music challenges.</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link to="/buy-tickets"><Button variant="outline" size="sm" className="rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs">Buy Ticket</Button></Link>
