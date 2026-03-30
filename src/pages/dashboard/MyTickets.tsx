@@ -128,7 +128,7 @@ const MyTickets = () => {
                   src={order.events.banner_url}
                   alt={order.events?.title}
                   crossOrigin="anonymous"
-                  style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                  style={{ width: "100%", height: "180px", objectFit: "cover", objectPosition: "center top", display: "block" }}
                 />
               ) : (
                 <div style={{

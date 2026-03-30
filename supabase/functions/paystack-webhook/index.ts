@@ -88,6 +88,13 @@ Deno.serve(async (req) => {
         });
         if (error) console.error("Order insert error:", error);
       }
+
+      // Decrement available quantity by incrementing sold count
+      const { error: soldErr } = await adminSupabase.rpc("increment_sold", {
+        _ticket_type_id: ticket.ticket_type_id,
+        _qty: ticket.quantity,
+      });
+      if (soldErr) console.error("Increment sold error:", soldErr);
     }
 
     const paymentDetail = last4 ? `${cardType} ****${last4}` : channel;
