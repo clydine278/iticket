@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          id: string
+          key: string
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: []
+      }
       bookings: {
         Row: {
           artist_id: string
@@ -347,6 +368,7 @@ export type Database = {
       profiles: {
         Row: {
           account_type: string
+          artist_fee_paid: boolean
           avatar_url: string | null
           bio: string | null
           booking_price: string | null
@@ -363,9 +385,11 @@ export type Database = {
           status: string
           updated_at: string | null
           username: string | null
+          video_urls: string[] | null
         }
         Insert: {
           account_type?: string
+          artist_fee_paid?: boolean
           avatar_url?: string | null
           bio?: string | null
           booking_price?: string | null
@@ -382,9 +406,11 @@ export type Database = {
           status?: string
           updated_at?: string | null
           username?: string | null
+          video_urls?: string[] | null
         }
         Update: {
           account_type?: string
+          artist_fee_paid?: boolean
           avatar_url?: string | null
           bio?: string | null
           booking_price?: string | null
@@ -401,6 +427,7 @@ export type Database = {
           status?: string
           updated_at?: string | null
           username?: string | null
+          video_urls?: string[] | null
         }
         Relationships: []
       }

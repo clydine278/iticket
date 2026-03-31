@@ -23,7 +23,8 @@ const BookArtist = () => {
       const { data } = await supabase
         .from("profiles")
         .select("*")
-        .eq("account_type", "artist");
+        .eq("account_type", "artist")
+        .eq("artist_fee_paid", true);
       setArtists(data || []);
       setLoading(false);
     };

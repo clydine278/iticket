@@ -34,7 +34,7 @@ const Index = () => {
     const fetchAll = async () => {
       const [evRes, arRes, chRes, ordRes] = await Promise.all([
         supabase.from("events").select("*, ticket_types(price)").eq("status", "published").order("date", { ascending: true }).limit(3),
-        supabase.from("profiles").select("*").eq("account_type", "artist").limit(3),
+        supabase.from("profiles").select("*").eq("account_type", "artist").eq("artist_fee_paid", true).limit(3),
         supabase.from("challenges").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(3),
         supabase.from("orders").select("quantity"),
       ]);

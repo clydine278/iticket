@@ -9,7 +9,8 @@ import { AdminUserTable } from "@/components/admin/AdminUserTable";
 import { AdminEventList } from "@/components/admin/AdminEventList";
 import { AdminTransactionList } from "@/components/admin/AdminTransactionList";
 import { AdminPartnerList } from "@/components/admin/AdminPartnerList";
-import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake } from "lucide-react";
+import { AdminArtistFeeSettings } from "@/components/admin/AdminArtistFeeSettings";
+import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake, Sparkles } from "lucide-react";
 
 export interface AdminProfile {
   id: string;
@@ -30,6 +31,7 @@ const tabs = [
   { id: "events" as const, label: "Events", icon: CalendarPlus },
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
   { id: "partners" as const, label: "Partners", icon: Handshake },
+  { id: "artist-fees" as const, label: "Artist Fees", icon: Sparkles },
 ];
 
 const AdminDashboard = () => {
@@ -40,7 +42,7 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions" | "partners">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions" | "partners" | "artist-fees">("overview");
 
   useEffect(() => {
     if (!loading && !user) {
@@ -153,6 +155,12 @@ const AdminDashboard = () => {
         {activeTab === "partners" && (
           <div className="animate-in fade-in duration-300">
             <AdminPartnerList />
+          </div>
+        )}
+
+        {activeTab === "artist-fees" && (
+          <div className="animate-in fade-in duration-300">
+            <AdminArtistFeeSettings />
           </div>
         )}
       </div>

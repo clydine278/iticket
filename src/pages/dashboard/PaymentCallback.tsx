@@ -13,6 +13,7 @@ const PaymentCallback = () => {
   const { user } = useAuth();
   const [status, setStatus] = useState<"verifying" | "success" | "failed">("verifying");
   const [error, setError] = useState("");
+  const paymentType = searchParams.get("type");
 
   useEffect(() => {
     const reference = searchParams.get("reference") || searchParams.get("trxref");
@@ -36,37 +37,50 @@ const PaymentCallback = () => {
 
         setStatus("success");
       } catch (err: any) {
-        // Fallback: check if the webhook already created the order
-        const { data: existingOrders } = await supabase
-          .from("orders")
-          .select("id")
-          .eq("payment_reference", reference)
-          .eq("status", "confirmed")
-          .limit(1);
-
-        if (existingOrders && existingOrders.length > 0) {
-          setStatus("success");
-        } else {
-          // Wait and retry once — webhook may still be processing
+        if (paymentType === "artist_fee") {
+          // Check if profile was updated
           await new Promise((r) => setTimeout(r, 5000));
-          const { data: retryOrders } = await supabase
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("artist_fee_paid")
+            .eq("id", user.id)
+            .single();
+          if (profile?.artist_fee_paid) {
+            setStatus("success");
+          } else {
+            setError(err.message);
+            setStatus("failed");
+          }
+        } else {
+          const { data: existingOrders } = await supabase
             .from("orders")
             .select("id")
             .eq("payment_reference", reference)
             .eq("status", "confirmed")
             .limit(1);
 
-          if (retryOrders && retryOrders.length > 0) {
+          if (existingOrders && existingOrders.length > 0) {
             setStatus("success");
           } else {
-            setError(err.message);
-            setStatus("failed");
+            await new Promise((r) => setTimeout(r, 5000));
+            const { data: retryOrders } = await supabase
+              .from("orders")
+              .select("id")
+              .eq("payment_reference", reference)
+              .eq("status", "confirmed")
+              .limit(1);
+
+            if (retryOrders && retryOrders.length > 0) {
+              setStatus("success");
+            } else {
+              setError(err.message);
+              setStatus("failed");
+            }
           }
         }
       }
     };
 
-    // Delay to let webhook process first
     setTimeout(verify, 3000);
   }, [searchParams, user]);
 
@@ -84,11 +98,17 @@ const PaymentCallback = () => {
             )}
             {status === "success" && (
               <>
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-                <h2 className="text-lg font-bold">Payment Successful!</h2>
-                <p className="text-sm text-muted-foreground">Your tickets have been confirmed. Check your tickets page for details.</p>
-                <Button onClick={() => navigate("/dashboard/tickets")} className="w-full">
-                  View My Tickets
+                <CheckCircle2 className="w-12 h-12 text-primary mx-auto" />
+                <h2 className="text-lg font-bold">
+                  {paymentType === "artist_fee" ? "Registration Complete!" : "Payment Successful!"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {paymentType === "artist_fee"
+                    ? "Your artist registration fee has been paid. Your profile is now live!"
+                    : "Your tickets have been confirmed. Check your tickets page for details."}
+                </p>
+                <Button onClick={() => navigate(paymentType === "artist_fee" ? "/dashboard" : "/dashboard/tickets")} className="w-full">
+                  {paymentType === "artist_fee" ? "Go to Dashboard" : "View My Tickets"}
                 </Button>
               </>
             )}

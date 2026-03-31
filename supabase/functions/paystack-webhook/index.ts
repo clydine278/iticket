@@ -37,6 +37,21 @@ Deno.serve(async (req) => {
     const cardType = data.authorization?.card_type || "";
     const last4 = data.authorization?.last4 || "";
 
+    // Handle artist fee payment
+    if (meta.type === "artist_fee") {
+      const adminSupabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const { error } = await adminSupabase
+        .from("profiles")
+        .update({ artist_fee_paid: true })
+        .eq("id", userId);
+      if (error) console.error("Artist fee update error:", error);
+      else console.log(`✅ Artist fee paid for user: ${userId}`);
+      return new Response("OK", { status: 200 });
+    }
+
     if (!userId || !meta.event_id) {
       console.log("Missing user_id or event_id in metadata, skipping");
       return new Response("OK", { status: 200 });

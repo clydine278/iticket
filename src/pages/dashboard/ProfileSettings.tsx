@@ -8,15 +8,23 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { User, Mail, Phone, MapPin, Globe, Music, Briefcase, Save, Sparkles } from "lucide-react";
+import { User, Mail, Phone, MapPin, Globe, Music, Briefcase, Save, Sparkles, Facebook, Instagram, Twitter, Video, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { toast } from "sonner";
+import { motion, AnimatePresence } from "framer-motion";
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.51a8.27 8.27 0 0 0 4.76 1.5v-3.4a4.85 4.85 0 0 1-1-.08z"/>
+  </svg>
+);
 
 const ProfileSettings = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [expandedSocials, setExpandedSocials] = useState<Record<string, boolean>>({});
+  const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     if (user) fetchProfile();
@@ -42,6 +50,8 @@ const ProfileSettings = () => {
       country: profile.country,
       bio: profile.bio,
       booking_price: profile.booking_price,
+      social_links: profile.social_links || {},
+      video_urls: profile.video_urls || [],
     };
     if (profile.account_type === "artist") {
       updates.stage_name = profile.stage_name;
@@ -59,6 +69,19 @@ const ProfileSettings = () => {
   const update = (field: string, value: any) =>
     setProfile((p: any) => ({ ...p, [field]: value }));
 
+  const updateSocial = (platform: string, value: string) =>
+    setProfile((p: any) => ({
+      ...p,
+      social_links: { ...(p.social_links || {}), [platform]: value },
+    }));
+
+  const updateVideo = (index: number, value: string) =>
+    setProfile((p: any) => {
+      const urls = [...(p.video_urls || ["", "", ""])];
+      urls[index] = value;
+      return { ...p, video_urls: urls };
+    });
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -71,6 +94,8 @@ const ProfileSettings = () => {
 
   const accountType = profile?.account_type || "personal";
   const initials = (profile?.full_name || profile?.username || "U").slice(0, 2).toUpperCase();
+  const socialLinks = profile?.social_links || {};
+  const videoUrls = profile?.video_urls || [];
 
   return (
     <DashboardLayout>
@@ -141,28 +166,113 @@ const ProfileSettings = () => {
 
         {/* Artist-specific fields */}
         {accountType === "artist" && (
-          <Card className="border-border/40">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-display flex items-center gap-2">
-                <Music className="w-4 h-4 text-primary" /> Artist Details
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Field label="Stage Name" icon={<Sparkles className="w-3.5 h-3.5" />} value={profile?.stage_name || ""} onChange={(v) => update("stage_name", v)} placeholder="Your stage name" />
-                <Field label="Booking Price" icon={<Music className="w-3.5 h-3.5" />} value={profile?.booking_price || ""} onChange={(v) => update("booking_price", v)} placeholder="e.g. ₦500,000" />
-              </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Services (comma-separated)</label>
-                <Input
-                  value={(profile?.services || []).join(", ")}
-                  onChange={(e) => update("services", e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
-                  className="h-10 text-sm"
-                  placeholder="Live Performance, DJ Set, MC"
-                />
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <Music className="w-4 h-4 text-primary" /> Artist Details
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Stage Name" icon={<Sparkles className="w-3.5 h-3.5" />} value={profile?.stage_name || ""} onChange={(v) => update("stage_name", v)} placeholder="Your stage name" />
+                  <Field label="Booking Price" icon={<Music className="w-3.5 h-3.5" />} value={profile?.booking_price || ""} onChange={(v) => update("booking_price", v)} placeholder="e.g. ₦500,000" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Services (comma-separated)</label>
+                  <Input
+                    value={(profile?.services || []).join(", ")}
+                    onChange={(e) => update("services", e.target.value.split(",").map((s: string) => s.trim()).filter(Boolean))}
+                    className="h-10 text-sm"
+                    placeholder="Live Performance, DJ Set, MC"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Social Links */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-primary" /> Social Links
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[
+                  { key: "facebook", label: "Facebook", icon: <Facebook className="w-4 h-4" />, placeholder: "https://facebook.com/yourpage" },
+                  { key: "instagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, placeholder: "https://instagram.com/yourhandle" },
+                  { key: "tiktok", label: "TikTok", icon: <TikTokIcon />, placeholder: "https://tiktok.com/@yourhandle" },
+                  { key: "twitter", label: "Twitter", icon: <Twitter className="w-4 h-4" />, placeholder: "https://twitter.com/yourhandle" },
+                ].map((social) => (
+                  <div key={social.key}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedSocials(prev => ({ ...prev, [social.key]: !prev[social.key] }))}
+                      className={`w-full flex items-center gap-2 border rounded-lg px-3 py-2 text-xs transition-all ${
+                        expandedSocials[social.key] ? "border-primary/50 bg-accent/30" : "border-border/50 hover:border-primary/30"
+                      }`}
+                    >
+                      <span className="text-primary">{social.icon}</span>
+                      <span className="flex-1 text-left">{social.label}</span>
+                      {socialLinks[social.key] && <Check className="w-3 h-3 text-primary" />}
+                      {expandedSocials[social.key] ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+                    </button>
+                    <AnimatePresence>
+                      {expandedSocials[social.key] && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <Input
+                            value={socialLinks[social.key] || ""}
+                            onChange={(e) => updateSocial(social.key, e.target.value)}
+                            placeholder={social.placeholder}
+                            className="h-9 text-xs mt-1.5 border-border/50"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+
+            {/* Video URLs */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <Video className="w-4 h-4 text-primary" /> Performance Videos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {[0, 1, 2].map((i) => (
+                  <div key={i}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedVideos(prev => ({ ...prev, [i]: !prev[i] }))}
+                      className={`w-full flex items-center gap-2 border rounded-lg px-3 py-2 text-xs transition-all ${
+                        expandedVideos[i] ? "border-primary/50 bg-accent/30" : "border-border/50 hover:border-primary/30"
+                      }`}
+                    >
+                      <Video className="w-4 h-4 text-primary" />
+                      <span className="flex-1 text-left">Video {i + 1}</span>
+                      {videoUrls[i] && <Check className="w-3 h-3 text-primary" />}
+                      {expandedVideos[i] ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+                    </button>
+                    <AnimatePresence>
+                      {expandedVideos[i] && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                          <Input
+                            value={videoUrls[i] || ""}
+                            onChange={(e) => updateVideo(i, e.target.value)}
+                            placeholder="https://youtube.com/watch?v=... or TikTok/Instagram link"
+                            className="h-9 text-xs mt-1.5 border-border/50"
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </>
         )}
 
         {/* Organizer-specific fields */}
