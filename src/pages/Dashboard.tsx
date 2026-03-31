@@ -6,6 +6,7 @@ import ArtistDashboard from "@/components/dashboard/ArtistDashboard";
 import OrganizerDashboard from "@/components/dashboard/OrganizerDashboard";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { ProfileCompletionNotice } from "@/components/dashboard/ProfileCompletionNotice";
+import { ArtistFeePopup } from "@/components/dashboard/ArtistFeePopup";
 
 const container = {
   hidden: { opacity: 0 },
