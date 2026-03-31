@@ -157,6 +157,12 @@ const AdminDashboard = () => {
             <AdminPartnerList />
           </div>
         )}
+
+        {activeTab === "artist-fees" && (
+          <div className="animate-in fade-in duration-300">
+            <AdminArtistFeeSettings />
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );
