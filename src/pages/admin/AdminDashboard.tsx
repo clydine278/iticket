@@ -31,6 +31,7 @@ const tabs = [
   { id: "events" as const, label: "Events", icon: CalendarPlus },
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
   { id: "partners" as const, label: "Partners", icon: Handshake },
+  { id: "artist-fees" as const, label: "Artist Fees", icon: Sparkles },
 ];
 
 const AdminDashboard = () => {
