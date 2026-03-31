@@ -230,24 +230,84 @@ const CreateAccount = () => {
           <span className="text-xs text-muted-foreground">Connect Socials</span>
           <div className="flex-1 h-px bg-border" />
         </div>
-        <div className="grid grid-cols-2 sm:flex gap-2">
-          {socialPlatforms.map((p) => (
-            <button key={p} className="flex-1 border border-border/50 rounded-full py-1.5 text-[10px] text-primary/60 hover:border-primary/50 transition-colors">
-              {p}
-            </button>
+        <div className="space-y-2">
+          {[
+            { key: "socialFacebook", label: "Facebook", icon: <Facebook className="w-4 h-4" />, placeholder: "https://facebook.com/yourpage" },
+            { key: "socialInstagram", label: "Instagram", icon: <Instagram className="w-4 h-4" />, placeholder: "https://instagram.com/yourhandle" },
+            { key: "socialTiktok", label: "TikTok", icon: <TikTokIcon />, placeholder: "https://tiktok.com/@yourhandle" },
+            { key: "socialTwitter", label: "Twitter", icon: <Twitter className="w-4 h-4" />, placeholder: "https://twitter.com/yourhandle" },
+          ].map((social) => (
+            <div key={social.key}>
+              <button
+                type="button"
+                onClick={() => setExpandedSocials(prev => ({ ...prev, [social.key]: !prev[social.key] }))}
+                className={`w-full flex items-center gap-2 border rounded-lg px-3 py-2 text-xs transition-all ${
+                  expandedSocials[social.key] ? "border-primary/50 bg-accent/30" : "border-border/50 hover:border-primary/30"
+                }`}
+              >
+                <span className="text-primary">{social.icon}</span>
+                <span className="flex-1 text-left">{social.label}</span>
+                {formData[social.key as keyof typeof formData] && <Check className="w-3 h-3 text-green-500" />}
+                {expandedSocials[social.key] ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+              </button>
+              <AnimatePresence>
+                {expandedSocials[social.key] && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <Input
+                      value={formData[social.key as keyof typeof formData]}
+                      onChange={(e) => updateField(social.key, e.target.value)}
+                      placeholder={social.placeholder}
+                      className="h-9 text-xs mt-1.5 border-border/50"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           ))}
         </div>
       </motion.div>
 
-      {/* Add Video slots */}
-      <motion.div variants={itemFade} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="aspect-square rounded-xl bg-muted/50 border border-dashed border-border/50 flex flex-col items-center justify-center cursor-pointer hover:bg-muted transition-colors">
-            <Video className="w-6 h-6 text-muted-foreground mb-1" />
-            <span className="text-[10px] text-muted-foreground">Add Video</span>
-            <span className="text-[8px] text-muted-foreground">1:1 ratio recommended</span>
-          </div>
-        ))}
+      {/* Add Video URLs */}
+      <motion.div variants={itemFade}>
+        <div className="flex items-center gap-2 my-4">
+          <div className="flex-1 h-px bg-border" />
+          <span className="text-xs text-muted-foreground">Performance Videos</span>
+          <div className="flex-1 h-px bg-border" />
+        </div>
+        <div className="space-y-2">
+          {[
+            { key: "videoUrl1", label: "Video 1" },
+            { key: "videoUrl2", label: "Video 2" },
+            { key: "videoUrl3", label: "Video 3" },
+          ].map((vid) => (
+            <div key={vid.key}>
+              <button
+                type="button"
+                onClick={() => setExpandedVideos(prev => ({ ...prev, [vid.key]: !prev[vid.key] }))}
+                className={`w-full flex items-center gap-2 border rounded-lg px-3 py-2 text-xs transition-all ${
+                  expandedVideos[vid.key] ? "border-primary/50 bg-accent/30" : "border-border/50 hover:border-primary/30"
+                }`}
+              >
+                <Video className="w-4 h-4 text-primary" />
+                <span className="flex-1 text-left">{vid.label}</span>
+                {formData[vid.key as keyof typeof formData] && <Check className="w-3 h-3 text-green-500" />}
+                {expandedVideos[vid.key] ? <ChevronUp className="w-3 h-3 text-muted-foreground" /> : <ChevronDown className="w-3 h-3 text-muted-foreground" />}
+              </button>
+              <AnimatePresence>
+                {expandedVideos[vid.key] && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
+                    <Input
+                      value={formData[vid.key as keyof typeof formData]}
+                      onChange={(e) => updateField(vid.key, e.target.value)}
+                      placeholder="https://youtube.com/watch?v=... or TikTok/Instagram link"
+                      className="h-9 text-xs mt-1.5 border-border/50"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          ))}
+        </div>
       </motion.div>
 
       {/* Booking Price & Services */}
