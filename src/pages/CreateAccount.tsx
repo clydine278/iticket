@@ -58,7 +58,11 @@ const CreateAccount = () => {
     firstName: "", username: "", email: "", phone: "",
     country: "", city: "", dob: "", password: "", password2: "",
     fullName: "", stageName: "", aboutYou: "",
+    socialFacebook: "", socialInstagram: "", socialTiktok: "", socialTwitter: "",
+    videoUrl1: "", videoUrl2: "", videoUrl3: "",
   });
+  const [expandedSocials, setExpandedSocials] = useState<Record<string, boolean>>({});
+  const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({});
 
   const updateField = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
