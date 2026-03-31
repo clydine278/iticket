@@ -98,11 +98,17 @@ const PaymentCallback = () => {
             )}
             {status === "success" && (
               <>
-                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto" />
-                <h2 className="text-lg font-bold">Payment Successful!</h2>
-                <p className="text-sm text-muted-foreground">Your tickets have been confirmed. Check your tickets page for details.</p>
-                <Button onClick={() => navigate("/dashboard/tickets")} className="w-full">
-                  View My Tickets
+                <CheckCircle2 className="w-12 h-12 text-primary mx-auto" />
+                <h2 className="text-lg font-bold">
+                  {paymentType === "artist_fee" ? "Registration Complete!" : "Payment Successful!"}
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  {paymentType === "artist_fee"
+                    ? "Your artist registration fee has been paid. Your profile is now live!"
+                    : "Your tickets have been confirmed. Check your tickets page for details."}
+                </p>
+                <Button onClick={() => navigate(paymentType === "artist_fee" ? "/dashboard" : "/dashboard/tickets")} className="w-full">
+                  {paymentType === "artist_fee" ? "Go to Dashboard" : "View My Tickets"}
                 </Button>
               </>
             )}
