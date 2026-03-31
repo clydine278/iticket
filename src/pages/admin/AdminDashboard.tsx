@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   const [orders, setOrders] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
-  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions" | "partners">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "users" | "events" | "transactions" | "partners" | "artist-fees">("overview");
 
   useEffect(() => {
     if (!loading && !user) {
