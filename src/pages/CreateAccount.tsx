@@ -94,10 +94,28 @@ const CreateAccount = () => {
         },
       },
     });
-    setLoading(false);
     if (error) {
+      setLoading(false);
       toast.error(error.message);
     } else {
+      // After signup, update profile with social links and video URLs
+      const socialLinks: Record<string, string> = {};
+      if (formData.socialFacebook) socialLinks.facebook = formData.socialFacebook;
+      if (formData.socialInstagram) socialLinks.instagram = formData.socialInstagram;
+      if (formData.socialTiktok) socialLinks.tiktok = formData.socialTiktok;
+      if (formData.socialTwitter) socialLinks.twitter = formData.socialTwitter;
+
+      const videoUrls = [formData.videoUrl1, formData.videoUrl2, formData.videoUrl3].filter(Boolean);
+
+      // Get current user after signup
+      const { data: { user: newUser } } = await supabase.auth.getUser();
+      if (newUser) {
+        await supabase.from("profiles").update({
+          social_links: socialLinks,
+          video_urls: videoUrls,
+        }).eq("id", newUser.id);
+      }
+      setLoading(false);
       toast.success("Account created successfully!");
       navigate("/dashboard");
     }
