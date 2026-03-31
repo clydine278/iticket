@@ -9,7 +9,8 @@ import { AdminUserTable } from "@/components/admin/AdminUserTable";
 import { AdminEventList } from "@/components/admin/AdminEventList";
 import { AdminTransactionList } from "@/components/admin/AdminTransactionList";
 import { AdminPartnerList } from "@/components/admin/AdminPartnerList";
-import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake } from "lucide-react";
+import { AdminArtistFeeSettings } from "@/components/admin/AdminArtistFeeSettings";
+import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake, Sparkles } from "lucide-react";
 
 export interface AdminProfile {
   id: string;
