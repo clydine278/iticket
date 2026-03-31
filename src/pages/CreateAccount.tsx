@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video } from "lucide-react";
+import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -10,6 +10,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import concertImg from "@/assets/concert-crowd.jpg";
+
+const TikTokIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-4 h-4" fill="currentColor">
+    <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.51a8.27 8.27 0 0 0 4.76 1.5v-3.4a4.85 4.85 0 0 1-1-.08z"/>
+  </svg>
+);
 
 const accountTypes = [
   { id: "personal", icon: User, title: "Personal / Individual", desc: "Get a personal account, ticket discounts and credits" },
