@@ -40,7 +40,7 @@ const ArtistDetail = () => {
               Cater Efe
             </motion.h1>
             <p className="text-hero-foreground/60 text-sm">Stand up Comedian</p>
-            <p className="text-hero-foreground/60 text-sm">Average Booking Price 400 - 1000$</p>
+            <p className="text-hero-foreground/60 text-sm">Average Booking Price ₦400,000 - ₦1,000,000</p>
             <div className="flex items-center gap-1 text-hero-foreground/60 text-sm mt-1">
               <MapPin className="w-3 h-3" /> Location: Abuja
             </div>
