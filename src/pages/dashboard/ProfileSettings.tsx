@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import ImageUpload from "@/components/ImageUpload";
+import { useR2Upload } from "@/hooks/use-r2-upload";
 
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
