@@ -164,8 +164,13 @@ const CreateEvent = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Banner Image URL</Label>
-                <Input value={form.banner_url} onChange={(e) => updateForm("banner_url", e.target.value)} placeholder="https://..." />
+                <Label>Banner Image</Label>
+                <ImageUpload
+                  value={form.banner_url}
+                  onChange={(url) => updateForm("banner_url", url)}
+                  folder="event-banners"
+                  placeholder="Upload event banner"
+                />
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>

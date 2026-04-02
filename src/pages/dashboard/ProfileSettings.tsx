@@ -110,11 +110,23 @@ const ProfileSettings = () => {
           <div className="h-20 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/5" />
           <CardContent className="p-5 -mt-10">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                {profile?.avatar_url ? (
+                  <div className="h-20 w-20 rounded-full ring-4 ring-background shadow-lg overflow-hidden relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">Change</div>
+                  </div>
+                ) : (
+                  <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <AvatarUploadInput
+                  onUpload={(url) => update("avatar_url", url)}
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-bold truncate">{profile?.full_name || "—"}</h2>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
