@@ -218,7 +218,7 @@ const ArtistDetail = () => {
                 <MapPin className="w-3 h-3" /> Location: Abuja
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Average Booking Price: <span className="font-bold text-foreground">$500 - $1,000</span></p>
+            <p className="text-xs text-muted-foreground">Average Booking Price: <span className="font-bold text-foreground">₦500,000 - ₦1,000,000</span></p>
           </div>
 
           <h2 className="font-bold text-lg text-center mb-6">Checkout</h2>

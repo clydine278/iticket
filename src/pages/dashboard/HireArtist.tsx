@@ -132,7 +132,7 @@ const HireArtist = () => {
                       <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
                         {artist.booking_price && (
                           <span className="text-sm font-bold text-primary flex items-center gap-1">
-                            <DollarSign className="w-3.5 h-3.5" />{artist.booking_price}
+                            ₦{Number(artist.booking_price).toLocaleString()}
                           </span>
                         )}
                         <Dialog>

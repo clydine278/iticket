@@ -161,7 +161,21 @@ const ProfileSettings = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field label="City" icon={<MapPin className="w-3.5 h-3.5" />} value={profile?.city || ""} onChange={(v) => update("city", v)} placeholder="Lagos" />
-              <Field label="Country" icon={<Globe className="w-3.5 h-3.5" />} value={profile?.country || ""} onChange={(v) => update("country", v)} placeholder="Nigeria" />
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <Globe className="w-3.5 h-3.5" /> Country
+                </label>
+                <Select value={profile?.country || ""} onValueChange={(v) => update("country", v)}>
+                  <SelectTrigger className="h-10 text-sm">
+                    <SelectValue placeholder="Select country" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {countries.map((c) => (
+                      <SelectItem key={c} value={c}>{c}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </CardContent>
         </Card>

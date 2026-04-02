@@ -45,7 +45,7 @@ const ChallengeDetail = () => {
           <div className="md:w-1/2 p-5">
             <h3 className="font-bold text-sm mb-2">Reward attached to this challenge</h3>
             <div className="flex flex-wrap gap-3 text-[10px] mb-4">
-              <span>💰 $1,000 cash price</span>
+              <span>💰 ₦1,000,000 cash price</span>
               <span>🎫 Free ticket to kokpee show</span>
               <span>📣 Free promotion on our socials</span>
             </div>
