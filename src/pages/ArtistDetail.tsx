@@ -40,7 +40,7 @@ const ArtistDetail = () => {
               Cater Efe
             </motion.h1>
             <p className="text-hero-foreground/60 text-sm">Stand up Comedian</p>
-            <p className="text-hero-foreground/60 text-sm">Average Booking Price 400 - 1000$</p>
+            <p className="text-hero-foreground/60 text-sm">Average Booking Price ₦400,000 - ₦1,000,000</p>
             <div className="flex items-center gap-1 text-hero-foreground/60 text-sm mt-1">
               <MapPin className="w-3 h-3" /> Location: Abuja
             </div>
@@ -82,7 +82,7 @@ const ArtistDetail = () => {
                 <MapPin className="w-3 h-3" /> Location: Abuja
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Average Booking Price for this artist: <span className="font-bold text-foreground">$500 - $1,000</span></p>
+            <p className="text-xs text-muted-foreground">Average Booking Price for this artist: <span className="font-bold text-foreground">₦500,000 - ₦1,000,000</span></p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -218,7 +218,7 @@ const ArtistDetail = () => {
                 <MapPin className="w-3 h-3" /> Location: Abuja
               </div>
             </div>
-            <p className="text-xs text-muted-foreground">Average Booking Price: <span className="font-bold text-foreground">$500 - $1,000</span></p>
+            <p className="text-xs text-muted-foreground">Average Booking Price: <span className="font-bold text-foreground">₦500,000 - ₦1,000,000</span></p>
           </div>
 
           <h2 className="font-bold text-lg text-center mb-6">Checkout</h2>

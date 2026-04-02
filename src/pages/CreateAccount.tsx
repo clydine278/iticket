@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
+import { countries } from "@/lib/countries";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
@@ -150,7 +152,16 @@ const CreateAccount = () => {
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">Country</label>
-          <Input placeholder="Country" value={formData.country} onChange={(e) => updateField("country", e.target.value)} className="h-10 text-sm border-border/50" />
+          <Select value={formData.country} onValueChange={(v) => updateField("country", v)}>
+            <SelectTrigger className="h-10 text-sm border-border/50">
+              <SelectValue placeholder="Select country" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {countries.map((c) => (
+                <SelectItem key={c} value={c}>{c}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">City</label>
