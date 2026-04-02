@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { CalendarPlus, Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import ImageUpload from "@/components/ImageUpload";
 
 interface TicketTier {
   name: string;
