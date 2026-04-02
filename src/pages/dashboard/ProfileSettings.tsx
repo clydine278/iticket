@@ -21,6 +21,22 @@ const TikTokIcon = () => (
   </svg>
 );
 
+const AvatarUploadInput = ({ onUpload }: { onUpload: (url: string) => void }) => {
+  const { upload, uploading } = useR2Upload();
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await upload(file, { folder: "avatars", maxSizeMB: 5, acceptedTypes: ["image/"] });
+      if (url) onUpload(url);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    e.target.value = "";
+  };
+  return <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFile} />;
+};
+
 const ProfileSettings = () => {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
