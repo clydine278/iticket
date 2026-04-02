@@ -13,12 +13,30 @@ import { countries } from "@/lib/countries";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import ImageUpload from "@/components/ImageUpload";
+import { useR2Upload } from "@/hooks/use-r2-upload";
 
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
     <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.51a8.27 8.27 0 0 0 4.76 1.5v-3.4a4.85 4.85 0 0 1-1-.08z"/>
   </svg>
 );
+
+const AvatarUploadInput = ({ onUpload }: { onUpload: (url: string) => void }) => {
+  const { upload, uploading } = useR2Upload();
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const url = await upload(file, { folder: "avatars", maxSizeMB: 5, acceptedTypes: ["image/"] });
+      if (url) onUpload(url);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+    e.target.value = "";
+  };
+  return <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFile} />;
+};
 
 const ProfileSettings = () => {
   const { user } = useAuth();
@@ -109,11 +127,23 @@ const ProfileSettings = () => {
           <div className="h-20 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/5" />
           <CardContent className="p-5 -mt-10">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg">
-                <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                {profile?.avatar_url ? (
+                  <div className="h-20 w-20 rounded-full ring-4 ring-background shadow-lg overflow-hidden relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                    <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">Change</div>
+                  </div>
+                ) : (
+                  <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
+                    <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground text-xl font-bold">
+                      {initials}
+                    </AvatarFallback>
+                  </Avatar>
+                )}
+                <AvatarUploadInput
+                  onUpload={(url) => update("avatar_url", url)}
+                />
+              </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-bold truncate">{profile?.full_name || "—"}</h2>
                 <div className="flex flex-wrap items-center gap-2 mt-1">
