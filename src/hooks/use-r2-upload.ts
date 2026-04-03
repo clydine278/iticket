@@ -35,7 +35,7 @@ function uploadWithXhr({
 
     xhr.upload.onprogress = (event) => {
       if (!event.lengthComputable || event.total <= 0) return;
-      const nextProgress = Math.min(95, Math.max(15, Math.round((event.loaded / event.total) * 90)));
+      const nextProgress = Math.min(90, Math.max(10, Math.round((event.loaded / event.total) * 90)));
       onProgress(nextProgress);
     };
 
@@ -113,9 +113,11 @@ export function useR2Upload() {
       });
 
       setProgress(100);
+      await new Promise((resolve) => setTimeout(resolve, 500));
       return result.url;
     } finally {
       setUploading(false);
+      setProgress(0);
     }
   };
 
