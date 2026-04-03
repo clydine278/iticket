@@ -1,8 +1,9 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { useR2Upload } from "@/hooks/use-r2-upload";
 import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "@/hooks/use-toast";
-import { Upload, X, Loader2 } from "lucide-react";
+import { ImageIcon, X, Loader2 } from "lucide-react";
 
 interface ImageUploadProps {
   value?: string;
@@ -63,13 +64,16 @@ const ImageUpload = ({ value, onChange, folder = "uploads", className = "", aspe
           style={{ aspectRatio }}
         >
           {uploading ? (
-            <>
-              <Loader2 className="w-8 h-8 animate-spin" />
-              <span className="text-sm">{progress}%</span>
-            </>
+            <div className="flex flex-col items-center gap-3 w-full px-8">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              <div className="w-full max-w-[200px] space-y-1">
+                <Progress value={progress} className="h-2" />
+                <span className="text-xs text-center block">{progress}% uploading...</span>
+              </div>
+            </div>
           ) : (
             <>
-              <Upload className="w-8 h-8" />
+              <ImageIcon className="w-8 h-8" />
               <span className="text-sm">{placeholder}</span>
             </>
           )}

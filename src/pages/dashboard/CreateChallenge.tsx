@@ -114,8 +114,13 @@ const CreateChallenge = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>Banner Image URL</Label>
-                <Input value={form.banner_url} onChange={(e) => updateForm("banner_url", e.target.value)} placeholder="https://..." />
+                <Label>Banner Image</Label>
+                <ImageUpload
+                  value={form.banner_url}
+                  onChange={(url) => updateForm("banner_url", url)}
+                  folder="challenge-banners"
+                  placeholder="Upload challenge banner"
+                />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
