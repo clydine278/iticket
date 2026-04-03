@@ -1,3 +1,5 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-file-content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
@@ -10,6 +12,8 @@ const CF_R2_ACCESS_KEY_ID = Deno.env.get("CF_R2_ACCESS_KEY_ID")!;
 const CF_R2_SECRET_ACCESS_KEY = Deno.env.get("CF_R2_SECRET_ACCESS_KEY")!;
 const CF_R2_BUCKET_NAME = Deno.env.get("CF_R2_BUCKET_NAME")!;
 const CF_R2_PUBLIC_URL = Deno.env.get("CF_R2_PUBLIC_URL")!;
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_PUBLISHABLE_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
 
 async function hmacSha256(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
@@ -75,69 +79,88 @@ async function signRequest(method: string, url: string, headers: Record<string, 
   return headers;
 }
 
+function jsonResponse(status: number, body: Record<string, string>) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function sanitizePath(input: string) {
+  const normalized = input.replace(/^\/+/, "");
+  if (!normalized || normalized.includes("..") || normalized.includes("\\") || normalized.startsWith(".")) {
+    return null;
+  }
+  return normalized;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const contentType = req.headers.get("content-type") || "";
-
-    // Direct upload: receive file as binary
-    if (req.method === "PUT") {
-      const filePath = new URL(req.url).searchParams.get("path");
-      if (!filePath) {
-        return new Response(JSON.stringify({ error: "Missing path param" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      const fileBytes = new Uint8Array(await req.arrayBuffer());
-      const r2Url = `https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${CF_R2_BUCKET_NAME}/${filePath}`;
-
-      const fileContentType = req.headers.get("x-file-content-type") || "application/octet-stream";
-
-      const headers: Record<string, string> = {
-        host: `${CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
-        "content-type": fileContentType,
-      };
-
-      const signedHeaders = await signRequest("PUT", r2Url, headers, fileBytes);
-
-      const r2Response = await fetch(r2Url, {
-        method: "PUT",
-        headers: signedHeaders,
-        body: fileBytes,
-      });
-
-      if (!r2Response.ok) {
-        const errorText = await r2Response.text();
-        console.error("R2 upload error:", errorText);
-        return new Response(JSON.stringify({ error: "Upload failed", details: errorText }), {
-          status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-
-      await r2Response.text();
-
-      const publicUrl = `${CF_R2_PUBLIC_URL}/${filePath}`;
-
-      return new Response(JSON.stringify({ url: publicUrl }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (req.method !== "PUT") {
+      return jsonResponse(405, { error: "Method not allowed" });
     }
 
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
+    const authHeader = req.headers.get("authorization");
+    const token = authHeader?.replace(/^Bearer\s+/i, "");
+
+    if (!token) {
+      return jsonResponse(401, { error: "Unauthorized" });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return jsonResponse(401, { error: "Unauthorized" });
+    }
+
+    const requestedPath = new URL(req.url).searchParams.get("path");
+    if (!requestedPath) {
+      return jsonResponse(400, { error: "Missing path param" });
+    }
+
+    const filePath = sanitizePath(requestedPath);
+    if (!filePath) {
+      return jsonResponse(400, { error: "Invalid path param" });
+    }
+
+    const fileBytes = new Uint8Array(await req.arrayBuffer());
+    const r2Url = `https://${CF_ACCOUNT_ID}.r2.cloudflarestorage.com/${CF_R2_BUCKET_NAME}/${filePath}`;
+    const fileContentType = req.headers.get("x-file-content-type") || req.headers.get("content-type") || "application/octet-stream";
+
+    const headers: Record<string, string> = {
+      host: `${CF_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      "content-type": fileContentType,
+    };
+
+    const signedHeaders = await signRequest("PUT", r2Url, headers, fileBytes);
+
+    const r2Response = await fetch(r2Url, {
+      method: "PUT",
+      headers: signedHeaders,
+      body: fileBytes,
+    });
+
+    if (!r2Response.ok) {
+      const errorText = await r2Response.text();
+      console.error("R2 upload error:", errorText);
+      return jsonResponse(500, { error: "Upload failed", details: errorText });
+    }
+
+    await r2Response.text();
+
+    return new Response(JSON.stringify({ url: `${CF_R2_PUBLIC_URL}/${filePath}` }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
     console.error("Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return jsonResponse(500, { error: err instanceof Error ? err.message : "Unexpected error" });
   }
 });

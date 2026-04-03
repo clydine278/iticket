@@ -46,7 +46,7 @@ const ImageUpload = ({ value, onChange, folder = "uploads", className = "", aspe
       {value ? (
         <div className="relative group rounded-xl overflow-hidden border border-border" style={{ aspectRatio }}>
           <img src={value} alt="Upload" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+          <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
             <Button type="button" size="sm" variant="secondary" onClick={() => inputRef.current?.click()} disabled={uploading}>
               Change
             </Button>
