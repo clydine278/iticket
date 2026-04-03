@@ -127,11 +127,11 @@ const ProfileSettings = () => {
           <div className="h-20 bg-gradient-to-r from-primary/20 via-accent/10 to-primary/5" />
           <CardContent className="p-5 -mt-10">
             <div className="flex flex-col sm:flex-row sm:items-end gap-4">
-              <div className="relative">
+              <div className="relative pb-4">
                 {profile?.avatar_url ? (
                   <div className="h-20 w-20 rounded-full ring-4 ring-background shadow-lg overflow-hidden relative group cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
                     <img src={profile.avatar_url} alt="Avatar" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs">Change</div>
+                    <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-background text-xs">Change</div>
                   </div>
                 ) : (
                   <Avatar className="h-20 w-20 ring-4 ring-background shadow-lg cursor-pointer" onClick={() => document.getElementById('avatar-upload')?.click()}>
@@ -140,6 +140,14 @@ const ProfileSettings = () => {
                     </AvatarFallback>
                   </Avatar>
                 )}
+                <button
+                  type="button"
+                  onClick={() => document.getElementById('avatar-upload')?.click()}
+                  className="absolute -bottom-1 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
+                >
+                  <Camera className="w-3 h-3 text-primary" />
+                  {profile?.avatar_url ? "Change photo" : "Add a photo"}
+                </button>
                 <AvatarUploadInput
                   onUpload={(url) => update("avatar_url", url)}
                 />
