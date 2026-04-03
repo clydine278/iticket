@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "@/hooks/use-toast";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
+import ImageUpload from "@/components/ImageUpload";
 
 interface TicketTier {
   id?: string;
@@ -172,7 +173,15 @@ const EditEvent = () => {
                 </div>
                 <div className="space-y-2"><Label>Capacity</Label><Input type="number" value={form.capacity} onChange={(e) => updateForm("capacity", e.target.value)} /></div>
               </div>
-              <div className="space-y-2"><Label>Banner Image URL</Label><Input value={form.banner_url} onChange={(e) => updateForm("banner_url", e.target.value)} /></div>
+              <div className="space-y-2">
+                <Label>Banner Image</Label>
+                <ImageUpload
+                  value={form.banner_url}
+                  onChange={(url) => updateForm("banner_url", url)}
+                  folder="event-banners"
+                  placeholder="Upload event banner"
+                />
+              </div>
               <div className="space-y-2">
                 <Label>Status</Label>
                 <Select value={form.status} onValueChange={(v) => updateForm("status", v)}>

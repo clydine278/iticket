@@ -72,6 +72,7 @@ const ProfileSettings = () => {
       booking_price: profile.booking_price,
       social_links: profile.social_links || {},
       video_urls: profile.video_urls || [],
+      avatar_url: profile.avatar_url || null,
     };
     if (profile.account_type === "artist") {
       updates.stage_name = profile.stage_name;

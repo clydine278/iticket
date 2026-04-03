@@ -327,10 +327,10 @@ const CreateAccount = () => {
           <label className="text-xs text-muted-foreground mb-1 block">Booking Price</label>
           <select className="w-full h-10 text-sm border border-border/50 rounded-md bg-background px-3">
             <option>Select range</option>
-            <option>$100 - $500</option>
-            <option>$500 - $1,000</option>
-            <option>$1,000 - $5,000</option>
-            <option>$5,000+</option>
+            <option>₦50,000 - ₦200,000</option>
+            <option>₦200,000 - ₦500,000</option>
+            <option>₦500,000 - ₦1,000,000</option>
+            <option>₦1,000,000+</option>
           </select>
         </div>
         <div className="space-y-2 pt-1">
