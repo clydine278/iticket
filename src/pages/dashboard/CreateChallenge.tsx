@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 import { Trophy } from "lucide-react";
 import { motion } from "framer-motion";
+import ImageUpload from "@/components/ImageUpload";
 
 const CreateChallenge = () => {
   const { user } = useAuth();
