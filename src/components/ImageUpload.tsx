@@ -45,14 +45,26 @@ const ImageUpload = ({ value, onChange, folder = "uploads", className = "", aspe
 
       {value ? (
         <div className="relative group rounded-xl overflow-hidden border border-border" style={{ aspectRatio }}>
-          <img src={value} alt="Upload" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-foreground/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button type="button" size="sm" variant="secondary" onClick={() => inputRef.current?.click()} disabled={uploading}>
-              Change
-            </Button>
-            <Button type="button" size="sm" variant="destructive" onClick={() => onChange("")}>
-              <X className="w-4 h-4" />
-            </Button>
+          <img src={value} alt="Uploaded image" className="w-full h-full object-cover" />
+          <div className={`absolute inset-0 bg-foreground/60 transition-opacity flex items-center justify-center gap-2 ${uploading ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>
+            {uploading ? (
+              <div className="flex flex-col items-center gap-3 w-full px-8">
+                <Loader2 className="w-8 h-8 animate-spin text-background" />
+                <div className="w-full max-w-[200px] space-y-1">
+                  <Progress value={progress} className="h-2" />
+                  <span className="text-xs text-center text-background block">{progress}% uploading...</span>
+                </div>
+              </div>
+            ) : (
+              <>
+                <Button type="button" size="sm" variant="secondary" onClick={() => inputRef.current?.click()} disabled={uploading}>
+                  Change
+                </Button>
+                <Button type="button" size="sm" variant="destructive" onClick={() => onChange("")}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
       ) : (

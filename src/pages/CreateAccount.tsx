@@ -2,14 +2,15 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import ImageUpload from "@/components/ImageUpload";
-import { User, Users, Briefcase, Check, Eye, EyeOff, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
+import { User, Users, Briefcase, Check, Eye, EyeOff, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp, ImageIcon, Loader2, X } from "lucide-react";
 import { countries } from "@/lib/countries";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useR2Upload } from "@/hooks/use-r2-upload";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import concertImg from "@/assets/concert-crowd.jpg";
@@ -49,14 +50,17 @@ const itemFade = {
 
 const CreateAccount = () => {
   const navigate = useNavigate();
+  const { upload: uploadAvatarFile } = useR2Upload();
   const [step, setStep] = useState(0);
   const [selectedType, setSelectedType] = useState("personal");
   const [showPw, setShowPw] = useState(false);
   const [showPw2, setShowPw2] = useState(false);
   const [selectedServices, setSelectedServices] = useState<string[]>(["Live Performance"]);
   const [loading, setLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const [avatarProgress, setAvatarProgress] = useState(0);
 
-  // Form fields
   const [formData, setFormData] = useState({
     firstName: "", username: "", email: "", phone: "",
     country: "", city: "", dob: "", password: "", password2: "",
@@ -72,6 +76,58 @@ const CreateAccount = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleAvatarSelection = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      e.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Profile photos must be 5MB or less.");
+      e.target.value = "";
+      return;
+    }
+
+    setAvatarUploading(true);
+    setAvatarProgress(10);
+
+    try {
+      const previewUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onprogress = (event) => {
+          if (!event.lengthComputable || event.total <= 0) return;
+          const nextProgress = Math.min(95, Math.max(10, Math.round((event.loaded / event.total) * 100)));
+          setAvatarProgress(nextProgress);
+        };
+
+        reader.onerror = () => reject(new Error("Unable to read the selected photo."));
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.readAsDataURL(file);
+      });
+
+      setAvatarFile(file);
+      updateField("avatarUrl", previewUrl);
+      setAvatarProgress(100);
+    } catch (error: any) {
+      toast.error(error.message || "Unable to prepare the selected photo.");
+    } finally {
+      setAvatarUploading(false);
+      window.setTimeout(() => setAvatarProgress(0), 400);
+      e.target.value = "";
+    }
+  };
+
+  const clearAvatar = () => {
+    setAvatarFile(null);
+    setAvatarProgress(0);
+    updateField("avatarUrl", "");
+  };
+
   const handleSignUp = async () => {
     if (formData.password !== formData.password2) {
       toast.error("Passwords do not match");
@@ -82,7 +138,7 @@ const CreateAccount = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: formData.password,
       options: {
@@ -95,7 +151,6 @@ const CreateAccount = () => {
           phone: formData.phone,
           city: formData.city,
           country: formData.country,
-          avatar_url: formData.avatarUrl || null,
         },
       },
     });
@@ -103,7 +158,6 @@ const CreateAccount = () => {
       setLoading(false);
       toast.error(error.message);
     } else {
-      // After signup, update profile with social links and video URLs
       const socialLinks: Record<string, string> = {};
       if (formData.socialFacebook) socialLinks.facebook = formData.socialFacebook;
       if (formData.socialInstagram) socialLinks.instagram = formData.socialInstagram;
@@ -112,18 +166,34 @@ const CreateAccount = () => {
 
       const videoUrls = [formData.videoUrl1, formData.videoUrl2, formData.videoUrl3].filter(Boolean);
 
-      // Get current user after signup
-      const { data: { user: newUser } } = await supabase.auth.getUser();
+      let uploadedAvatarUrl: string | null = null;
+      if (avatarFile && data.session) {
+        try {
+          uploadedAvatarUrl = await uploadAvatarFile(avatarFile, {
+            folder: "avatars",
+            maxSizeMB: 5,
+            acceptedTypes: ["image/"],
+          });
+        } catch {
+          uploadedAvatarUrl = null;
+        }
+      }
+
+      const newUser = data.user;
       if (newUser) {
         await supabase.from("profiles").update({
           social_links: socialLinks,
           video_urls: videoUrls,
-          avatar_url: formData.avatarUrl || null,
+          avatar_url: uploadedAvatarUrl,
           full_name: formData.fullName || formData.firstName || null,
         }).eq("id", newUser.id);
       }
       setLoading(false);
-      toast.success("Account created successfully!");
+      toast.success(
+        avatarFile && !uploadedAvatarUrl
+          ? "Account created! Add your photo from Profile Settings after you sign in."
+          : "Account created successfully!"
+      );
       navigate("/dashboard");
     }
   };
@@ -134,19 +204,67 @@ const CreateAccount = () => {
     );
   };
 
+  const renderPhotoPicker = () => (
+    <motion.div variants={itemFade} className="space-y-2">
+      <label className="text-xs text-muted-foreground mb-1 block">Profile Photo</label>
+      <input id="account-avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarSelection} />
+
+      {formData.avatarUrl ? (
+        <div className="w-[140px] space-y-2">
+          <div className="relative overflow-hidden rounded-full border border-border bg-muted/30" style={{ aspectRatio: "1 / 1" }}>
+            <img src={formData.avatarUrl} alt="Selected profile preview" className="h-full w-full object-cover" />
+            {avatarUploading && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-foreground/60 px-4">
+                <Loader2 className="h-7 w-7 animate-spin text-background" />
+                <div className="w-full max-w-[100px] space-y-1">
+                  <Progress value={avatarProgress} className="h-2" />
+                  <span className="block text-center text-[10px] text-background">{avatarProgress}% processing...</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {!avatarUploading && (
+            <div className="flex gap-2">
+              <Button type="button" size="sm" variant="secondary" className="flex-1" onClick={() => document.getElementById("account-avatar-upload")?.click()}>
+                Change
+              </Button>
+              <Button type="button" size="icon" variant="destructive" onClick={clearAvatar}>
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => document.getElementById("account-avatar-upload")?.click()}
+          disabled={avatarUploading}
+          className="flex w-[140px] flex-col items-center justify-center gap-2 rounded-full border-2 border-dashed border-border bg-muted/30 px-4 py-6 text-muted-foreground transition-colors hover:bg-muted/50"
+          style={{ aspectRatio: "1 / 1" }}
+        >
+          {avatarUploading ? (
+            <div className="flex w-full flex-col items-center gap-3">
+              <Loader2 className="h-7 w-7 animate-spin text-primary" />
+              <div className="w-full space-y-1">
+                <Progress value={avatarProgress} className="h-2" />
+                <span className="block text-center text-[10px]">{avatarProgress}% processing...</span>
+              </div>
+            </div>
+          ) : (
+            <>
+              <ImageIcon className="h-7 w-7" />
+              <span className="text-xs font-medium">Add a photo</span>
+            </>
+          )}
+        </button>
+      )}
+    </motion.div>
+  );
+
   const renderPersonalForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
-      <motion.div variants={itemFade} className="space-y-2">
-        <label className="text-xs text-muted-foreground mb-1 block">Profile Photo</label>
-        <ImageUpload
-          value={formData.avatarUrl}
-          onChange={(url) => updateField("avatarUrl", url)}
-          folder="avatars"
-          className="max-w-[140px]"
-          aspectRatio="1 / 1"
-          placeholder="Add a photo"
-        />
-      </motion.div>
+      {renderPhotoPicker()}
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">First name</label>
@@ -210,20 +328,10 @@ const CreateAccount = () => {
   const renderArtistForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
       {/* Header with account type badge and photo */}
-      <motion.div variants={itemFade} className="space-y-3 mb-2">
+      <motion.div variants={itemFade} className="mb-2">
         <span className="text-xs underline text-foreground">Artist Account</span>
-        <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">Profile Photo</label>
-          <ImageUpload
-            value={formData.avatarUrl}
-            onChange={(url) => updateField("avatarUrl", url)}
-            folder="avatars"
-            className="max-w-[140px]"
-            aspectRatio="1 / 1"
-            placeholder="Add a photo"
-          />
-        </div>
       </motion.div>
+      {renderPhotoPicker()}
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>
@@ -391,20 +499,10 @@ const CreateAccount = () => {
   const renderOrganizerForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
       {/* Header with account type badge and photo */}
-      <motion.div variants={itemFade} className="space-y-3 mb-2">
+      <motion.div variants={itemFade} className="mb-2">
         <span className="text-xs underline text-foreground">Organiser's Account</span>
-        <div className="space-y-2">
-          <label className="text-xs text-muted-foreground block">Profile Photo</label>
-          <ImageUpload
-            value={formData.avatarUrl}
-            onChange={(url) => updateField("avatarUrl", url)}
-            folder="avatars"
-            className="max-w-[140px]"
-            aspectRatio="1 / 1"
-            placeholder="Add a photo"
-          />
-        </div>
       </motion.div>
+      {renderPhotoPicker()}
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div>

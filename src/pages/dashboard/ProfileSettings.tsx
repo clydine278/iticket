@@ -5,6 +5,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -21,24 +22,9 @@ const TikTokIcon = () => (
   </svg>
 );
 
-const AvatarUploadInput = ({ onUpload }: { onUpload: (url: string) => void }) => {
-  const { upload } = useR2Upload();
-  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const url = await upload(file, { folder: "avatars", maxSizeMB: 5, acceptedTypes: ["image/"] });
-      if (url) onUpload(url);
-    } catch (err: any) {
-      toast.error(err.message);
-    }
-    e.target.value = "";
-  };
-  return <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleFile} />;
-};
-
 const ProfileSettings = () => {
   const { user } = useAuth();
+  const { upload: uploadAvatar, uploading: avatarUploading, progress: avatarProgress } = useR2Upload();
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -102,6 +88,20 @@ const ProfileSettings = () => {
       return { ...p, video_urls: urls };
     });
 
+  const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadAvatar(file, { folder: "avatars", maxSizeMB: 5, acceptedTypes: ["image/"] });
+      if (url) update("avatar_url", url);
+    } catch (err: any) {
+      toast.error(err.message);
+    }
+
+    e.target.value = "";
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -140,17 +140,22 @@ const ProfileSettings = () => {
                     </AvatarFallback>
                   </Avatar>
                 )}
+                <input id="avatar-upload" type="file" accept="image/*" className="hidden" onChange={handleAvatarFile} />
                 <button
                   type="button"
+                  disabled={avatarUploading}
                   onClick={() => document.getElementById('avatar-upload')?.click()}
-                  className="absolute -bottom-1 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-muted"
+                  className="absolute -bottom-1 left-1/2 inline-flex -translate-x-1/2 items-center gap-1.5 rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-medium text-foreground shadow-sm transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-70"
                 >
                   <Camera className="w-3 h-3 text-primary" />
-                  {profile?.avatar_url ? "Change photo" : "Add a photo"}
+                  {avatarUploading ? "Uploading..." : profile?.avatar_url ? "Change photo" : "Add a photo"}
                 </button>
-                <AvatarUploadInput
-                  onUpload={(url) => update("avatar_url", url)}
-                />
+                {avatarUploading && (
+                  <div className="mt-6 w-28 space-y-1">
+                    <Progress value={avatarProgress} className="h-1.5" />
+                    <span className="block text-center text-[10px] text-muted-foreground">{avatarProgress}% uploading...</span>
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-bold truncate">{profile?.full_name || "—"}</h2>
