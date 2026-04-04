@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import ImageUpload from "@/components/ImageUpload";
-import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
+import { User, Users, Briefcase, Check, Eye, EyeOff, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
 import { countries } from "@/lib/countries";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { motion, AnimatePresence } from "framer-motion";
