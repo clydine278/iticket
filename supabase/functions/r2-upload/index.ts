@@ -13,16 +13,20 @@ const CF_R2_SECRET_ACCESS_KEY = Deno.env.get("CF_R2_SECRET_ACCESS_KEY")!;
 const CF_R2_BUCKET_NAME = Deno.env.get("CF_R2_BUCKET_NAME")!;
 const CF_R2_PUBLIC_URL = Deno.env.get("CF_R2_PUBLIC_URL")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-const SUPABASE_PUBLISHABLE_KEY = Deno.env.get("SUPABASE_PUBLISHABLE_KEY")!;
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+
+function toArrayBuffer(view: Uint8Array): ArrayBuffer {
+  return view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength) as ArrayBuffer;
+}
 
 async function hmacSha256(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
-  const cryptoKey = await crypto.subtle.importKey("raw", key, { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
-  const sig = await crypto.subtle.sign("HMAC", cryptoKey, data);
+  const cryptoKey = await crypto.subtle.importKey("raw", toArrayBuffer(key), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
+  const sig = await crypto.subtle.sign("HMAC", cryptoKey, toArrayBuffer(data));
   return new Uint8Array(sig);
 }
 
 async function sha256(data: Uint8Array): Promise<string> {
-  const hash = await crypto.subtle.digest("SHA-256", data);
+  const hash = await crypto.subtle.digest("SHA-256", toArrayBuffer(data));
   return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
@@ -111,7 +115,11 @@ Deno.serve(async (req) => {
       return jsonResponse(401, { error: "Unauthorized" });
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+    if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+      return jsonResponse(500, { error: "Upload service is not configured correctly." });
+    }
+
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const {
       data: { user },
       error: authError,

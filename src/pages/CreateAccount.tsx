@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ImageUpload from "@/components/ImageUpload";
 import { User, Users, Briefcase, Check, Eye, EyeOff, Camera, Video, Facebook, Instagram, Twitter, ChevronDown, ChevronUp } from "lucide-react";
 import { countries } from "@/lib/countries";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -62,6 +63,7 @@ const CreateAccount = () => {
     fullName: "", stageName: "", aboutYou: "",
     socialFacebook: "", socialInstagram: "", socialTiktok: "", socialTwitter: "",
     videoUrl1: "", videoUrl2: "", videoUrl3: "",
+    avatarUrl: "",
   });
   const [expandedSocials, setExpandedSocials] = useState<Record<string, boolean>>({});
   const [expandedVideos, setExpandedVideos] = useState<Record<string, boolean>>({});
@@ -93,6 +95,7 @@ const CreateAccount = () => {
           phone: formData.phone,
           city: formData.city,
           country: formData.country,
+          avatar_url: formData.avatarUrl || null,
         },
       },
     });
@@ -115,6 +118,8 @@ const CreateAccount = () => {
         await supabase.from("profiles").update({
           social_links: socialLinks,
           video_urls: videoUrls,
+          avatar_url: formData.avatarUrl || null,
+          full_name: formData.fullName || formData.firstName || null,
         }).eq("id", newUser.id);
       }
       setLoading(false);
@@ -131,6 +136,17 @@ const CreateAccount = () => {
 
   const renderPersonalForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
+      <motion.div variants={itemFade} className="space-y-2">
+        <label className="text-xs text-muted-foreground mb-1 block">Profile Photo</label>
+        <ImageUpload
+          value={formData.avatarUrl}
+          onChange={(url) => updateField("avatarUrl", url)}
+          folder="avatars"
+          className="max-w-[140px]"
+          aspectRatio="1 / 1"
+          placeholder="Add a photo"
+        />
+      </motion.div>
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
           <label className="text-xs text-muted-foreground mb-1 block">First name</label>
@@ -194,13 +210,18 @@ const CreateAccount = () => {
   const renderArtistForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
       {/* Header with account type badge and photo */}
-      <motion.div variants={itemFade} className="flex items-center justify-between mb-2">
+      <motion.div variants={itemFade} className="space-y-3 mb-2">
         <span className="text-xs underline text-foreground">Artist Account</span>
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
-          <div className="text-center">
-            <Camera className="w-4 h-4 mx-auto text-muted-foreground" />
-            <span className="text-[8px] text-muted-foreground">Add Photo</span>
-          </div>
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground block">Profile Photo</label>
+          <ImageUpload
+            value={formData.avatarUrl}
+            onChange={(url) => updateField("avatarUrl", url)}
+            folder="avatars"
+            className="max-w-[140px]"
+            aspectRatio="1 / 1"
+            placeholder="Add a photo"
+          />
         </div>
       </motion.div>
 
@@ -370,13 +391,18 @@ const CreateAccount = () => {
   const renderOrganizerForm = () => (
     <motion.div variants={stagger} initial="initial" animate="animate" className="space-y-4">
       {/* Header with account type badge and photo */}
-      <motion.div variants={itemFade} className="flex items-center justify-between mb-2">
+      <motion.div variants={itemFade} className="space-y-3 mb-2">
         <span className="text-xs underline text-foreground">Organiser's Account</span>
-        <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center cursor-pointer hover:bg-muted/80 transition-colors">
-          <div className="text-center">
-            <Camera className="w-4 h-4 mx-auto text-muted-foreground" />
-            <span className="text-[8px] text-muted-foreground">Add Photo</span>
-          </div>
+        <div className="space-y-2">
+          <label className="text-xs text-muted-foreground block">Profile Photo</label>
+          <ImageUpload
+            value={formData.avatarUrl}
+            onChange={(url) => updateField("avatarUrl", url)}
+            folder="avatars"
+            className="max-w-[140px]"
+            aspectRatio="1 / 1"
+            placeholder="Add a photo"
+          />
         </div>
       </motion.div>
 
