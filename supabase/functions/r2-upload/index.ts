@@ -38,7 +38,7 @@ async function signRequest(
   headers["content-length"] = body.length.toString();
   
   // Calculate SHA256 of body
-  const bodyHash = await crypto.subtle.digest("SHA-256", body);
+  const bodyHash = await crypto.subtle.digest("SHA-256", body.buffer as ArrayBuffer);
   const bodyHashHex = Array.from(new Uint8Array(bodyHash))
     .map(b => b.toString(16).padStart(2, "0"))
     .join("");
@@ -107,12 +107,12 @@ async function signRequest(
 async function hmacSha256(key: Uint8Array, data: Uint8Array): Promise<Uint8Array> {
   const cryptoKey = await crypto.subtle.importKey(
     "raw", 
-    key, 
+    key.buffer as ArrayBuffer, 
     { name: "HMAC", hash: "SHA-256" }, 
     false, 
     ["sign"]
   );
-  const signature = await crypto.subtle.sign("HMAC", cryptoKey, data);
+  const signature = await crypto.subtle.sign("HMAC", cryptoKey, data.buffer as ArrayBuffer);
   return new Uint8Array(signature);
 }
 
