@@ -306,31 +306,36 @@ export function useR2Upload() {
       setProgress(5, "preparing");
 
       // Environment check
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      if (!projectId) {
-        throw new Error("Missing VITE_SUPABASE_PROJECT_ID. Check your .env file.");
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        throw new Error("Missing VITE_SUPABASE_URL. Check your backend connection.");
       }
 
-      // Validate project ID format
-      if (!/^[a-z0-9-]+$/.test(projectId)) {
-        throw new Error("Invalid VITE_SUPABASE_PROJECT_ID format");
+      let url: string;
+      try {
+        url = new URL(`/functions/v1/r2-upload?path=${encodeURIComponent(fileName)}`, supabaseUrl).toString();
+      } catch {
+        throw new Error("Invalid VITE_SUPABASE_URL format");
       }
 
-      const url = `https://${projectId}.supabase.co/functions/v1/r2-upload?path=${encodeURIComponent(fileName)}`;
-      
-      console.log("[R2Upload] Upload URL:", url.replace(token.substring(0, 20), "..."));
+      console.log("[R2Upload] Upload URL:", url);
 
       setProgress(10, "uploading");
+
+      const headers: Record<string, string> = {
+        Authorization: `Bearer ${token}`,
+        "x-file-content-type": file.type || "application/octet-stream",
+      };
+
+      const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      if (publishableKey) {
+        headers.apikey = publishableKey;
+      }
 
       const result = await uploadWithXhr({
         url,
         file,
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "x-file-content-type": file.type || "application/octet-stream",
-          "x-file-size": file.size.toString(),
-          "x-file-name": encodeURIComponent(file.name),
-        },
+        headers,
         onProgress: setProgress,
       });
 
