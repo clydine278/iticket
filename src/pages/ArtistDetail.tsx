@@ -55,7 +55,7 @@ const ArtistDetail = () => {
       {view === "info" && (
         <section className="container py-8">
           <p className="text-center text-muted-foreground text-sm mb-6">
-            Add your best performance so entertainers can see
+            Add your best performance so people can see
           </p>
           <div className="grid grid-cols-3 gap-3">
             {[1, 2, 3].map((i) => (

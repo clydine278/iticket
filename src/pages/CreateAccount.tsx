@@ -23,8 +23,14 @@ const TikTokIcon = () => (
 
 const accountTypes = [
   { id: "personal", icon: User, title: "Personal / Individual", desc: "Get a personal account, ticket discounts and credits" },
-  { id: "artist", icon: Users, title: "Artist / Entertainer", desc: "Register as an artist, so we help show off you for booking." },
+  { id: "artist", icon: Users, title: "Artist", desc: "Register as an artist, so we help show off you for booking." },
   { id: "organizer", icon: Briefcase, title: "Organizer's Account", desc: "Get a personal account, ticket discounts and credits" },
+];
+
+const artistCategories = [
+  "Singer", "Rapper", "Drummer", "Keyboardist", "Guitarist", "Bassist",
+  "DJ", "Producer", "Dancer", "Comedian", "Model", "MC/Host",
+  "Saxophonist", "Trumpeter", "Violinist", "Spoken Word", "Poet", "Other",
 ];
 
 const steps = ["Account type", "About you", "Email Confirmation"];
@@ -64,7 +70,7 @@ const CreateAccount = () => {
   const [formData, setFormData] = useState({
     firstName: "", username: "", email: "", phone: "",
     country: "", city: "", dob: "", password: "", password2: "",
-    fullName: "", stageName: "", aboutYou: "",
+    fullName: "", stageName: "", aboutYou: "", artistCategory: "",
     socialFacebook: "", socialInstagram: "", socialTiktok: "", socialTwitter: "",
     videoUrl1: "", videoUrl2: "", videoUrl3: "",
     avatarUrl: "",
@@ -186,7 +192,8 @@ const CreateAccount = () => {
           video_urls: videoUrls,
           avatar_url: uploadedAvatarUrl,
           full_name: formData.fullName || formData.firstName || null,
-        }).eq("id", newUser.id);
+          artist_category: selectedType === "artist" ? formData.artistCategory || null : null,
+        } as any).eq("id", newUser.id);
       }
       setLoading(false);
       toast.success(
@@ -346,6 +353,20 @@ const CreateAccount = () => {
           <label className="text-xs text-muted-foreground mb-1 block">Username</label>
           <Input placeholder="Username" value={formData.username} onChange={(e) => updateField("username", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
+      </motion.div>
+
+      <motion.div variants={itemFade}>
+        <label className="text-xs text-muted-foreground mb-1 block">Artist Category</label>
+        <Select value={formData.artistCategory} onValueChange={(v) => updateField("artistCategory", v)}>
+          <SelectTrigger className="h-10 text-sm border-border/50">
+            <SelectValue placeholder="Select your category" />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {artistCategories.map((cat) => (
+              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </motion.div>
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">
