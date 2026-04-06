@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Star } from "lucide-react";
@@ -17,6 +17,7 @@ const BookArtist = () => {
   const [artists, setArtists] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchArtists = async () => {
@@ -30,6 +31,11 @@ const BookArtist = () => {
     };
     fetchArtists();
   }, []);
+
+  const handleArtistClick = (e: React.MouseEvent, artistId: string) => {
+    e.preventDefault();
+    navigate("/login", { state: { redirectTo: `/artist/${artistId}` } });
+  };
 
   const filtered = artists.filter(
     (a) =>
@@ -85,6 +91,7 @@ const BookArtist = () => {
               <motion.div key={artist.id} variants={fadeUp}>
                 <Link
                   to={`/artist/${artist.id}`}
+                  onClick={(e) => handleArtistClick(e, artist.id)}
                   className="block border border-hero-foreground/10 rounded-xl overflow-hidden hover:border-primary/50 transition-colors"
                 >
                   <div className="flex items-center justify-center p-4">
