@@ -58,7 +58,8 @@ const ProfileSettings = () => {
       social_links: profile.social_links || {},
       video_urls: profile.video_urls || [],
       avatar_url: profile.avatar_url || null,
-    };
+      artist_category: profile.artist_category || null,
+    } as any;
     if (profile.account_type === "artist") {
       updates.stage_name = profile.stage_name;
       updates.services = profile.services;
@@ -236,6 +237,21 @@ const ProfileSettings = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Field label="Stage Name" icon={<Sparkles className="w-3.5 h-3.5" />} value={profile?.stage_name || ""} onChange={(v) => update("stage_name", v)} placeholder="Your stage name" />
                   <Field label="Booking Price" icon={<Music className="w-3.5 h-3.5" />} value={profile?.booking_price || ""} onChange={(v) => update("booking_price", v)} placeholder="e.g. ₦500,000" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" /> Artist Category
+                  </label>
+                  <Select value={profile?.artist_category || ""} onValueChange={(v) => update("artist_category", v)}>
+                    <SelectTrigger className="h-10 text-sm">
+                      <SelectValue placeholder="Select your category" />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-60">
+                      {["Singer", "Rapper", "Drummer", "Keyboardist", "Guitarist", "Bassist", "DJ", "Producer", "Dancer", "Comedian", "Model", "MC/Host", "Saxophonist", "Trumpeter", "Violinist", "Spoken Word", "Poet", "Other"].map((cat) => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Services (comma-separated)</label>
