@@ -169,7 +169,7 @@ const Index = () => {
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-bold text-sm">{artist.stage_name || artist.full_name || "Artist"}</h3>
-                          <p className="text-hero-foreground/60 text-[10px]">{artist.services?.[0] || "Entertainer"}</p>
+                          <p className="text-hero-foreground/60 text-[10px]">{(artist as any).artist_category || artist.services?.[0] || "Artist"}</p>
                           <p className="text-hero-foreground/60 text-[10px]">{[artist.city, artist.country].filter(Boolean).join(", ") || ""}</p>
                         </div>
                         {artist.booking_price && <p className="font-bold text-sm">₦{Number(artist.booking_price).toLocaleString()}</p>}

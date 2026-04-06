@@ -100,7 +100,7 @@ const BookArtist = () => {
                   </div>
                   <div className="px-3 pb-3">
                     <h3 className="font-bold text-xs truncate">{artist.stage_name || artist.full_name || "Artist"}</h3>
-                    <p className="text-hero-foreground/50 text-[10px]">{artist.services?.[0] || "Entertainer"}</p>
+                    <p className="text-hero-foreground/50 text-[10px]">{(artist as any).artist_category || artist.services?.[0] || "Artist"}</p>
                     <div className="flex items-center justify-between mt-1.5">
                       <p className="text-hero-foreground/50 text-[10px] truncate">
                         {[artist.city, artist.country].filter(Boolean).join(", ") || ""}
