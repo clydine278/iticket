@@ -2,16 +2,16 @@ import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { motion } from "framer-motion";
-import { Ticket, Music, Trophy, ArrowRight, Calendar, MapPin, Share2, ChevronRight } from "lucide-react";
+import { Ticket, Trophy, ArrowRight, Calendar, MapPin, Share2, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 
+// Removed "Book Artist" from quickActions - personal users can't book artists
 const quickActions = [
   { title: "Buy Tickets", desc: "Explore upcoming events", icon: Ticket, to: "/dashboard/browse-events", gradient: "from-primary to-orange-600" },
-  { title: "Book Artist", desc: "Hire for your event", icon: Music, to: "/dashboard/hire-artist", gradient: "from-violet-500 to-purple-600" },
   { title: "Challenges", desc: "Compete & win prizes", icon: Trophy, to: "/dashboard/browse-challenges", gradient: "from-emerald-500 to-teal-600" },
 ];
 
@@ -50,7 +50,8 @@ const PersonalDashboard = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-3 gap-3">
+      {/* Quick Actions - Now only 2 items for personal users */}
+      <div className="grid grid-cols-2 gap-3">
         {quickActions.map((action) => (
           <motion.div key={action.title} variants={item}>
             <Link to={action.to}>

@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Camera, Image as ImageIcon } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { 
@@ -220,7 +221,39 @@ const ArtistDetail = () => {
           </div>
         </div>
       </section>
-
+            {/* Gallery Section - Right under hero */}
+      {artist?.gallery_images && artist.gallery_images.length > 0 && (
+        <section className="container py-6 md:py-8">
+          <div className="flex items-center gap-2 mb-4">
+            <ImageIcon className="w-4 h-4 text-orange-500" />
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Gallery</h2>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+            {artist.gallery_images.map((imageUrl: string, index: number) => (
+              imageUrl && (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="group relative aspect-square rounded-xl overflow-hidden bg-gray-800 cursor-pointer"
+                  onClick={() => window.open(imageUrl, '_blank')}
+                >
+                  <img
+                    src={imageUrl}
+                    alt={`${artist.stage_name || artist.full_name} gallery ${index + 1}`}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                    <span className="text-xs text-white/90 font-medium">View Photo {index + 1}</span>
+                  </div>
+                </motion.div>
+              )
+            ))}
+          </div>
+        </section>
+      )}
       {/* Main Content Grid */}
       <section className="container py-12">
         <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,26 +16,47 @@ import {
   Twitter, 
   Video,
   Music,
-  Sparkles
+  Sparkles,
+  X
 } from "lucide-react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 
 const ArtistProfile = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [artist, setArtist] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+    const [currentUserProfile, setCurrentUserProfile] = useState<any>(null); // ADD THIS
   const [bookingForm, setBookingForm] = useState({
     event_name: "",
     venue: "",
     event_date: "",
     offered_price: "",
     message: "",
+    expected_audience_size: "",
+    deposit_available: false,
+    event_type: "",
   });
   const [submitting, setSubmitting] = useState(false);
-  const [showBookingForm, setShowBookingForm] = useState(false);
+  const [showBookingDialog, setShowBookingDialog] = useState(false);
 
   useEffect(() => {
     const fetchArtist = async () => {
@@ -62,11 +83,44 @@ const ArtistProfile = () => {
 
     fetchArtist();
   }, [id]);
-
+    // Fetch current user profile to check if they're an organizer
+  useEffect(() => {
+    const fetchCurrentUserProfile = async () => {
+      if (!user) {
+        setCurrentUserProfile(null);
+        return;
+      }
+      
+      const { data } = await supabase
+        .from("profiles")
+        .select("account_type")
+        .eq("id", user.id)
+        .single();
+        
+      setCurrentUserProfile(data);
+    };
+    
+    fetchCurrentUserProfile();
+  }, [user]);
   const handleBooking = async () => {
     if (!user || !artist) return;
+    
+    // Validation
     if (!bookingForm.event_name) {
-      toast({ title: "Event name required", description: "Please enter your event name.", variant: "destructive" });
+      toast({ 
+        title: "Event name required", 
+        description: "Please enter your event name.", 
+        variant: "destructive" 
+      });
+      return;
+    }
+    
+    if (!bookingForm.event_type) {
+      toast({ 
+        title: "Event type required", 
+        description: "Please select an event type.", 
+        variant: "destructive" 
+      });
       return;
     }
 
@@ -80,25 +134,51 @@ const ArtistProfile = () => {
       event_date: bookingForm.event_date ? new Date(bookingForm.event_date).toISOString() : null,
       offered_price: bookingForm.offered_price ? Number(bookingForm.offered_price) : null,
       message: bookingForm.message || null,
+      // New fields
+      expected_audience_size: bookingForm.expected_audience_size ? Number(bookingForm.expected_audience_size) : null,
+      deposit_available: bookingForm.deposit_available,
+      event_type: bookingForm.event_type,
+      // Status defaults to 'pending' in DB
       status: "pending",
     });
 
     setSubmitting(false);
 
     if (error) {
-      toast({ title: "Unable to send booking", description: error.message, variant: "destructive" });
+      toast({ 
+        title: "Unable to send booking", 
+        description: error.message, 
+        variant: "destructive" 
+      });
       return;
     }
 
-    toast({ title: "Booking request sent", description: "The artist will be notified.", variant: "default" });
-    setBookingForm({ event_name: "", venue: "", event_date: "", offered_price: "", message: "" });
-    setShowBookingForm(false);
+    toast({ 
+      title: "Booking request sent!", 
+      description: "The artist will review and accept or decline your request.", 
+      variant: "default" 
+    });
+    
+    // Reset form and close dialog
+    setBookingForm({
+      event_name: "",
+      venue: "",
+      event_date: "",
+      offered_price: "",
+      message: "",
+      expected_audience_size: "",
+      deposit_available: false,
+      event_type: "",
+    });
+    setShowBookingDialog(false);
   };
 
   const socialLinks = (artist?.social_links || {}) as Record<string, string>;
   const services = artist?.services || [];
   const videos = artist?.video_urls || [];
-
+  const galleryImages = artist?.gallery_images || [];
+  const isOrganizer = currentUserProfile?.account_type === "organizer";
+  const canBook = !!user && isOrganizer;
   if (loading) {
     return (
       <DashboardLayout>
@@ -125,14 +205,13 @@ const ArtistProfile = () => {
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-black text-white pb-12">
-        {/* Hero Section - Matching ArtistDetail */}
+        {/* Hero Section */}
         <section className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
           
           <div className="container flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 py-8 md:py-12 relative z-20">
-            {/* Mobile: Circular Avatar / Desktop: Large Image */}
+            {/* Avatar */}
             <div className="flex-shrink-0">
-              {/* Mobile: Small circular avatar */}
               <div className="md:hidden w-20 h-20 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-800">
                 {artist.avatar_url ? (
                   <img 
@@ -149,7 +228,6 @@ const ArtistProfile = () => {
                 )}
               </div>
               
-              {/* Desktop: Large rectangular image */}
               <div className="hidden md:block w-full md:w-[400px] lg:w-[500px] aspect-square md:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-800">
                 {artist.avatar_url ? (
                   <img 
@@ -195,16 +273,217 @@ const ArtistProfile = () => {
                 </span>
               </div>
               
-              {/* Book Artist Button */}
-              <Button 
-                onClick={() => setShowBookingForm(true)}
-                className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-8 md:px-12 py-4 md:py-6 text-xs md:text-sm font-semibold"
-              >
-                Book Artist
-              </Button>
+              {/* Book Button - Only for organizers */}
+              {canBook ? (
+                <Button 
+                  onClick={() => setShowBookingDialog(true)}
+                  className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-8 md:px-12 py-4 md:py-6 text-xs md:text-sm font-semibold"
+                >
+                  Book Artist
+                </Button>
+              ) : user ? (
+                <div className="text-xs text-gray-500 bg-gray-900/50 px-4 py-2 rounded-full border border-gray-700">
+                  Only organizers can book artists
+                </div>
+              ) : (
+                <Button 
+                  onClick={() => navigate("/login")}
+                  className="bg-gray-700 hover:bg-gray-600 text-white rounded-full px-6 py-3 text-xs"
+                >
+                  Sign in to Book
+                </Button>
+              )}
             </div>
           </div>
         </section>
+
+        {/* Gallery Section - Right under hero */}
+        {galleryImages.length > 0 && (
+          <section className="container py-6 md:py-8">
+            <div className="flex items-center gap-2 mb-4">
+              <svg className="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Gallery</h2>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4">
+              {galleryImages.map((imageUrl: string, index: number) => (
+                imageUrl && (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="group relative aspect-square rounded-xl overflow-hidden bg-gray-800 cursor-pointer"
+                    onClick={() => window.open(imageUrl, '_blank')}
+                  >
+                    <img
+                      src={imageUrl}
+                      alt={`${artist.stage_name || artist.full_name} gallery ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute bottom-0 left-0 right-0 p-3 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <span className="text-xs text-white/90 font-medium">View Photo {index + 1}</span>
+                    </div>
+                  </motion.div>
+                )
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Booking Dialog */}
+        <Dialog open={showBookingDialog} onOpenChange={setShowBookingDialog}>
+          <DialogContent className="bg-[#1a1a1a] border-gray-800 text-white max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-white text-lg">
+                Book {artist.stage_name || artist.full_name || "this artist"}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              {/* Event Name */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Event Name *</Label>
+                <Input
+                  value={bookingForm.event_name}
+                  onChange={(e) => setBookingForm({ ...bookingForm, event_name: e.target.value })}
+                  placeholder="My private concert"
+                  className="h-10  border-gray-700 text-white placeholder:text-gray-600 text-sm"
+                />
+              </div>
+
+              {/* Event Type Dropdown */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Event Type *</Label>
+                <Select 
+                  value={bookingForm.event_type} 
+                  onValueChange={(v) => setBookingForm({ ...bookingForm, event_type: v })}
+                >
+                  <SelectTrigger className="h-10  border-gray-700 text-white text-sm">
+                    <SelectValue placeholder="Select event type" />
+                  </SelectTrigger>
+                  <SelectContent className=" border-gray-700">
+                    <SelectItem value="concert">Concert</SelectItem>
+                    <SelectItem value="wedding">Wedding</SelectItem>
+                    <SelectItem value="corporate">Corporate Event</SelectItem>
+                    <SelectItem value="party">Party</SelectItem>
+                    <SelectItem value="festival">Festival</SelectItem>
+                    <SelectItem value="club">Club/Nightclub</SelectItem>
+                    <SelectItem value="charity">Charity Event</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Venue & Date */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-400">Venue</Label>
+                  <Input
+                    value={bookingForm.venue}
+                    onChange={(e) => setBookingForm({ ...bookingForm, venue: e.target.value })}
+                    placeholder="Venue name"
+                    className="h-10  border-gray-700 text-white placeholder:text-gray-600 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs text-gray-400">Event Date</Label>
+                  <Input
+                    type="date"
+                    value={bookingForm.event_date}
+                    onChange={(e) => setBookingForm({ ...bookingForm, event_date: e.target.value })}
+                    className="h-10 border-gray-700 text-white text-sm"
+                  />
+                </div>
+              </div>
+
+              {/* Expected Audience Size */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Expected Audience Size</Label>
+                <Input
+                  type="number"
+                  value={bookingForm.expected_audience_size}
+                  onChange={(e) => setBookingForm({ ...bookingForm, expected_audience_size: e.target.value })}
+                  placeholder="e.g. 500"
+                  className="h-10  border-gray-700 text-white placeholder:text-gray-600 text-sm"
+                />
+              </div>
+
+              {/* Offered Price */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Offered Price (₦)</Label>
+                <Input
+                  type="number"
+                  value={bookingForm.offered_price}
+                  onChange={(e) => setBookingForm({ ...bookingForm, offered_price: e.target.value })}
+                  placeholder="100000"
+                  className="h-10  border-gray-700 text-white placeholder:text-gray-600 text-sm"
+                />
+              </div>
+
+              {/* Deposit Available Checkbox */}
+              <div className="flex items-center space-x-2 py-2">
+                <Checkbox
+                  id="deposit"
+                  checked={bookingForm.deposit_available}
+                  onCheckedChange={(checked) => 
+                    setBookingForm({ ...bookingForm, deposit_available: checked as boolean })
+                  }
+                  className="border-gray-600 data-[state=checked]:bg-orange-500 data-[state=checked]:border-orange-500"
+                />
+                <Label htmlFor="deposit" className="text-sm text-gray-300 cursor-pointer">
+                  I can provide a deposit to secure this booking
+                </Label>
+              </div>
+
+              {/* Message */}
+              <div className="space-y-1.5">
+                <Label className="text-xs text-gray-400">Message to Artist</Label>
+                <Textarea
+                  value={bookingForm.message}
+                  onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })}
+                  placeholder="Tell the artist about your event, requirements, and any special requests..."
+                  className="min-h-[100px]  border-gray-700 text-white placeholder:text-gray-600 text-sm"
+                />
+              </div>
+
+              {/* Info Box */}
+              <div className="rounded-lg  border border-gray-800 p-3">
+                <p className="text-xs text-gray-400">
+                  <span className="text-orange-500 font-medium">Note:</span> Your booking will be sent to the artist for review. You'll be notified once they accept or decline your request.
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3 pt-2">
+              {/* Book Button - Only for organizers */}
+              {canBook ? (
+                <div></div>
+              ) : user ? (
+                <div className="text-xs text-gray-500 bg-gray-900/50 px-4 py-2 rounded-full border border-gray-700">
+                  Only organizers can book artists
+                </div>
+              ) : (
+                <Button 
+                  onClick={() => navigate("/login")}
+                  className="bg-gray-700 hover:bg-gray-600 text-white rounded-full px-6 py-3 text-xs"
+                >
+                  Sign in to Book
+                </Button>
+              )}
+                <Button 
+                  onClick={handleBooking} 
+                  disabled={submitting}
+                  className="flex-1 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-sm"
+                >
+                  {submitting ? "Sending..." : "Send Booking Request"}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
 
         {/* Main Content Grid */}
         <section className="container py-8 md:py-12">
@@ -336,102 +615,37 @@ const ArtistProfile = () => {
               </Card>
             </div>
 
-            {/* Right Column - Booking Form or About */}
+            {/* Right Column - About Card */}
             <div className="space-y-4 md:space-y-6">
-              {showBookingForm ? (
-                /* Booking Form Card */
-                <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-white text-base">
-                      Book {artist.stage_name || artist.full_name || "this artist"}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3 md:space-y-4">
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-gray-500">Event Name</label>
-                      <Input
-                        value={bookingForm.event_name}
-                        onChange={(e) => setBookingForm({ ...bookingForm, event_name: e.target.value })}
-                        placeholder="My private concert"
-                        className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-gray-500">Venue</label>
-                        <Input
-                          value={bookingForm.venue}
-                          onChange={(e) => setBookingForm({ ...bookingForm, venue: e.target.value })}
-                          placeholder="Venue name"
-                          className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <label className="text-xs text-gray-500">Event Date</label>
-                        <Input
-                          type="date"
-                          value={bookingForm.event_date}
-                          onChange={(e) => setBookingForm({ ...bookingForm, event_date: e.target.value })}
-                          className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white text-sm"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-gray-500">Offered Price</label>
-                      <Input
-                        type="number"
-                        value={bookingForm.offered_price}
-                        onChange={(e) => setBookingForm({ ...bookingForm, offered_price: e.target.value })}
-                        placeholder="10000"
-                        className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <label className="text-xs text-gray-500">Message</label>
-                      <Textarea
-                        value={bookingForm.message}
-                        onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })}
-                        placeholder="Tell the artist about your event"
-                        className="min-h-[100px] md:min-h-[120px] bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
-                      />
-                    </div>
-                    <div className="flex gap-2 pt-2">
-                      <Button 
-                        variant="outline"
-                        onClick={() => setShowBookingForm(false)}
-                        className="flex-1 rounded-full border-gray-600 text-white hover:bg-gray-800 text-xs md:text-sm"
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={handleBooking} 
-                        disabled={submitting}
-                        className="flex-1 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm"
-                      >
-                        {submitting ? "Sending..." : "Send Request"}
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                /* About Card (shown when booking form is hidden) */
-                <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-white text-base md:text-lg">About</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm leading-6 text-gray-400">
-                      {artist.bio || "No bio yet. The artist can add a description from their profile settings."}
-                    </p>
+              <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base md:text-lg">About</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-6 text-gray-400">
+                    {artist.bio || "No bio yet. The artist can add a description from their profile settings."}
+                  </p>
+                  {canBook ? (
                     <Button 
-                      onClick={() => setShowBookingForm(true)}
+                      onClick={() => setShowBookingDialog(true)}
                       className="w-full mt-4 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
                     >
                       Book This Artist
                     </Button>
-                  </CardContent>
-                </Card>
-              )}
+                  ) : user ? (
+                    <div className="mt-4 p-3 rounded-lg bg-gray-900/50 border border-gray-800 text-xs text-gray-500 text-center">
+                      Only organizers can book artists
+                    </div>
+                  ) : (
+                    <Button 
+                      onClick={() => navigate("/login")}
+                      className="w-full mt-4 rounded-full bg-gray-700 hover:bg-gray-600 text-white"
+                    >
+                      Sign in to Book
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>

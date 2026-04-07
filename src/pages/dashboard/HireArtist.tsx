@@ -1,449 +1,319 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Music, Search, MapPin, Mail, Phone, Globe, Facebook, Instagram, Twitter, Video, Sparkles, ChevronDown, ChevronUp, Info } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { Search, ChevronDown, MapPin, Music } from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Separator } from "@/components/ui/separator";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
+};
+
+// Top categories
+const categories = ["All", "Singer", "Comedian", "Dancer", "DJ", "Producer", "Rapper", "Drummer"];
+
+const nigerianStates = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe",
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara",
+  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau",
+  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
+
+const priceRanges = [
+  { label: "All Prices", min: 0, max: Infinity },
+  { label: "₦10k - ₦50k", min: 10000, max: 50000 },
+  { label: "₦50k - ₦100k", min: 50000, max: 100000 },
+  { label: "₦100k - ₦200k", min: 100000, max: 200000 },
+  { label: "₦200k - ₦500k", min: 200000, max: 500000 },
+  { label: "₦500k+", min: 500000, max: Infinity },
+];
 
 const HireArtist = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [artists, setArtists] = useState<any[]>([]);
   const [search, setSearch] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedState, setSelectedState] = useState<string | null>(null);
+  const [selectedPriceRange, setSelectedPriceRange] = useState(priceRanges[0]);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+  const [showPriceDropdown, setShowPriceDropdown] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [bookingForm, setBookingForm] = useState({
-    event_name: "",
-    venue: "",
-    event_date: "",
-    offered_price: "",
-    message: "",
-  });
-  const [selectedArtist, setSelectedArtist] = useState<string | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [expandedSections, setExpandedSections] = useState<Record<string, Record<string, boolean>>>({});
 
   useEffect(() => {
     const fetchArtists = async () => {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("account_type", "artist")
+        .eq("artist_fee_paid", true)
         .order("created_at", { ascending: false });
+      
+      if (error) {
+        toast({ title: "Error loading artists", description: error.message, variant: "destructive" });
+      }
       setArtists(data || []);
       setLoading(false);
     };
     fetchArtists();
   }, []);
 
-  const filtered = artists.filter(
-    (a) =>
+  const handleArtistClick = (artistId: string) => {
+    if (!artistId) return;
+    navigate(`/dashboard/artist/${artistId}`);
+  };
+
+  const filtered = artists.filter((a) => {
+    const matchesSearch =
       (a.stage_name || a.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.city || "").toLowerCase().includes(search.toLowerCase())
-  );
-
-  const toggleSection = (artistId: string, section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [artistId]: {
-        ...prev[artistId],
-        [section]: !prev[artistId]?.[section]
-      }
-    }));
-  };
-
-  const handleBooking = async () => {
-    if (!user || !selectedArtist) return;
-    setSubmitting(true);
-    try {
-      const { error } = await supabase.from("bookings").insert({
-        organizer_id: user.id,
-        artist_id: selectedArtist,
-        event_name: bookingForm.event_name,
-        venue: bookingForm.venue || null,
-        event_date: bookingForm.event_date ? new Date(bookingForm.event_date).toISOString() : null,
-        offered_price: parseFloat(bookingForm.offered_price) || null,
-        message: bookingForm.message || null,
-        status: "pending",
-      });
-      if (error) throw error;
-      toast({ title: "Booking request sent!", description: "The artist will be notified." });
-      setBookingForm({ event_name: "", venue: "", event_date: "", offered_price: "", message: "" });
-      setSelectedArtist(null);
-    } catch (err: any) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
-    } finally {
-      setSubmitting(false);
-    }
-  };
+      (a.city || "").toLowerCase().includes(search.toLowerCase());
+    
+    const matchesCategory = 
+      selectedCategory === "All" || 
+      a.artist_category === selectedCategory ||
+      (a.services || []).some((s: string) => s.toLowerCase().includes(selectedCategory.toLowerCase()));
+    
+    const matchesState = !selectedState || 
+      (a.city && a.city.toLowerCase().includes(selectedState.toLowerCase()));
+    
+    const matchesPrice = 
+      selectedPriceRange.min === 0 || 
+      (a.booking_price && a.booking_price >= selectedPriceRange.min && a.booking_price <= selectedPriceRange.max);
+    
+    return matchesSearch && matchesCategory && matchesState && matchesPrice;
+  });
 
   return (
     <DashboardLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="space-y-6 max-w-6xl mx-auto"
+      >
+        {/* Header */}
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
             <Music className="w-6 h-6 text-primary" /> Hire an Artist
           </h1>
-          <p className="text-muted-foreground text-sm mt-1">Browse and book artists for your events</p>
+          <p className="text-muted-foreground text-sm mt-1">
+            Discover and book talented artists for your events
+          </p>
         </div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search artists, cities..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
+        {/* Filters Row */}
+        <div className="flex items-center justify-end gap-4">
+          {/* Price Range Dropdown */}
+          <div className="relative">
+            <button 
+              onClick={() => {
+                setShowPriceDropdown(!showPriceDropdown);
+                setShowStateDropdown(false);
+              }}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-white transition-colors px-3 py-1.5 rounded-full bg-muted/50"
+            >
+              {selectedPriceRange.label}
+              <ChevronDown className={`w-3 h-3 transition-transform ${showPriceDropdown ? "rotate-180" : ""}`} />
+            </button>
+            
+            {showPriceDropdown && (
+              <div className="absolute top-full right-0 mt-2 bg-[#1a1a1a] border border-gray-800 rounded-xl max-h-60 overflow-y-auto z-50 min-w-[140px] shadow-xl">
+                {priceRanges.map((range) => (
+                  <button
+                    key={range.label}
+                    onClick={() => {
+                      setSelectedPriceRange(range);
+                      setShowPriceDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs hover:bg-gray-800 transition-colors ${
+                      selectedPriceRange.label === range.label ? "text-orange-500 bg-gray-800/50" : "text-gray-400"
+                    }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
+        {/* Search Bar */}
+        <div className="relative">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+          <Input
+            placeholder="Search artists by name, city, or category..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-11 h-12 text-sm rounded-full bg-muted/50 border-gray-800 text-white placeholder:text-gray-500 focus:border-gray-600"
+          />
+        </div>
+
+        {/* Category Pills */}
+        <div className="flex flex-wrap gap-2">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-4 py-2 rounded-full text-xs font-medium transition-all ${
+                selectedCategory === cat
+                  ? "bg-orange-500 text-white"
+                  : "bg-muted/50 text-gray-400 hover:bg-gray-800"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* State Filter */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <button
+              onClick={() => {
+                setShowStateDropdown(!showStateDropdown);
+                setShowPriceDropdown(false);
+              }}
+              className="flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 text-gray-400 text-xs hover:bg-gray-800 transition-colors"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              {selectedState || "Filter by State"}
+              <ChevronDown className={`w-3 h-3 transition-transform ${showStateDropdown ? "rotate-180" : ""}`} />
+            </button>
+            
+            {showStateDropdown && (
+              <div className="absolute top-full left-0 mt-2 bg-[#1a1a1a] border border-gray-800 rounded-xl max-h-60 overflow-y-auto z-50 min-w-[180px] shadow-xl">
+                <button
+                  onClick={() => {
+                    setSelectedState(null);
+                    setShowStateDropdown(false);
+                  }}
+                  className="w-full text-left px-4 py-2 text-xs text-gray-400 hover:bg-gray-800 transition-colors"
+                >
+                  All States
+                </button>
+                {nigerianStates.map((state) => (
+                  <button
+                    key={state}
+                    onClick={() => {
+                      setSelectedState(state);
+                      setShowStateDropdown(false);
+                    }}
+                    className={`w-full text-left px-4 py-2 text-xs hover:bg-gray-800 transition-colors ${
+                      selectedState === state ? "text-orange-500 bg-gray-800/50" : "text-gray-400"
+                    }`}
+                  >
+                    {state}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          
+          {selectedState && (
+            <button
+              onClick={() => setSelectedState(null)}
+              className="text-xs text-gray-500 hover:text-white underline"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+
+        {/* Results Count */}
+        <div className="text-xs text-muted-foreground">
+          {filtered.length} artist{filtered.length !== 1 ? 's' : ''} found
+        </div>
+
+        {/* Artists Grid */}
         {loading ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
           </div>
         ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Music className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-semibold text-lg">No artists found</h3>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {filtered.map((artist, i) => {
-              const name = artist.stage_name || artist.full_name || "Artist";
-              const initials = name.slice(0, 2).toUpperCase();
-              const socialLinks = (artist.social_links || {}) as Record<string, string>;
-              const videos = artist.video_urls || [];
-              return (
-                <motion.div key={artist.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                  <Card className="hover:shadow-md transition-shadow">
-                    <CardHeader className="pb-4">
-                      <div className="flex flex-col sm:flex-row items-start gap-4">
-                        <Avatar className="h-16 w-16 mx-auto sm:mx-0">
-                          {artist.avatar_url ? (
-                            <AvatarImage src={artist.avatar_url} alt={name} />
-                          ) : (
-                            <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold text-lg">
-                              {initials}
-                            </AvatarFallback>
-                          )}
-                        </Avatar>
-                        <div className="flex-1 text-center sm:text-left">
-                          <h3 className="text-lg sm:text-xl font-semibold">{name}</h3>
-                          <p className="text-sm text-muted-foreground">{artist.artist_category || "Artist"}</p>
-                          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-2 sm:gap-4 mt-2 text-sm text-muted-foreground">
-                            {artist.email && (
-                              <span className="flex items-center gap-1">
-                                <Mail className="w-3.5 h-3.5" /> {artist.email}
-                              </span>
-                            )}
-                            {artist.city && (
-                              <span className="flex items-center gap-1">
-                                <MapPin className="w-3.5 h-3.5" /> {artist.city}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        <div className="text-center sm:text-right w-full sm:w-auto mt-4 sm:mt-0">
-                          {artist.booking_price && (
-                            <div className="text-lg font-bold text-primary">
-                              ₦{Number(artist.booking_price).toLocaleString()}
-                            </div>
-                          )}
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm" className="mt-2 w-full sm:w-auto" onClick={() => setSelectedArtist(artist.id)}>Book Now</Button>
-                            </DialogTrigger>
-                            <DialogContent className="mx-4">
-                              <DialogHeader>
-                                <DialogTitle>Book {name}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-4 pt-2">
-                                <div className="space-y-2">
-                                  <Label>Event Name *</Label>
-                                  <Input value={bookingForm.event_name} onChange={(e) => setBookingForm({ ...bookingForm, event_name: e.target.value })} placeholder="Your event name" />
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <div className="space-y-2">
-                                    <Label>Venue</Label>
-                                    <Input value={bookingForm.venue} onChange={(e) => setBookingForm({ ...bookingForm, venue: e.target.value })} placeholder="Venue" />
-                                  </div>
-                                  <div className="space-y-2">
-                                    <Label>Date</Label>
-                                    <Input type="datetime-local" value={bookingForm.event_date} onChange={(e) => setBookingForm({ ...bookingForm, event_date: e.target.value })} />
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Offered Price</Label>
-                                  <Input type="number" value={bookingForm.offered_price} onChange={(e) => setBookingForm({ ...bookingForm, offered_price: e.target.value })} placeholder="Amount" />
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Message</Label>
-                                  <Textarea value={bookingForm.message} onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })} placeholder="Tell the artist about your event..." rows={3} />
-                                </div>
-                                <Button onClick={handleBooking} disabled={submitting || !bookingForm.event_name} className="w-full">
-                                  {submitting ? "Sending..." : "Send Booking Request"}
-                                </Button>
-                              </div>
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-4 sm:space-y-6 px-4 sm:px-6">
-                      {/* Basic Information */}
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleSection(artist.id, 'basic')}
-                          className="w-full justify-between p-0 h-auto font-medium mb-3 text-sm sm:text-base"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4" /> Basic Information
-                          </div>
-                          {expandedSections[artist.id]?.basic ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <AnimatePresence>
-                          {expandedSections[artist.id]?.basic && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="grid grid-cols-1 gap-3 sm:gap-4 text-sm pt-2">
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Full Name:</span>
-                                  <p className="font-medium sm:text-right">{artist.full_name || "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Username:</span>
-                                  <p className="font-medium sm:text-right">{artist.username || "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Email:</span>
-                                  <p className="font-medium sm:text-right break-all">{artist.email || "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Phone:</span>
-                                  <p className="font-medium sm:text-right">{artist.phone || "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Location:</span>
-                                  <p className="font-medium sm:text-right">{[artist.city, artist.country].filter(Boolean).join(", ") || "-"}</p>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <Separator />
-
-                      {/* Artist Details */}
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleSection(artist.id, 'details')}
-                          className="w-full justify-between p-0 h-auto font-medium mb-3 text-sm sm:text-base"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Music className="w-4 h-4" /> Artist Details
-                          </div>
-                          {expandedSections[artist.id]?.details ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <AnimatePresence>
-                          {expandedSections[artist.id]?.details && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="grid grid-cols-1 gap-3 sm:gap-4 text-sm pt-2">
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Stage Name:</span>
-                                  <p className="font-medium sm:text-right">{artist.stage_name || "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Booking Price:</span>
-                                  <p className="font-medium sm:text-right">{artist.booking_price ? `₦${Number(artist.booking_price).toLocaleString()}` : "-"}</p>
-                                </div>
-                                <div className="flex flex-col sm:flex-row sm:justify-between">
-                                  <span className="text-muted-foreground">Artist Category:</span>
-                                  <p className="font-medium sm:text-right">{artist.artist_category || "-"}</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Services:</span>
-                                  <div className="flex flex-wrap gap-1 mt-1">
-                                    {artist.services?.length ? artist.services.map((s: string) => (
-                                      <Badge key={s} variant="secondary" className="text-xs">{s}</Badge>
-                                    )) : <span className="text-muted-foreground">-</span>}
-                                  </div>
-                                </div>
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <Separator />
-
-                      {/* Social Links */}
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleSection(artist.id, 'social')}
-                          className="w-full justify-between p-0 h-auto font-medium mb-3 text-sm sm:text-base"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Globe className="w-4 h-4" /> Social Links
-                          </div>
-                          {expandedSections[artist.id]?.social ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <AnimatePresence>
-                          {expandedSections[artist.id]?.social && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-4 text-sm pt-2">
-                                {socialLinks.facebook && (
-                                  <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                    <Facebook className="w-4 h-4" /> Facebook
-                                  </a>
-                                )}
-                                {socialLinks.instagram && (
-                                  <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-pink-600 hover:underline">
-                                    <Instagram className="w-4 h-4" /> Instagram
-                                  </a>
-                                )}
-                                {socialLinks.tiktok && (
-                                  <a href={socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-black hover:underline">
-                                    <Video className="w-4 h-4" /> TikTok
-                                  </a>
-                                )}
-                                {socialLinks.twitter && (
-                                  <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-400 hover:underline">
-                                    <Twitter className="w-4 h-4" /> Twitter
-                                  </a>
-                                )}
-                                {!socialLinks.facebook && !socialLinks.instagram && !socialLinks.tiktok && !socialLinks.twitter && (
-                                  <span className="text-muted-foreground">No social links provided</span>
-                                )}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <Separator />
-
-                      {/* Performance Videos */}
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleSection(artist.id, 'videos')}
-                          className="w-full justify-between p-0 h-auto font-medium mb-3 text-sm sm:text-base"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Video className="w-4 h-4" /> Performance Videos
-                          </div>
-                          {expandedSections[artist.id]?.videos ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <AnimatePresence>
-                          {expandedSections[artist.id]?.videos && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                              <div className="space-y-2 pt-2">
-                                {[0, 1, 2].map((index) => (
-                                  <div key={index} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 text-sm">
-                                    <span className="text-muted-foreground sm:min-w-[80px]">Video {index + 1}:</span>
-                                    {videos[index] ? (
-                                      <a href={videos[index]} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline break-all">
-                                        {videos[index]}
-                                      </a>
-                                    ) : (
-                                      <span className="text-muted-foreground">Not provided</span>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <Separator />
-
-                      {/* About */}
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => toggleSection(artist.id, 'about')}
-                          className="w-full justify-between p-0 h-auto font-medium mb-3 text-sm sm:text-base"
-                        >
-                          <div className="flex items-center gap-2">
-                            <Info className="w-4 h-4" /> About
-                          </div>
-                          {expandedSections[artist.id]?.about ? (
-                            <ChevronUp className="w-4 h-4" />
-                          ) : (
-                            <ChevronDown className="w-4 h-4" />
-                          )}
-                        </Button>
-                        <AnimatePresence>
-                          {expandedSections[artist.id]?.about && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: "auto", opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.3 }}
-                              className="overflow-hidden"
-                            >
-                              <p className="text-sm text-muted-foreground leading-relaxed pt-2">
-                                {artist.bio || "No bio provided yet."}
-                              </p>
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              );
-            })}
+          <div className="text-center py-12 text-gray-500 text-sm bg-muted/30 rounded-2xl border border-dashed border-gray-800">
+            <Music className="w-12 h-12 text-gray-600 mx-auto mb-3" />
+            <p>No artists found matching your criteria</p>
+            <button 
+              onClick={() => {
+                setSearch("");
+                setSelectedCategory("All");
+                setSelectedState(null);
+                setSelectedPriceRange(priceRanges[0]);
+              }}
+              className="mt-2 text-orange-500 hover:underline text-xs"
+            >
+              Clear all filters
+            </button>
           </div>
+        ) : (
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+          >
+            {filtered.map((artist) => (
+              <motion.div key={artist.id} variants={fadeUp}>
+                <button
+                  type="button"
+                  onClick={() => handleArtistClick(artist.id)}
+                  className="w-full bg-none border border-gray-800 rounded-2xl p-4 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02] hover:shadow-lg group"
+                >
+                  {/* Circular Avatar */}
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-3 rounded-full overflow-hidden bg-gray-800 ring-2 ring-transparent group-hover:ring-orange-500/30 transition-all">
+                    {artist.avatar_url ? (
+                      <img
+                        src={artist.avatar_url}
+                        alt={artist.stage_name || artist.full_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-gray-700 flex items-center justify-center">
+                        <span className="font-bold text-xl text-orange-400">
+                          {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Artist Name */}
+                  <h3 className="font-bold text-sm mb-0.5 truncate px-1 text-white group-hover:text-orange-400 transition-colors">
+                    {artist.stage_name || artist.full_name || "Artist"}
+                  </h3>
+
+                  {/* Category */}
+                  <p className="text-gray-500 text-xs mb-2">
+                    {artist.artist_category || artist.services?.[0] || "Artist"}
+                  </p>
+
+                  {/* Location */}
+                  <div className="flex items-center justify-center gap-1 mb-2">
+                    <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                    <span className="text-gray-400 text-xs truncate max-w-[100px]">
+                      {artist.city || artist.country 
+                        ? [artist.city, artist.country].filter(Boolean).join(", ")
+                        : "Location N/A"
+                      }
+                    </span>
+                  </div>
+
+                  {/* Price Tag */}
+                  <div className="inline-flex items-center bg-gray-800 rounded-lg px-3 py-1">
+                    <span className="text-xs font-semibold text-white">
+                      {artist.booking_price 
+                        ? `₦${Number(artist.booking_price).toLocaleString()}`
+                        : "Contact for price"
+                      }
+                    </span>
+                  </div>
+                </button>
+              </motion.div>
+            ))}
+          </motion.div>
         )}
       </motion.div>
     </DashboardLayout>

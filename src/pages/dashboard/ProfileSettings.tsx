@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -44,34 +45,37 @@ const ProfileSettings = () => {
     setProfile(data);
     setLoading(false);
   };
-
-  const handleSave = async () => {
-    setSaving(true);
-    const updates: Record<string, any> = {
-      full_name: profile.full_name,
-      username: profile.username,
-      phone: profile.phone,
-      city: profile.city,
-      country: profile.country,
-      bio: profile.bio,
-      booking_price: profile.booking_price,
-      social_links: profile.social_links || {},
-      video_urls: profile.video_urls || [],
-      avatar_url: profile.avatar_url || null,
-      artist_category: profile.artist_category || null,
-    } as any;
-    if (profile.account_type === "artist") {
-      updates.stage_name = profile.stage_name;
-      updates.services = profile.services;
-    }
-    const { error } = await supabase
-      .from("profiles")
-      .update(updates)
-      .eq("id", user!.id);
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Profile updated!");
+  
+const handleSave = async () => {
+  setSaving(true);
+  const updates = {  // Remove : TablesUpdate<"profiles">
+    full_name: profile?.full_name || null,
+    username: profile?.username || null,
+    phone: profile?.phone || null,
+    city: profile?.city || null,
+    country: profile?.country || null,
+    bio: profile?.bio || null,
+    booking_price: profile?.booking_price || null,
+    social_links: profile?.social_links || {},
+    video_urls: profile?.video_urls || [],
+    avatar_url: profile?.avatar_url || null,
+    artist_category: profile?.artist_category || null,
+    gallery_images: profile?.gallery_images || [], // Now should work
+    stage_name: profile?.account_type === "artist" ? profile?.stage_name || null : undefined,
+    services: profile?.account_type === "artist" || profile?.account_type === "organizer"
+      ? (profile?.services?.length ? profile.services : null)
+      : undefined,
   };
+  
+  const { error } = await supabase
+    .from("profiles")
+    .update(updates)
+    .eq("id", user!.id);
+    
+  setSaving(false);
+  if (error) toast.error(error.message);
+  else toast.success("Profile updated!");
+};
 
   const update = (field: string, value: any) =>
     setProfile((p: any) => ({ ...p, [field]: value }));
@@ -227,6 +231,98 @@ const ProfileSettings = () => {
         {/* Artist-specific fields */}
         {accountType === "artist" && (
           <>
+          {/* Social Links & Gallery */}
+            <Card className="border-border/40">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-display flex items-center gap-2">
+                  <Globe className="w-4 h-4 text-primary" />Gallery Photos
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+
+                {/* Gallery Images */}
+                <div className="space-y-3">
+                  <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <Camera className="w-3.5 h-3.5" /> Gallery Photos (3 max)
+                  </label>
+                  <div className="grid grid-cols-3 gap-3">
+                    {[0, 1, 2].map((index) => {
+                      const galleryImages = profile?.gallery_images || [];
+                      const imageUrl = galleryImages[index];
+                      
+                      return (
+                        <div key={index} className="relative aspect-square rounded-lg border border-border/50 overflow-hidden bg-muted/30 group">
+                          {imageUrl ? (
+                            <>
+                              <img 
+                                src={imageUrl} 
+                                alt={`Gallery ${index + 1}`} 
+                                className="w-full h-full object-cover"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const newImages = [...galleryImages];
+                                  newImages.splice(index, 1);
+                                  update("gallery_images", newImages);
+                                }}
+                                className="absolute top-1 right-1 p-1 rounded-full bg-destructive/90 text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={avatarUploading}
+                              onClick={() => document.getElementById(`gallery-upload-${index}`)?.click()}
+                              className="w-full h-full flex flex-col items-center justify-center gap-1.5 text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                              <Camera className="w-6 h-6" />
+                              <span className="text-[10px]">Add Photo</span>
+                            </button>
+                          )}
+                          <input 
+                            id={`gallery-upload-${index}`} 
+                            type="file" 
+                            accept="image/*" 
+                            className="hidden" 
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              
+                              try {
+                                const url = await uploadAvatar(file, { 
+                                  folder: "gallery", 
+                                  maxSizeMB: 5, 
+                                  acceptedTypes: ["image/"] 
+                                });
+                                if (url) {
+                                  const currentImages = [...(profile?.gallery_images || [])];
+                                  currentImages[index] = url;
+                                  update("gallery_images", currentImages);
+                                }
+                              } catch (err: any) {
+                                toast.error(err.message);
+                              }
+                              e.target.value = "";
+                            }}
+                          />
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {avatarUploading && (
+                    <div className="space-y-1">
+                      <Progress value={avatarProgress} className="h-1.5" />
+                      <span className="block text-center text-[10px] text-muted-foreground">{avatarProgress}% uploading...</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
             <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -264,6 +360,8 @@ const ProfileSettings = () => {
                 </div>
               </CardContent>
             </Card>
+            
+            
 
             {/* Social Links */}
             <Card className="border-border/40">
@@ -347,6 +445,8 @@ const ProfileSettings = () => {
                 ))}
               </CardContent>
             </Card>
+
+
           </>
         )}
 
