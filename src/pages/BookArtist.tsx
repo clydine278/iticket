@@ -248,75 +248,79 @@ const handleArtistClick = (artistId: string) => {
         </div>
 
         {/* Artists Grid */}
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+{/* Artists Grid */}
+{loading ? (
+  <div className="flex justify-center py-12">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+  </div>
+) : filtered.length === 0 ? (
+  <div className="text-center py-12 text-gray-500 text-sm">No artists found</div>
+) : (
+  <motion.div
+    initial="hidden"
+    animate="show"
+    variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+    className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4"
+  >
+    {filtered.map((artist) => (
+      <motion.div key={artist.id} variants={fadeUp}>
+        <button
+          type="button"
+          onClick={() => {
+            console.log("Clicked artist:", artist.id, artist);
+            handleArtistClick(artist.id);
+          }}
+          className="w-full bg-none border border-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02]"
+        >
+          {/* Circular Avatar - Smaller on mobile */}
+          <div className="w-32 h-32 xs:w-40 xs:h-40 sm:w-48 sm:h-48 mx-auto mb-2 sm:mb-3 rounded-full overflow-hidden bg-gray-800">
+            {artist.avatar_url ? (
+              <img
+                src={artist.avatar_url}
+                alt={artist.stage_name || artist.full_name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-gray-700 flex items-center justify-center">
+                <span className="font-bold text-base xs:text-lg sm:text-xl text-orange-400">
+                  {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                </span>
+              </div>
+            )}
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-500 text-sm">No artists found</div>
-        ) : (
-          <motion.div
-            initial="hidden"
-            animate="show"
-            variants={{ show: { transition: { staggerChildren: 0.06 } } }}
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-          >
-              {filtered.map((artist) => (
-                <motion.div key={artist.id} variants={fadeUp}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      console.log("Clicked artist:", artist.id, artist); // DEBUG
-                      handleArtistClick(artist.id);  // <-- CRITICAL: Must pass artist.id
-                    }}
-                    className="w-full bg-none border border-gray-800 rounded-2xl p-4 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02]"
-                  >
-                  {/* Circular Avatar */}
-                  <div className="w-48 h-48 mx-auto mb-3 rounded-full overflow-hidden bg-gray-800">
-                    {artist.avatar_url ? (
-                      <img
-                        src={artist.avatar_url}
-                        alt={artist.stage_name || artist.full_name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full bg-gradient-to-br from-orange-500/20 to-gray-700 flex items-center justify-center">
-                        <span className="font-bold text-lg text-orange-400">
-                          {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Artist Name */}
-                  <h3 className="font-bold text-sm mb-0.5 truncate px-1">
-                    {artist.stage_name || artist.full_name || "Artist"}
-                  </h3>
+          {/* Artist Name - Smaller text on mobile */}
+          <h3 className="font-bold text-xs sm:text-sm mb-0.5 truncate px-1">
+            {artist.stage_name || artist.full_name || "Artist"}
+          </h3>
 
-                  {/* Category */}
-                  <p className="text-gray-500 text-xs mb-3">
-                    {(artist as any).artist_category || artist.services?.[0] || "Artist"}
-                  </p>
+          {/* Category - Hidden on very small screens, shown on xs+ */}
+          <p className="text-gray-500 text-[10px] xs:text-xs mb-1 sm:mb-3 hidden xs:block">
+            {(artist as any).artist_category || artist.services?.[0] || "Artist"}
+          </p>
 
-                  {/* Location - Centered */}
-                  <div className="flex items-center justify-center gap-1.5 mb-3">
-                    <MapPin className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                    <span className="text-gray-400 text-xs truncate">
-                      {[artist.city, artist.country].filter(Boolean).join(", ") || "Location not specified"}
-                    </span>
-                  </div>
+          {/* Location - Simplified on mobile */}
+          <div className="flex items-center justify-center gap-1 mb-1 sm:mb-3">
+            <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-gray-500 flex-shrink-0" />
+            <span className="text-gray-400 text-[10px] xs:text-xs truncate max-w-[80px] xs:max-w-[100px] sm:max-w-none">
+              {artist.city || artist.country 
+                ? [artist.city, artist.country].filter(Boolean).join(", ").substring(0, 12) + ([artist.city, artist.country].filter(Boolean).join(", ").length > 12 ? "..." : "")
+                : "N/A"
+              }
+            </span>
+          </div>
 
-                  {/* Price Tag */}
-                  <div className="inline-flex items-center bg-gray-800 rounded-md px-3 py-1">
-                    <span className="text-xs font-semibold text-white">
-                      ₦{Number(artist.booking_price || 0).toLocaleString()}
-                    </span>
-                  </div>
-                </button>
-              </motion.div>
-            ))}
-          </motion.div>
-        )}
+          {/* Price Tag - Smaller on mobile */}
+          <div className="inline-flex items-center bg-gray-800 rounded px-2 sm:rounded-md py-0.5 sm:py-1">
+            <span className="text-[10px] xs:text-xs font-semibold text-white">
+              ₦{Number(artist.booking_price || 0).toLocaleString()}
+            </span>
+          </div>
+        </button>
+      </motion.div>
+    ))}
+  </motion.div>
+)}
       </section>
 
       <Footer />

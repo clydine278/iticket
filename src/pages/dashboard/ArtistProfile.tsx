@@ -7,8 +7,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MapPin, Mail, Phone, Globe, Sparkles, Music, Facebook, Instagram, Twitter, Video, Camera } from "lucide-react";
+import { 
+  MapPin, 
+  Mail, 
+  Phone, 
+  Facebook, 
+  Instagram, 
+  Twitter, 
+  Video,
+  Music,
+  Sparkles
+} from "lucide-react";
+import { motion } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
 
 const ArtistProfile = () => {
@@ -25,6 +35,7 @@ const ArtistProfile = () => {
     message: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
 
   useEffect(() => {
     const fetchArtist = async () => {
@@ -81,251 +92,349 @@ const ArtistProfile = () => {
 
     toast({ title: "Booking request sent", description: "The artist will be notified.", variant: "default" });
     setBookingForm({ event_name: "", venue: "", event_date: "", offered_price: "", message: "" });
+    setShowBookingForm(false);
   };
 
   const socialLinks = (artist?.social_links || {}) as Record<string, string>;
   const services = artist?.services || [];
   const videos = artist?.video_urls || [];
 
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="min-h-[320px] rounded-3xl border border-red-500/30 bg-red-500/5 p-8 text-red-400">
+          <h2 className="text-xl font-semibold">Unable to load artist</h2>
+          <p className="mt-2 text-sm">{error}</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!artist) return null;
+
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        {loading ? (
-          <div className="min-h-[320px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
+      <div className="min-h-screen bg-black text-white pb-12">
+        {/* Hero Section - Matching ArtistDetail */}
+        <section className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
+          
+          <div className="container flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 py-8 md:py-12 relative z-20">
+            {/* Mobile: Circular Avatar / Desktop: Large Image */}
+            <div className="flex-shrink-0">
+              {/* Mobile: Small circular avatar */}
+              <div className="md:hidden w-20 h-20 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-800">
+                {artist.avatar_url ? (
+                  <img 
+                    src={artist.avatar_url} 
+                    alt={artist.stage_name || artist.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
+                    <span className="font-bold text-lg text-orange-400">
+                      {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Desktop: Large rectangular image */}
+              <div className="hidden md:block w-full md:w-[400px] lg:w-[500px] aspect-square md:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-800">
+                {artist.avatar_url ? (
+                  <img 
+                    src={artist.avatar_url} 
+                    alt={artist.stage_name || artist.full_name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
+                    <span className="font-bold text-4xl text-orange-400">
+                      {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Artist Info */}
+            <div className="flex-1 md:pl-8">
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2"
+              >
+                {artist.stage_name || artist.full_name || "Artist"}
+              </motion.h1>
+              <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">
+                {artist.artist_category || services[0] || "Artist"}
+              </p>
+              <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">
+                Average Booking Price: {" "}
+                <span className="text-white font-semibold">
+                  {artist.booking_price 
+                    ? `₦${Number(artist.booking_price).toLocaleString()}`
+                    : "Contact for pricing"
+                  }
+                </span>
+              </p>
+              <div className="flex items-center gap-1 text-gray-400 text-xs md:text-sm mb-4 md:mb-6">
+                <MapPin className="w-3 h-3 md:w-4 md:h-4" /> 
+                <span className="truncate">
+                  {[artist.city, artist.country].filter(Boolean).join(", ") || "Not specified"}
+                </span>
+              </div>
+              
+              {/* Book Artist Button */}
+              <Button 
+                onClick={() => setShowBookingForm(true)}
+                className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-8 md:px-12 py-4 md:py-6 text-xs md:text-sm font-semibold"
+              >
+                Book Artist
+              </Button>
+            </div>
           </div>
-        ) : error ? (
-          <div className="min-h-[320px] rounded-3xl border border-destructive/30 bg-destructive/5 p-8 text-destructive">
-            <h2 className="text-xl font-semibold">Unable to load artist</h2>
-            <p className="mt-2 text-sm">{error}</p>
-          </div>
-        ) : (
-          <>
-            <section className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
-              <Card className="border-border/70 bg-background p-6">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-20 w-20">
-                      {artist?.avatar_url ? (
-                        <img src={artist.avatar_url} alt={artist.stage_name || artist.full_name || "Artist"} />
-                      ) : (
-                        <AvatarFallback className="bg-gradient-to-br from-primary to-accent text-primary-foreground font-bold">
-                          {(artist?.stage_name || artist?.full_name || "AR").slice(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
+        </section>
+
+        {/* Main Content Grid */}
+        <section className="container py-8 md:py-12">
+          <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
+            {/* Left Column */}
+            <div className="space-y-4 md:space-y-6">
+              {/* Basic Information */}
+              <Card className="bg-[#1a1a1a] border-gray-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base md:text-lg">Basic Information</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <p className="text-sm text-muted-foreground">Artist Profile</p>
-                      <h1 className="text-3xl font-semibold">{artist?.stage_name || artist?.full_name || "Unknown Artist"}</h1>
-                      <p className="mt-1 text-sm text-muted-foreground">{artist?.artist_category || "Artist"}</p>
-                      <div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        {artist?.email && (
-                          <span className="inline-flex items-center gap-1">
-                            <Mail className="w-3.5 h-3.5" /> {artist.email}
-                          </span>
-                        )}
-                        {artist?.city && (
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="w-3.5 h-3.5" /> {artist.city}
-                          </span>
-                        )}
-                      </div>
+                      <p className="text-xs text-gray-500 mb-1">Full Name</p>
+                      <p className="text-white">{artist.full_name || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Username</p>
+                      <p className="text-white">{artist.username || "-"}</p>
                     </div>
                   </div>
-                  <div className="space-y-2 text-right">
-                    <Button size="sm">Change photo</Button>
-                    <div className="rounded-2xl border border-border p-3">
-                      <p className="text-xs text-muted-foreground">Booking price</p>
-                      <p className="text-xl font-semibold">{artist?.booking_price ? `₦${Number(artist.booking_price).toLocaleString()}` : "Not set"}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Email</p>
+                      <p className="text-white break-all">{artist.email || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Phone</p>
+                      <p className="text-white">{artist.phone || "-"}</p>
                     </div>
                   </div>
-                </div>
+                  <div>
+                    <p className="text-xs text-gray-500 mb-1">Location</p>
+                    <p className="text-white">{[artist.city, artist.country].filter(Boolean).join(", ") || "-"}</p>
+                  </div>
+                </CardContent>
               </Card>
 
-              <div className="space-y-4">
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle className="text-base">Book {artist?.stage_name || artist?.full_name || "this artist"}</CardTitle>
+              {/* Artist Details */}
+              <Card className="bg-[#1a1a1a] border-gray-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base md:text-lg">Artist Details</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-3 md:gap-4 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Stage Name</p>
+                      <p className="text-white">{artist.stage_name || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Booking Price</p>
+                      <p className="text-white">{artist.booking_price ? `₦${Number(artist.booking_price).toLocaleString()}` : "-"}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Artist Category</p>
+                      <p className="text-white">{artist.artist_category || "-"}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-gray-500 mb-1">Services</p>
+                      <p className="text-white">{services.length ? services.join(", ") : "-"}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Social Links */}
+              <Card className="bg-[#1a1a1a] border-gray-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base md:text-lg">Social Links</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 md:space-y-3">
+                  {[
+                    { label: "Facebook", key: "facebook", icon: <Facebook className="w-4 h-4 text-gray-500" /> },
+                    { label: "Instagram", key: "instagram", icon: <Instagram className="w-4 h-4 text-gray-500" /> },
+                    { label: "TikTok", key: "tiktok", icon: <Video className="w-4 h-4 text-gray-500" /> },
+                    { label: "Twitter", key: "twitter", icon: <Twitter className="w-4 h-4 text-gray-500" /> },
+                  ].map((social) => (
+                    <div key={social.key} className="flex items-center gap-2 text-sm">
+                      {social.icon}
+                      <span className="text-gray-500 min-w-[80px]">{social.label}:</span>
+                      <span className="text-white flex-1">
+                        {socialLinks[social.key] ? (
+                          <a 
+                            href={socialLinks[social.key]} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-orange-500 hover:underline break-all"
+                          >
+                            {socialLinks[social.key]}
+                          </a>
+                        ) : (
+                          <span className="text-gray-500">Not provided</span>
+                        )}
+                      </span>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Performance Videos */}
+              <Card className="bg-[#1a1a1a] border-gray-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-white text-base md:text-lg">Performance Videos</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 md:space-y-3">
+                  {[0, 1, 2].map((index) => (
+                    <div key={index} className="rounded-xl border border-gray-700 p-3 md:p-4 bg-gray-900/50">
+                      <p className="text-xs text-gray-500 mb-1">Video {index + 1}</p>
+                      <p className="text-sm text-white">
+                        {videos[index] ? (
+                          <a 
+                            href={videos[index]} 
+                            target="_blank" 
+                            rel="noreferrer" 
+                            className="text-orange-500 hover:underline break-all"
+                          >
+                            {videos[index]}
+                          </a>
+                        ) : (
+                          <span className="text-gray-500">No video provided</span>
+                        )}
+                      </p>
+                    </div>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Right Column - Booking Form or About */}
+            <div className="space-y-4 md:space-y-6">
+              {showBookingForm ? (
+                /* Booking Form Card */
+                <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base">
+                      Book {artist.stage_name || artist.full_name || "this artist"}
+                    </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Event Name</label>
+                  <CardContent className="space-y-3 md:space-y-4">
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-gray-500">Event Name</label>
                       <Input
                         value={bookingForm.event_name}
                         onChange={(e) => setBookingForm({ ...bookingForm, event_name: e.target.value })}
                         placeholder="My private concert"
-                        className="h-10"
+                        className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
                       />
                     </div>
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">Venue</label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-gray-500">Venue</label>
                         <Input
                           value={bookingForm.venue}
                           onChange={(e) => setBookingForm({ ...bookingForm, venue: e.target.value })}
                           placeholder="Venue name"
-                          className="h-10"
+                          className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
                         />
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-xs text-muted-foreground">Event Date</label>
+                      <div className="space-y-1.5">
+                        <label className="text-xs text-gray-500">Event Date</label>
                         <Input
                           type="date"
                           value={bookingForm.event_date}
                           onChange={(e) => setBookingForm({ ...bookingForm, event_date: e.target.value })}
-                          className="h-10"
+                          className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white text-sm"
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Offered Price</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-gray-500">Offered Price</label>
                       <Input
                         type="number"
                         value={bookingForm.offered_price}
                         onChange={(e) => setBookingForm({ ...bookingForm, offered_price: e.target.value })}
                         placeholder="10000"
-                        className="h-10"
+                        className="h-9 md:h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <label className="text-xs text-muted-foreground">Message</label>
+                    <div className="space-y-1.5">
+                      <label className="text-xs text-gray-500">Message</label>
                       <Textarea
                         value={bookingForm.message}
                         onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })}
                         placeholder="Tell the artist about your event"
-                        className="min-h-[120px]"
+                        className="min-h-[100px] md:min-h-[120px] bg-gray-900 border-gray-700 text-white placeholder:text-gray-600 text-sm"
                       />
                     </div>
-                    <Button onClick={handleBooking} disabled={submitting} className="w-full rounded-full">
-                      {submitting ? "Sending request..." : "Send Booking Request"}
+                    <div className="flex gap-2 pt-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => setShowBookingForm(false)}
+                        className="flex-1 rounded-full border-gray-600 text-white hover:bg-gray-800 text-xs md:text-sm"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={handleBooking} 
+                        disabled={submitting}
+                        className="flex-1 rounded-full bg-orange-500 hover:bg-orange-600 text-white text-xs md:text-sm"
+                      >
+                        {submitting ? "Sending..." : "Send Request"}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                /* About Card (shown when booking form is hidden) */
+                <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-white text-base md:text-lg">About</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm leading-6 text-gray-400">
+                      {artist.bio || "No bio yet. The artist can add a description from their profile settings."}
+                    </p>
+                    <Button 
+                      onClick={() => setShowBookingForm(true)}
+                      className="w-full mt-4 rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      Book This Artist
                     </Button>
                   </CardContent>
                 </Card>
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle className="text-base">About this artist</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      Review the artist details and booking requirements before sending your request.
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-
-            <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-              <div className="space-y-6">
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle>Basic Information</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Full Name</p>
-                      <p>{artist.full_name || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Username</p>
-                      <p>{artist.username || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Email</p>
-                      <p>{artist.email || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Phone</p>
-                      <p>{artist.phone || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Location</p>
-                      <p>{[artist.city, artist.country].filter(Boolean).join(", ") || "-"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle>Artist Details</CardTitle>
-                  </CardHeader>
-                  <CardContent className="grid gap-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Stage Name</p>
-                      <p>{artist.stage_name || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Booking Price</p>
-                      <p>{artist.booking_price ? `₦${Number(artist.booking_price).toLocaleString()}` : "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Artist Category</p>
-                      <p>{artist.artist_category || "-"}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Services</p>
-                      <p>{services.length ? services.join(", ") : "-"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle>Social Links</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {[
-                      { label: "Facebook", key: "facebook", icon: <Facebook className="w-4 h-4" /> },
-                      { label: "Instagram", key: "instagram", icon: <Instagram className="w-4 h-4" /> },
-                      { label: "TikTok", key: "tiktok", icon: <Video className="w-4 h-4" /> },
-                      { label: "Twitter", key: "twitter", icon: <Twitter className="w-4 h-4" /> },
-                    ].map((social) => (
-                      <div key={social.key} className="flex items-center gap-2 text-sm text-muted-foreground">
-                        {social.icon}
-                        <span>{social.label}:</span>
-                        <span className="text-foreground">{socialLinks[social.key] || "Not provided"}</span>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="space-y-6">
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle>Performance Videos</CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    {[0, 1, 2].map((index) => (
-                      <div key={index} className="rounded-2xl border border-border/60 p-4">
-                        <p className="text-xs text-muted-foreground">Video {index + 1}</p>
-                        <p className="mt-2 text-sm text-foreground">
-                          {videos[index] ? (
-                            <a href={videos[index]} target="_blank" rel="noreferrer" className="text-primary hover:underline">
-                              {videos[index]}
-                            </a>
-                          ) : (
-                            "No video provided"
-                          )}
-                        </p>
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card className="border-border/70 bg-background p-6">
-                  <CardHeader>
-                    <CardTitle>About</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm leading-6 text-muted-foreground">
-                      {artist.bio || "No bio yet. The artist can add a description from their profile settings."}
-                    </p>
-                  </CardContent>
-                </Card>
-              </div>
-            </section>
-          </>
-        )}
+              )}
+            </div>
+          </div>
+        </section>
       </div>
     </DashboardLayout>
   );

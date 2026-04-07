@@ -176,27 +176,27 @@ const Index = () => {
 
       {/* Hire Artists from DB */}
       {artists.length > 0 && (
-        <section className="bg-black text-white py-16">
-          <div className="container">
-            <h2 className="font-display text-xl font-bold text-center mb-10">Hire our talented Artists</h2>
+        <section className="bg-black text-white py-8 sm:py-12 md:py-16">
+          <div className="container px-4 sm:px-6">
+            <h2 className="font-display text-lg sm:text-xl font-bold text-center mb-6 sm:mb-10">Hire our talented Artists</h2>
             <motion.div 
               initial="hidden" 
               whileInView="show" 
               viewport={{ once: true }} 
               variants={stagger} 
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6"
             >
               {artists.map((artist) => (
                 <motion.div key={artist.id} variants={fadeUp}>
                   <div
                     onClick={() => handleArtistClick(artist.id)}
-                    className="block w-full bg-none border border-gray-800 rounded-2xl p-5 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                    className="block w-full bg-none border border-gray-800 rounded-xl sm:rounded-2xl p-3 sm:p-4 md:p-5 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => e.key === 'Enter' && handleArtistClick(artist.id)}
                   >
-                    {/* Circular Avatar */}
-                    <div className="w-48 h-48 mx-auto mb-4 rounded-full overflow-hidden border-2 border-gray-700">
+                    {/* Circular Avatar - Responsive sizes */}
+                    <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 mx-auto mb-2 sm:mb-3 md:mb-4 rounded-full overflow-hidden border-2 border-gray-700">
                       {artist.avatar_url ? (
                         <img 
                           src={artist.avatar_url} 
@@ -205,27 +205,27 @@ const Index = () => {
                         />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
-                          <span className="font-bold text-xl text-orange-400">
+                          <span className="font-bold text-sm sm:text-base md:text-lg lg:text-xl text-orange-400">
                             {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
                           </span>
                         </div>
                       )}
                     </div>
 
-                    {/* Artist Name */}
-                    <h3 className="font-bold text-sm mb-1 truncate">
+                    {/* Artist Name - Responsive text */}
+                    <h3 className="font-bold text-xs sm:text-sm mb-0.5 sm:mb-1 truncate px-1">
                       {artist.stage_name || artist.full_name || "Artist"}
                     </h3>
 
-                    {/* Category */}
-                    <p className="text-gray-400 text-xs mb-3">
+                    {/* Category - Hidden on smallest screens */}
+                    <p className="text-gray-400 text-[10px] sm:text-xs mb-1 sm:mb-2 md:mb-3 hidden sm:block">
                       {(artist as any).artist_category || artist.services?.[0] || "Artist"}
                     </p>
 
-                    {/* Location */}
-                    <div className="flex items-center justify-center gap-1.5 mb-3">
+                    {/* Location - Simplified on mobile */}
+                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-1 sm:mb-2 md:mb-3">
                       <svg 
-                        className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" 
+                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 text-gray-500 flex-shrink-0" 
                         fill="none" 
                         stroke="currentColor" 
                         viewBox="0 0 24 24"
@@ -243,14 +243,15 @@ const Index = () => {
                           d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" 
                         />
                       </svg>
-                      <span className="text-gray-400 text-xs truncate">
-                        {[artist.city, artist.country].filter(Boolean).join(", ") || "Location not specified"}
+                      <span className="text-gray-400 text-[10px] sm:text-xs truncate max-w-[60px] sm:max-w-[80px] md:max-w-none">
+                        {[artist.city, artist.country].filter(Boolean).join(", ").substring(0, 15) || "N/A"}
+                        {[artist.city, artist.country].filter(Boolean).join(", ").length > 15 ? "..." : ""}
                       </span>
                     </div>
 
-                    {/* Price Tag */}
-                    <div className="inline-flex items-center bg-gray-800 rounded-full px-4 py-1.5">
-                      <span className="text-sm font-semibold text-white">
+                    {/* Price Tag - Responsive */}
+                    <div className="inline-flex items-center bg-gray-800 rounded-full px-2 sm:px-3 md:px-4 py-1 sm:py-1 md:py-1.5">
+                      <span className="text-[10px] sm:text-xs md:text-sm font-semibold text-white">
                         ₦{Number(artist.booking_price || 0).toLocaleString()}
                       </span>
                     </div>
@@ -259,13 +260,13 @@ const Index = () => {
               ))}
             </motion.div>
             
-            <div className="text-center mt-8">
+            <div className="text-center mt-6 sm:mt-8">
               <Link 
                 to="/book-artist" 
-                className="inline-flex items-center gap-2 text-orange-500 text-sm font-medium hover:text-orange-400 transition-colors"
+                className="inline-flex items-center gap-2 text-orange-500 text-xs sm:text-sm font-medium hover:text-orange-400 transition-colors"
               >
                 See more 
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-3 h-3 sm:w-4 sm:h-4" />
               </Link>
             </div>
           </div>
