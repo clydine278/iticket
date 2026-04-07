@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import type { TablesUpdate } from "@/integrations/supabase/types";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -47,23 +48,23 @@ const ProfileSettings = () => {
 
   const handleSave = async () => {
     setSaving(true);
-    const updates: Record<string, any> = {
-      full_name: profile.full_name,
-      username: profile.username,
-      phone: profile.phone,
-      city: profile.city,
-      country: profile.country,
-      bio: profile.bio,
-      booking_price: profile.booking_price,
+    const updates: TablesUpdate<"profiles"> = {
+      full_name: profile.full_name || null,
+      username: profile.username || null,
+      phone: profile.phone || null,
+      city: profile.city || null,
+      country: profile.country || null,
+      bio: profile.bio || null,
+      booking_price: profile.booking_price || null,
       social_links: profile.social_links || {},
       video_urls: profile.video_urls || [],
       avatar_url: profile.avatar_url || null,
       artist_category: profile.artist_category || null,
-    } as any;
-    if (profile.account_type === "artist") {
-      updates.stage_name = profile.stage_name;
-      updates.services = profile.services;
-    }
+      stage_name: profile.account_type === "artist" ? profile.stage_name || null : undefined,
+      services: profile.account_type === "artist" || profile.account_type === "organizer"
+        ? (profile.services?.length ? profile.services : null)
+        : undefined,
+    };
     const { error } = await supabase
       .from("profiles")
       .update(updates)
