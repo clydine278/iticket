@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Added useNavigate
 import { Button } from "@/components/ui/button";
 import { Ticket, Users, Calendar, Award, Sparkles, Search, ArrowRight } from "lucide-react";
 import { motion } from "framer-motion";
@@ -25,10 +25,21 @@ const stagger = {
 };
 
 const Index = () => {
+  const navigate = useNavigate(); // Added navigate hook
   const [events, setEvents] = useState<any[]>([]);
   const [artists, setArtists] = useState<any[]>([]);
   const [challenges, setChallenges] = useState<any[]>([]);
   const [stats, setStats] = useState({ events: 0, artists: 0, tickets: 0, challenges: 0 });
+  const [user, setUser] = useState<any>(null); // Added user state
+
+  // Fetch user on mount
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -63,6 +74,22 @@ const Index = () => {
   const cheapestPrice = (event: any) => {
     const prices = event.ticket_types?.map((t: any) => t.price).filter((p: number) => p > 0) || [];
     return prices.length > 0 ? Math.min(...prices) : 0;
+  };
+
+  // Handle artist click with auth check
+  const handleArtistClick = (artistId: string) => {
+    console.log("Clicked artist:", artistId, "User:", user);
+    
+    if (!artistId) {
+      console.error("No artist ID!");
+      return;
+    }
+    
+    if (user) {
+      navigate(`/dashboard/artist/${artistId}`);
+    } else {
+      navigate(`/artist/${artistId}`);
+    }
   };
 
   return (
@@ -149,39 +176,97 @@ const Index = () => {
 
       {/* Hire Artists from DB */}
       {artists.length > 0 && (
-        <section className="bg-hero text-hero-foreground py-10">
+        <section className="bg-black text-white py-16">
           <div className="container">
-            <h2 className="font-display text-lg font-bold text-center mb-6">Hire our talented Artists</h2>
-            <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <h2 className="font-display text-xl font-bold text-center mb-10">Hire our talented Artists</h2>
+            <motion.div 
+              initial="hidden" 
+              whileInView="show" 
+              viewport={{ once: true }} 
+              variants={stagger} 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+            >
               {artists.map((artist) => (
                 <motion.div key={artist.id} variants={fadeUp}>
-                  <Link to="/book-artist" className="block rounded-xl overflow-hidden">
-                    {artist.avatar_url ? (
-                      <img src={artist.avatar_url} alt={artist.stage_name || artist.full_name} className="h-48 w-full object-cover" />
-                    ) : (
-                      <div className="h-48 bg-gradient-to-br from-primary/30 to-muted/20 flex items-center justify-center">
-                        <span className="font-bold text-4xl text-primary/60">
-                          {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
-                    )}
-                    <div className="p-3 bg-hero">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="font-bold text-sm">{artist.stage_name || artist.full_name || "Artist"}</h3>
-                          <p className="text-hero-foreground/60 text-[10px]">{(artist as any).artist_category || artist.services?.[0] || "Artist"}</p>
-                          <p className="text-hero-foreground/60 text-[10px]">{[artist.city, artist.country].filter(Boolean).join(", ") || ""}</p>
+                  <div
+                    onClick={() => handleArtistClick(artist.id)}
+                    className="block w-full bg-none border border-gray-800 rounded-2xl p-5 text-center hover:border-gray-600 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => e.key === 'Enter' && handleArtistClick(artist.id)}
+                  >
+                    {/* Circular Avatar */}
+                    <div className="w-48 h-48 mx-auto mb-4 rounded-full overflow-hidden border-2 border-gray-700">
+                      {artist.avatar_url ? (
+                        <img 
+                          src={artist.avatar_url} 
+                          alt={artist.stage_name || artist.full_name} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
+                          <span className="font-bold text-xl text-orange-400">
+                            {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
-                        {artist.booking_price && <p className="font-bold text-sm">₦{Number(artist.booking_price).toLocaleString()}</p>}
-                      </div>
-                      <Button size="sm" className="rounded-full text-[10px] h-7 px-3 mt-2">Book Now</Button>
+                      )}
                     </div>
-                  </Link>
+
+                    {/* Artist Name */}
+                    <h3 className="font-bold text-sm mb-1 truncate">
+                      {artist.stage_name || artist.full_name || "Artist"}
+                    </h3>
+
+                    {/* Category */}
+                    <p className="text-gray-400 text-xs mb-3">
+                      {(artist as any).artist_category || artist.services?.[0] || "Artist"}
+                    </p>
+
+                    {/* Location */}
+                    <div className="flex items-center justify-center gap-1.5 mb-3">
+                      <svg 
+                        className="w-3.5 h-3.5 text-gray-500 flex-shrink-0" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        viewBox="0 0 24 24"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" 
+                        />
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" 
+                        />
+                      </svg>
+                      <span className="text-gray-400 text-xs truncate">
+                        {[artist.city, artist.country].filter(Boolean).join(", ") || "Location not specified"}
+                      </span>
+                    </div>
+
+                    {/* Price Tag */}
+                    <div className="inline-flex items-center bg-gray-800 rounded-full px-4 py-1.5">
+                      <span className="text-sm font-semibold text-white">
+                        ₦{Number(artist.booking_price || 0).toLocaleString()}
+                      </span>
+                    </div>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
-            <div className="text-right mt-3">
-              <Link to="/book-artist" className="text-primary text-xs font-medium">See more...</Link>
+            
+            <div className="text-center mt-8">
+              <Link 
+                to="/book-artist" 
+                className="inline-flex items-center gap-2 text-orange-500 text-sm font-medium hover:text-orange-400 transition-colors"
+              >
+                See more 
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </section>

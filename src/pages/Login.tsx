@@ -11,7 +11,8 @@ import Navbar from "@/components/Navbar";
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as any)?.from || "/dashboard";
+  const state = location.state as any;
+  const from = state?.redirectTo ?? state?.from ?? "/dashboard";
   
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

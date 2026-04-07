@@ -10,9 +10,10 @@ import BuyTickets from "./pages/BuyTickets";
 import EventDetailPage from "./pages/EventDetailPage";
 import Checkout from "./pages/Checkout";
 import Challenges from "./pages/Challenges";
+import ArtistDetail from "@/pages/ArtistDetail";
 import ChallengeDetail from "./pages/ChallengeDetail";
 import BookArtist from "./pages/BookArtist";
-import ArtistDetail from "./pages/ArtistDetail";
+import ArtistProfile from "./pages/dashboard/ArtistProfile";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -55,7 +56,7 @@ const App = () => (
               <Route path="/challenges" element={<Challenges />} />
               <Route path="/challenge/:id" element={<ChallengeDetail />} />
               <Route path="/book-artist" element={<BookArtist />} />
-              <Route path="/artist/:id" element={<ArtistDetail />} />
+              <Route path="/artist/:artistId" element={<ArtistDetail />} />
               <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/login" element={<Login />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -69,6 +70,7 @@ const App = () => (
               <Route path="/dashboard/edit-event/:id" element={<EditEvent />} />
               <Route path="/dashboard/create-challenge" element={<CreateChallenge />} />
               <Route path="/dashboard/challenges" element={<MyChallenges />} />
+              <Route path="/dashboard/artist/:id" element={<ArtistProfile />} />
               <Route path="/dashboard/bookings" element={<MyBookings />} />
               <Route path="/dashboard/browse-events" element={<BrowseEvents />} />
               <Route path="/dashboard/browse-challenges" element={<BrowseChallenges />} />

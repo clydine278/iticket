@@ -33,6 +33,14 @@ const artistCategories = [
   "Saxophonist", "Trumpeter", "Violinist", "Spoken Word", "Poet", "Other",
 ];
 
+const nigerianStates = [
+  "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", "Borno",
+  "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "FCT", "Gombe",
+  "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara",
+  "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau",
+  "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara"
+];
+
 const steps = ["Account type", "About you", "Email Confirmation"];
 
 const socialPlatforms = ["Facebook", "Instagram", "Tiktok", "Twitter"];
@@ -69,7 +77,7 @@ const CreateAccount = () => {
 
   const [formData, setFormData] = useState({
     firstName: "", username: "", email: "", phone: "",
-    country: "", city: "", dob: "", password: "", password2: "",
+    country: "", state: "", dob: "", password: "", password2: "",
     fullName: "", stageName: "", aboutYou: "", artistCategory: "",
     socialFacebook: "", socialInstagram: "", socialTiktok: "", socialTwitter: "",
     videoUrl1: "", videoUrl2: "", videoUrl3: "",
@@ -155,7 +163,7 @@ const CreateAccount = () => {
           username: formData.username,
           stage_name: formData.stageName,
           phone: formData.phone,
-          city: formData.city,
+          city: formData.state,
           country: formData.country,
         },
       },
@@ -305,8 +313,17 @@ const CreateAccount = () => {
           </Select>
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">City</label>
-          <Input placeholder="City" value={formData.city} onChange={(e) => updateField("city", e.target.value)} className="h-10 text-sm border-border/50" />
+          <label className="text-xs text-muted-foreground mb-1 block">State</label>
+          <Select value={formData.state} onValueChange={(v) => updateField("state", v)}>
+            <SelectTrigger className="h-10 text-sm border-border/50">
+              <SelectValue placeholder="Select state" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {nigerianStates.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </motion.div>
       <motion.div variants={itemFade}>
@@ -379,8 +396,17 @@ const CreateAccount = () => {
           <Input placeholder="Phone Number" type="tel" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">City</label>
-          <Input placeholder="City" value={formData.city} onChange={(e) => updateField("city", e.target.value)} className="h-10 text-sm border-border/50" />
+          <label className="text-xs text-muted-foreground mb-1 block">State</label>
+          <Select value={formData.state} onValueChange={(v) => updateField("state", v)}>
+            <SelectTrigger className="h-10 text-sm border-border/50">
+              <SelectValue placeholder="Select state" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {nigerianStates.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </motion.div>
 
@@ -550,8 +576,17 @@ const CreateAccount = () => {
           <Input placeholder="Phone Number" type="tel" value={formData.phone} onChange={(e) => updateField("phone", e.target.value)} className="h-10 text-sm border-border/50" />
         </div>
         <div>
-          <label className="text-xs text-muted-foreground mb-1 block">City</label>
-          <Input placeholder="City" value={formData.city} onChange={(e) => updateField("city", e.target.value)} className="h-10 text-sm border-border/50" />
+          <label className="text-xs text-muted-foreground mb-1 block">State</label>
+          <Select value={formData.state} onValueChange={(v) => updateField("state", v)}>
+            <SelectTrigger className="h-10 text-sm border-border/50">
+              <SelectValue placeholder="Select state" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {nigerianStates.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </motion.div>
 

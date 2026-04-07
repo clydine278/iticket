@@ -1,306 +1,429 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { MapPin } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  MapPin, 
+  Mail, 
+  Phone, 
+  Facebook, 
+  Instagram, 
+  Twitter, 
+  Video,
+  Music,
+  Sparkles
+} from "lucide-react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-
-const serviceTypes = ["Live Performance", "Hosting/MC", "Meet & Greet", "Brand Promotion"];
+import { supabase } from "@/integrations/supabase/client";
 
 const ArtistDetail = () => {
   const navigate = useNavigate();
-  const [selectedServices, setSelectedServices] = useState<string[]>(["Live Performance"]);
-  const [agreed, setAgreed] = useState(false);
-  const [view, setView] = useState<"info" | "booking" | "checkout">("info");
+  const params = useParams();
+  const artistId = params.artistId;
+  
+  const [artist, setArtist] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [bookingForm, setBookingForm] = useState({
+    event_name: "",
+    venue: "",
+    event_date: "",
+    offered_price: "",
+    message: "",
+  });
 
-  const toggleService = (s: string) => {
-    setSelectedServices((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    );
+  useEffect(() => {
+    if (!artistId) {
+      setError("No artist ID provided");
+      setLoading(false);
+      return;
+    }
+
+    const fetchArtist = async () => {
+      try {
+        const { data, error: supabaseError } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", artistId)
+          .eq("account_type", "artist")
+          .maybeSingle();
+
+        if (supabaseError) {
+          setError(`Database error: ${supabaseError.message}`);
+          setLoading(false);
+          return;
+        }
+
+        if (!data) {
+          setError("Artist not found");
+          setLoading(false);
+          return;
+        }
+
+        setArtist(data);
+        setLoading(false);
+      } catch (err) {
+        console.error("Unexpected error:", err);
+        setError("An unexpected error occurred");
+        setLoading(false);
+      }
+    };
+
+    fetchArtist();
+  }, [artistId]);
+
+  const handleBookClick = () => {
+    navigate("/login", { 
+      state: { 
+        redirectTo: `/artist/${artistId}`,
+        message: "Please sign in to book this artist" 
+      } 
+    });
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+  const socialLinks = (artist?.social_links || {}) as Record<string, string>;
+  const services = artist?.services || [];
+  const videos = artist?.video_urls || [];
 
-      {/* Artist Hero */}
-      <section className="bg-hero text-hero-foreground">
-        <div className="container flex flex-col md:flex-row items-center gap-6 py-8">
-          <div className="w-full md:w-1/2 h-48 md:h-64 rounded-xl bg-gradient-to-br from-primary/30 to-muted/20 overflow-hidden" />
-          <div className="flex-1">
+  if (!artistId) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="flex flex-col justify-center items-center h-96 gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+          <p className="text-gray-400 text-sm">Loading...</p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="flex flex-col justify-center items-center h-96 gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navbar />
+        <div className="flex flex-col justify-center items-center h-96 gap-4">
+          <p className="text-red-400 text-lg">{error}</p>
+          <Button 
+            onClick={() => navigate("/book-artist")}
+            className="bg-orange-500 hover:bg-orange-600 rounded-full mt-4"
+          >
+            Back to Artists
+          </Button>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!artist) return null;
+
+  return (
+    <div className="min-h-screen bg-black text-white">
+      <Navbar />
+      {/* Hero Section */}
+      <section className="relative">
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/80 to-transparent z-10" />
+        
+        <div className="container flex flex-col md:flex-row items-start md:items-center gap-6 md:gap-8 py-8 md:py-12 relative z-20">
+          {/* Mobile: Circular Avatar (left) + Info (right) stacked horizontally */}
+          {/* Desktop: Large Image (left) + Info (right) side by side */}
+          
+          {/* Avatar/Image Container */}
+          <div className="flex-shrink-0">
+            {/* Mobile: Small circular avatar (80x80) */}
+            <div className="md:hidden w-40 h-40 rounded-full overflow-hidden border-2 border-gray-700 bg-gray-800">
+              {artist.avatar_url ? (
+                <img 
+                  src={artist.avatar_url} 
+                  alt={artist.stage_name || artist.full_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
+                  <span className="font-bold text-lg text-orange-400">
+                    {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            
+            {/* Desktop: Large rectangular image */}
+            <div className="hidden md:block w-full md:w-[400px] lg:w-[500px] aspect-square md:aspect-[4/3] rounded-2xl overflow-hidden bg-gray-800">
+              {artist.avatar_url ? (
+                <img 
+                  src={artist.avatar_url} 
+                  alt={artist.stage_name || artist.full_name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div className="w-full h-full bg-gradient-to-br from-orange-500/30 to-gray-700 flex items-center justify-center">
+                  <span className="font-bold text-4xl text-orange-400">
+                    {(artist.stage_name || artist.full_name || "AR").slice(0, 2).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Artist Info - Mobile: flex-1 to take remaining space, Desktop: full width */}
+          <div className="flex-1 md:pl-8">
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="font-display text-2xl font-bold"
+              className="font-display text-2xl md:text-3xl lg:text-4xl font-bold mb-1 md:mb-2"
             >
-              Cater Efe
+              {artist.stage_name || artist.full_name || "Artist"}
             </motion.h1>
-            <p className="text-hero-foreground/60 text-sm">Stand up Comedian</p>
-            <p className="text-hero-foreground/60 text-sm">Average Booking Price ₦400,000 - ₦1,000,000</p>
-            <div className="flex items-center gap-1 text-hero-foreground/60 text-sm mt-1">
-              <MapPin className="w-3 h-3" /> Location: Abuja
+            <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">
+              {artist.artist_category || services[0] || "Artist"}
+            </p>
+            <p className="text-gray-400 text-xs md:text-sm mb-1 md:mb-2">
+              Average Booking Price: {" "}
+              <span className="text-white font-semibold">
+                {artist.booking_price 
+                  ? `₦${Number(artist.booking_price).toLocaleString()}`
+                  : "Contact for pricing"
+                }
+              </span>
+            </p>
+            <div className="flex items-center gap-1 text-gray-400 text-xs md:text-sm mb-4 md:mb-6">
+              <MapPin className="w-3 h-3 md:w-4 md:h-4" /> 
+              <span className="truncate">
+                {[artist.city, artist.country].filter(Boolean).join(", ") || "Not specified"}
+              </span>
             </div>
-            <Button onClick={() => setView("booking")} className="mt-3 rounded-full px-8">
+            
+            <Button 
+              onClick={handleBookClick} 
+              className="bg-orange-500 hover:bg-orange-600 text-white rounded-full px-8 md:px-12 py-4 md:py-6 text-xs md:text-sm font-semibold"
+            >
               Book Artist
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Portfolio */}
-      {view === "info" && (
-        <section className="container py-8">
-          <p className="text-center text-muted-foreground text-sm mb-6">
-            Add your best performance so people can see
-          </p>
-          <div className="grid grid-cols-3 gap-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="aspect-square bg-gradient-to-br from-primary/20 to-muted rounded-lg" />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Booking Form */}
-      {view === "booking" && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="container py-8"
-        >
-          {/* Artist mini profile */}
-          <div className="flex items-start gap-4 mb-6 pb-4 border-b border-border">
-            <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-primary/30 to-muted/20 flex-shrink-0" />
-            <div className="flex-1">
-              <h2 className="font-bold text-sm">Cater Efe</h2>
-              <p className="text-muted-foreground text-xs">Stand Up Comedian/ MC/ Advertiser</p>
-              <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-                <MapPin className="w-3 h-3" /> Location: Abuja
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">Average Booking Price for this artist: <span className="font-bold text-foreground">₦500,000 - ₦1,000,000</span></p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Left: Event Info + Flyer */}
-            <div>
-              <div className="w-full h-48 bg-gradient-to-br from-primary/20 to-muted rounded-lg mb-4" />
-
-              <h3 className="font-bold text-sm mb-3">Events Information</h3>
-              <div className="space-y-3">
+      {/* Main Content Grid */}
+      <section className="container py-12">
+        <div className="grid gap-6 xl:grid-cols-[1.8fr_1fr]">
+          {/* Left Column */}
+          <div className="space-y-6">
+            {/* Basic Information */}
+            <Card className="bg-[#1a1a1a] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Basic Information</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 text-sm">
                 <div>
-                  <label className="text-xs text-muted-foreground">Event Name:</label>
-                  <Input className="h-8 text-sm" />
+                  <p className="text-xs text-gray-500">Full Name</p>
+                  <p className="text-white">{artist.full_name || "-"}</p>
                 </div>
                 <div>
-                  <label className="text-xs text-muted-foreground">Event Type:</label>
-                  <Input className="h-8 text-sm" />
+                  <p className="text-xs text-gray-500">Username</p>
+                  <p className="text-white">{artist.username || "-"}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="text-xs text-muted-foreground">Event Date:</label>
-                    <Input type="date" className="h-8 text-sm" />
+                <div>
+                  <p className="text-xs text-gray-500">Email</p>
+                  <p className="text-white">{artist.email || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Phone</p>
+                  <p className="text-white">{artist.phone || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Location</p>
+                  <p className="text-white">{[artist.city, artist.country].filter(Boolean).join(", ") || "-"}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Artist Details */}
+            <Card className="bg-[#1a1a1a] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Artist Details</CardTitle>
+              </CardHeader>
+              <CardContent className="grid gap-4 text-sm">
+                <div>
+                  <p className="text-xs text-gray-500">Stage Name</p>
+                  <p className="text-white">{artist.stage_name || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Booking Price</p>
+                  <p className="text-white">{artist.booking_price ? `₦${Number(artist.booking_price).toLocaleString()}` : "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Artist Category</p>
+                  <p className="text-white">{artist.artist_category || "-"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-500">Services</p>
+                  <p className="text-white">{services.length ? services.join(", ") : "-"}</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Social Links */}
+            <Card className="bg-[#1a1a1a] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Social Links</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[
+                  { label: "Facebook", key: "facebook", icon: <Facebook className="w-4 h-4 text-gray-500" /> },
+                  { label: "Instagram", key: "instagram", icon: <Instagram className="w-4 h-4 text-gray-500" /> },
+                  { label: "TikTok", key: "tiktok", icon: <Video className="w-4 h-4 text-gray-500" /> },
+                  { label: "Twitter", key: "twitter", icon: <Twitter className="w-4 h-4 text-gray-500" /> },
+                ].map((social) => (
+                  <div key={social.key} className="flex items-center gap-2 text-sm">
+                    {social.icon}
+                    <span className="text-gray-500">{social.label}:</span>
+                    <span className="text-white">
+                      {socialLinks[social.key] ? (
+                        <a 
+                          href={socialLinks[social.key]} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-orange-500 hover:underline"
+                        >
+                          {socialLinks[social.key]}
+                        </a>
+                      ) : (
+                        "Not provided"
+                      )}
+                    </span>
                   </div>
-                  <div>
-                    <label className="text-xs text-muted-foreground">Event Time:</label>
-                    <Input type="time" className="h-8 text-sm" />
-                  </div>
-                </div>
-              </div>
-
-              <h3 className="font-bold text-sm mt-6 mb-3">Budget Offer</h3>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Proposed Budget</label>
-                  <Input className="h-8 text-sm" placeholder="Select" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Deposit Available</label>
-                  <Input className="h-8 text-sm" placeholder="Select" />
-                </div>
-              </div>
-
-              <h3 className="font-bold text-sm mt-6 mb-3">Audience Details</h3>
-              <div className="mb-3">
-                <label className="text-xs text-muted-foreground">Expected Audience Size</label>
-                <Input className="h-8 text-sm" placeholder="Select" />
-              </div>
-              <div className="flex flex-wrap gap-4">
-                {serviceTypes.map((s) => (
-                  <label key={s} className="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      checked={selectedServices.includes(s)}
-                      onCheckedChange={() => toggleService(s)}
-                    />
-                    {s}
-                  </label>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
 
-            {/* Right: Message + Contact */}
-            <div>
-              <h3 className="font-bold text-sm mb-3">Message to the Artist</h3>
-              <Textarea
-                placeholder="Hello, we would love to invite you..."
-                className="min-h-[160px] text-sm"
-              />
+            {/* Performance Videos */}
+            <Card className="bg-[#1a1a1a] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">Performance Videos</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {[0, 1, 2].map((index) => (
+                  <div key={index} className="rounded-xl border border-gray-700 p-4 bg-gray-900/50">
+                    <p className="text-xs text-gray-500">Video {index + 1}</p>
+                    <p className="mt-2 text-sm text-white">
+                      {videos[index] ? (
+                        <a 
+                          href={videos[index]} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="text-orange-500 hover:underline break-all"
+                        >
+                          {videos[index]}
+                        </a>
+                      ) : (
+                        <span className="text-gray-500">No video provided</span>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
 
-              <h3 className="font-bold text-sm mt-6 mb-3">Organisers Contact Information</h3>
-              <div className="space-y-3">
-                <div>
-                  <label className="text-xs text-muted-foreground">Name</label>
-                  <Input className="h-8 text-sm" />
+          {/* Right Column */}
+          <div className="space-y-6">
+            {/* Booking Form Card */}
+            {/* <Card className="bg-[#1a1a1a] border-gray-800 sticky top-4">
+              <CardHeader>
+                <CardTitle className="text-white text-base">
+                  Book {artist.stage_name || artist.full_name || "this artist"}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-500">Event Name</label>
+                  <Input
+                    value={bookingForm.event_name}
+                    onChange={(e) => setBookingForm({ ...bookingForm, event_name: e.target.value })}
+                    placeholder="My private concert"
+                    className="h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600"
+                  />
                 </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Company:</label>
-                  <Input className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Email:</label>
-                  <Input type="email" className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Contact Line 1</label>
-                  <Input className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Contact Line 2</label>
-                  <Input className="h-8 text-sm" />
-                </div>
-                <div>
-                  <label className="text-xs text-muted-foreground">Social Media Link</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input className="h-8 text-sm" placeholder="Instagram" />
-                    <Input className="h-8 text-sm" placeholder="Facebook" />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500">Venue</label>
+                    <Input
+                      value={bookingForm.venue}
+                      onChange={(e) => setBookingForm({ ...bookingForm, venue: e.target.value })}
+                      placeholder="Venue name"
+                      className="h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs text-gray-500">Event Date</label>
+                    <Input
+                      type="date"
+                      value={bookingForm.event_date}
+                      onChange={(e) => setBookingForm({ ...bookingForm, event_date: e.target.value })}
+                      className="h-10 bg-gray-900 border-gray-700 text-white"
+                    />
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bottom actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-8 pt-4 border-t border-border gap-4">
-            <label className="flex items-center gap-2 text-xs">
-              <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(!!v)} />
-              I confirm this booking request is genuine and agree to iticket booking policy agreement
-            </label>
-            <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={() => setView("info")} className="rounded-full text-xs">
-                Cancel
-              </Button>
-              <Button size="sm" onClick={() => setView("checkout")} className="rounded-full text-xs" disabled={!agreed}>
-                Send Booking Request
-              </Button>
-            </div>
-          </div>
-        </motion.section>
-      )}
-
-      {/* Checkout View */}
-      {view === "checkout" && (
-        <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="container py-8"
-        >
-          {/* Artist mini profile */}
-          <div className="flex items-start gap-4 mb-6 pb-4 border-b border-border">
-            <div className="w-24 h-24 rounded-lg bg-gradient-to-br from-primary/30 to-muted/20 flex-shrink-0" />
-            <div className="flex-1">
-              <h2 className="font-bold text-sm">Cater Efe</h2>
-              <p className="text-muted-foreground text-xs">Stand Up Comedian/ MC/ Advertiser</p>
-              <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-                <MapPin className="w-3 h-3" /> Location: Abuja
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">Average Booking Price: <span className="font-bold text-foreground">₦500,000 - ₦1,000,000</span></p>
-          </div>
-
-          <h2 className="font-bold text-lg text-center mb-6">Checkout</h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Payment Options */}
-            <div>
-              <h3 className="font-bold text-sm mb-2">Payment Options</h3>
-              <p className="text-[10px] text-muted-foreground mb-4">
-                We've reserved your ticket for you. Please check out within <span className="text-primary font-bold">10:00</span> to secure your tickets.
-              </p>
-              <div className="space-y-3">
-                <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer">
-                  <input type="radio" name="payment" defaultChecked className="accent-primary" />
-                  <div>
-                    <p className="font-bold text-xs">Pay with Card</p>
-                    <p className="text-[10px] text-muted-foreground">Pay with Mastercard, Visa, Verve or Bank Transfer.</p>
-                  </div>
-                  <span className="ml-auto text-xs font-bold text-primary">paystack</span>
-                </label>
-                <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer">
-                  <input type="radio" name="payment" className="accent-primary" />
-                  <div>
-                    <p className="font-bold text-xs">Pay with Card</p>
-                    <p className="text-[10px] text-muted-foreground">Pay with Mastercard, Visa, Verve or Bank Transfer.</p>
-                  </div>
-                  <span className="ml-auto text-xs font-bold text-accent-foreground">OPay</span>
-                </label>
-              </div>
-              <div className="mt-4 p-3 bg-accent/50 rounded-lg">
-                <p className="text-[10px] text-primary">You must agree to all iticket terms and conditions, Refund policy, before completing this purchase</p>
-              </div>
-            </div>
-
-            {/* Summary */}
-            <div className="border border-border rounded-xl p-4">
-              <h3 className="font-bold text-sm text-center mb-3">Summary</h3>
-              <p className="font-bold text-xs text-center mb-3">Carter Efe Booking</p>
-              <div className="space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">50% deposit | Carter Efe Booking</span>
-                  <span>₦5,000</span>
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-500">Offered Price</label>
+                  <Input
+                    type="number"
+                    value={bookingForm.offered_price}
+                    onChange={(e) => setBookingForm({ ...bookingForm, offered_price: e.target.value })}
+                    placeholder="10000"
+                    className="h-10 bg-gray-900 border-gray-700 text-white placeholder:text-gray-600"
+                  />
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Remaining Balance</span>
-                  <span>₦5,000</span>
+                <div className="space-y-2">
+                  <label className="text-xs text-gray-500">Message</label>
+                  <Textarea
+                    value={bookingForm.message}
+                    onChange={(e) => setBookingForm({ ...bookingForm, message: e.target.value })}
+                    placeholder="Tell the artist about your event"
+                    className="min-h-[120px] bg-gray-900 border-gray-700 text-white placeholder:text-gray-600"
+                  />
                 </div>
-                <div className="border-t border-border pt-2 flex justify-between">
-                  <span className="text-muted-foreground">Fee</span>
-                  <span>0.00</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Subtotal</span>
-                  <span>₦50,000</span>
-                </div>
-                <Input placeholder="Enter Promo Code" className="h-8 text-xs" />
-                <div className="border-t border-border pt-2 flex justify-between font-bold">
-                  <span>TOTAL</span>
-                  <span>₦50,000</span>
-                </div>
-              </div>
-              <Button className="w-full mt-4 rounded-full">Submit</Button>
-            </div>
-          </div>
+                <Button 
+                  onClick={handleBookClick} 
+                  className="w-full rounded-full bg-orange-500 hover:bg-orange-600 text-white"
+                >
+                  Sign in to Send Booking Request
+                </Button>
+              </CardContent>
+            </Card> */}
 
-          {/* Bottom actions */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mt-8 pt-4 border-t border-border gap-4">
-            <label className="flex items-center gap-2 text-xs">
-              <Checkbox checked={agreed} onCheckedChange={(v) => setAgreed(!!v)} />
-              I confirm this booking request is genuine and agree to iticket booking policy agreement
-            </label>
-            <div className="flex gap-3">
-              <Button variant="outline" size="sm" onClick={() => setView("booking")} className="rounded-full text-xs">
-                Cancel
-              </Button>
-              <Button size="sm" onClick={() => navigate("/")} className="rounded-full text-xs">
-                Send Booking Request
-              </Button>
-            </div>
+            {/* About Card */}
+            <Card className="bg-[#1a1a1a] border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white">About</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm leading-6 text-gray-400">
+                  {artist.bio || "No bio yet. The artist can add a description from their profile settings."}
+                </p>
+              </CardContent>
+            </Card>
           </div>
-        </motion.section>
-      )}
+        </div>
+      </section>
 
       <Footer />
     </div>

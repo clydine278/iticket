@@ -12,14 +12,6 @@ const Footer = () => {
             <p className="text-nav-foreground/60 text-xs leading-relaxed mb-3">
               iticket is an event ticketing platform for memorable experiences. Sign up to receive information about upcoming events.
             </p>
-            <div className="flex gap-2">
-              <Link to="/create-account">
-                <button className="text-xs bg-nav-foreground/10 px-3 py-1.5 rounded text-nav-foreground/70 hover:bg-nav-foreground/20 transition-colors">Sign Up</button>
-              </Link>
-              <Link to="/login">
-                <button className="text-xs bg-primary px-3 py-1.5 rounded text-primary-foreground hover:bg-primary/90 transition-colors">Log In</button>
-              </Link>
-            </div>
           </div>
 
           <div>
