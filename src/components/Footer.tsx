@@ -21,7 +21,7 @@ const Footer = () => {
             <h4 className="font-bold text-xs mb-3 text-nav-foreground/80">Explore</h4>
             <ul className="space-y-2 text-xs text-nav-foreground/60">
               <li><Link to="/buy-tickets" className="hover:text-primary transition-colors">Buy Tickets</Link></li>
-              <li><Link to="/book-artist" className="hover:text-primary transition-colors">Book an Artist</Link></li>
+              <li><Link to="/book-artist" className="hover:text-primary transition-colors">Book an Entertainer</Link></li>
               <li><Link to="/challenges" className="hover:text-primary transition-colors">Join a Challenge</Link></li>
             </ul>
           </div>
@@ -59,7 +59,7 @@ const Footer = () => {
           <div className="hidden md:flex items-center gap-6 text-xs text-nav-foreground/60">
             <Link to="/" className="hover:text-primary transition-colors">Home</Link>
             <Link to="/buy-tickets" className="hover:text-primary transition-colors">Buy Tickets</Link>
-            <Link to="/book-artist" className="hover:text-primary transition-colors">Book Artist</Link>
+            <Link to="/book-artist" className="hover:text-primary transition-colors">Book Entertainer</Link>
             <Link to="/challenges" className="hover:text-primary transition-colors">Join Challenge</Link>
           </div>
         </div>

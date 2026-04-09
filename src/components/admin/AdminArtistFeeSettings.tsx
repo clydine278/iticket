@@ -1,136 +1,167 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Save, Check, Search } from "lucide-react";
-import { toast } from "sonner";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Trophy, Sparkles, DollarSign, Loader2, Save, Info } from "lucide-react";
+import { toast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const AdminArtistFeeSettings = () => {
-  const [feeAmount, setFeeAmount] = useState("1000");
+  const { user } = useAuth();
+  const [artistFee, setArtistFee] = useState<number>(10000);
+  const [challengeEntryFee, setChallengeEntryFee] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [artists, setArtists] = useState<any[]>([]);
-  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetchFee();
-    fetchArtists();
+    fetchSettings();
   }, []);
 
-  const fetchFee = async () => {
-    const { data } = await supabase
-      .from("app_settings")
-      .select("value")
-      .eq("key", "artist_fee_amount")
-      .single();
-    if (data) setFeeAmount(data.value);
-  };
+  const fetchSettings = async () => {
+    try {
+      // Fetch both fees from platform_settings
+      const { data: settingsData, error: settingsError } = await supabase
+        .from("platform_settings")
+        .select("artist_fee, challenge_entry_fee")
+        .single();
 
-  const fetchArtists = async () => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("id, full_name, stage_name, email, artist_fee_paid")
-      .eq("account_type", "artist")
-      .order("created_at", { ascending: false });
-    setArtists(data || []);
-  };
+      if (settingsError && settingsError.code !== 'PGRST116') {
+        console.error("Settings fetch error:", settingsError);
+      }
 
-  const saveFee = async () => {
-    setSaving(true);
-    const { error } = await supabase
-      .from("app_settings")
-      .update({ value: feeAmount, updated_at: new Date().toISOString() })
-      .eq("key", "artist_fee_amount");
-    setSaving(false);
-    if (error) toast.error(error.message);
-    else toast.success("Fee amount updated!");
-  };
-
-  const togglePaid = async (artistId: string, currentlyPaid: boolean) => {
-    const { error } = await supabase
-      .from("profiles")
-      .update({ artist_fee_paid: !currentlyPaid })
-      .eq("id", artistId);
-    if (error) toast.error(error.message);
-    else {
-      toast.success(`Artist fee ${!currentlyPaid ? "marked as paid" : "marked as unpaid"}`);
-      fetchArtists();
+      if (settingsData) {
+        setArtistFee(settingsData.artist_fee || 10000);
+        setChallengeEntryFee(settingsData.challenge_entry_fee || 0);
+      }
+      
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching settings:", err);
+      setLoading(false);
     }
   };
 
-  const filtered = artists.filter(
-    (a) =>
-      (a.full_name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.stage_name || "").toLowerCase().includes(search.toLowerCase()) ||
-      (a.email || "").toLowerCase().includes(search.toLowerCase())
-  );
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      // Update both fees via edge function (bypasses RLS)
+      const { data: session } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/admin-actions`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session.session?.access_token}`,
+          },
+          body: JSON.stringify({
+            action: "update_fees",
+            artistFee: artistFee,
+            challengeEntryFee: challengeEntryFee,
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update fees");
+
+      toast({ 
+        title: "Settings saved!",
+        description: `Artist: ₦${artistFee.toLocaleString()}, Challenge: ₦${challengeEntryFee.toLocaleString()}`
+      });
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <div className="flex justify-center py-12"><Loader2 className="animate-spin" /></div>;
 
   return (
-    <div className="space-y-4">
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Artist Registration Fee</CardTitle>
+    <div className="space-y-6 max-w-2xl">
+      <h2 className="text-2xl font-bold">Fee Settings</h2>
+      
+      {/* Artist Verification Fee */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Sparkles className="w-5 h-5 text-primary" />
+            Artist Verification Fee
+          </CardTitle>
         </CardHeader>
-        <CardContent className="flex gap-3 items-end">
-          <div className="flex-1">
-            <label className="text-xs text-muted-foreground mb-1 block">Fee Amount (₦)</label>
-            <Input
-              value={feeAmount}
-              onChange={(e) => setFeeAmount(e.target.value)}
-              className="h-9 text-sm"
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Amount (₦)</Label>
+            <Input 
               type="number"
+              min="0"
+              step="100"
+              value={artistFee}
+              onChange={(e) => setArtistFee(Number(e.target.value))}
+              placeholder="10000"
             />
+            <p className="text-sm text-muted-foreground">
+              Fee artists pay to get verified badge
+            </p>
           </div>
-          <Button onClick={saveFee} disabled={saving} size="sm" className="gap-1.5">
-            <Save className="w-3.5 h-3.5" />
-            {saving ? "Saving..." : "Save"}
-          </Button>
         </CardContent>
       </Card>
 
-      <Card className="border-border/40">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-sm">Artist Fee Status</CardTitle>
+      {/* Challenge Entry Fee */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Trophy className="w-5 h-5 text-amber-500" />
+            Challenge Entry Fee
+          </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search artists..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-8 text-xs pl-8"
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label>Standard Entry Fee (₦)</Label>
+            <Input 
+              type="number"
+              min="0"
+              step="100"
+              value={challengeEntryFee}
+              onChange={(e) => setChallengeEntryFee(Number(e.target.value))}
+              placeholder="0 for free"
             />
+            <p className="text-sm text-muted-foreground">
+              {challengeEntryFee === 0 
+                ? "All challenges are FREE to enter" 
+                : `All challenges require ₦${challengeEntryFee.toLocaleString()} to join`}
+            </p>
           </div>
-          <div className="space-y-1.5 max-h-64 overflow-y-auto">
-            {filtered.map((a) => (
-              <div key={a.id} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 text-xs">
-                <div>
-                  <span className="font-medium">{a.stage_name || a.full_name || "—"}</span>
-                  <span className="text-muted-foreground ml-2">{a.email}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge variant={a.artist_fee_paid ? "default" : "destructive"} className="text-[10px]">
-                    {a.artist_fee_paid ? "Paid" : "Unpaid"}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-[10px] px-2"
-                    onClick={() => togglePaid(a.id, a.artist_fee_paid)}
-                  >
-                    {a.artist_fee_paid ? "Mark Unpaid" : "Mark Paid"}
-                  </Button>
-                </div>
+          
+          <div className="p-4 bg-muted rounded-lg">
+            <div className="flex items-start gap-3">
+              <Info className="w-5 h-5 text-blue-500 mt-0.5" />
+              <div>
+                <p className="font-medium">Current Challenge Setting</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {challengeEntryFee === 0 ? (
+                    <span className="text-green-600 font-medium">Free entry for all challenges</span>
+                  ) : (
+                    <span>Entry fee: <span className="font-bold text-amber-600">₦{challengeEntryFee.toLocaleString()}</span></span>
+                  )}
+                </p>
               </div>
-            ))}
-            {filtered.length === 0 && (
-              <p className="text-muted-foreground text-xs text-center py-4">No artists found</p>
-            )}
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      <Button 
+        onClick={handleSave} 
+        disabled={saving}
+        className="w-full gap-2"
+      >
+        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+        Save All Settings
+      </Button>
     </div>
   );
 };

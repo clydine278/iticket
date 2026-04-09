@@ -163,7 +163,7 @@ const OrganizerDashboard = () => {
 
       <motion.div variants={item}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-display text-base sm:text-lg font-semibold">Book Artists</h2>
+          <h2 className="font-display text-base sm:text-lg font-semibold">Book Entertainers</h2>
           <Link to="/dashboard/hire-artist" className="text-xs text-primary font-medium hover:underline">Browse</Link>
         </div>
         <Card className="border-dashed border-2 border-border/60 bg-muted/20">

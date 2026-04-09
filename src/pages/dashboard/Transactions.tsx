@@ -7,22 +7,70 @@ import { Receipt, ArrowUpRight, ArrowDownLeft } from "lucide-react";
 
 const Transactions = () => {
   const { user } = useAuth();
+  const accountType = user?.user_metadata?.account_type || "personal";
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (user) {
-      supabase
-        .from("transactions")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false })
-        .then(({ data }) => {
-          setTransactions(data || []);
-          setLoading(false);
-        });
-    }
-  }, [user]);
+    if (!user) return;
+
+    const fetchTransactions = async () => {
+      try {
+        let allTransactions: any[] = [];
+
+        if (accountType === "organizer") {
+          // Fetch organizer's own transactions
+          const { data: ownTxns } = await supabase
+            .from("transactions")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
+          allTransactions.push(...(ownTxns || []));
+
+          // Fetch all bookings where this organizer is the organizer
+          const { data: bookings } = await supabase
+            .from("bookings")
+            .select("artist_id, amount, status, created_at")
+            .eq("organizer_id", user.id)
+            .eq("status", "paid");
+
+          if (bookings && bookings.length > 0) {
+            const artistIds = [...new Set(bookings.map(b => b.artist_id))];
+
+            // Fetch transactions for all artists this organizer has paid
+            const { data: artistTxns } = await supabase
+              .from("transactions")
+              .select("*")
+              .in("user_id", artistIds)
+              .order("created_at", { ascending: false });
+
+            allTransactions.push(...(artistTxns || []));
+          }
+
+          // Sort by date
+          allTransactions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        } else {
+          // For non-organizers, just fetch their own transactions
+          const { data } = await supabase
+            .from("transactions")
+            .select("*")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false });
+
+          allTransactions = data || [];
+        }
+
+        setTransactions(allTransactions);
+      } catch (err) {
+        console.error("Error fetching transactions:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [user, accountType]);
 
   return (
     <DashboardLayout>

@@ -10,7 +10,7 @@ import { format } from "date-fns";
 
 const features = [
   { icon: Ticket, title: "Buy Ticket Easily", desc: "Browse upcoming events, pick your seats, and buy tickets instantly.", cta: "Explore Events", link: "/buy-tickets" },
-  { icon: Search, title: "Discover & Book Talent", desc: "Organizers can find artists, compare prices, and book them instantly. Artists get discovered and promoted.", cta: "Explore Artists", link: "/book-artist" },
+  { icon: Search, title: "Discover & Book Talent", desc: "Organizers can find entertainers, compare prices, and book them instantly. Entertainers get discovered and promoted.", cta: "Explore Entertainers", link: "/book-artist" },
   { icon: Sparkles, title: "Join a Challenge", desc: "Show off your skill, compete with others, and win prizes or event tickets.", cta: "Join Challenge", link: "/challenges" },
 ];
 
@@ -45,7 +45,7 @@ const Index = () => {
     const fetchAll = async () => {
       const [evRes, arRes, chRes, ordRes] = await Promise.all([
         supabase.from("events").select("*, ticket_types(price)").eq("status", "published").order("date", { ascending: true }).limit(3),
-        supabase.from("profiles").select("*").eq("account_type", "artist").eq("artist_fee_paid", true).limit(3),
+        supabase.from("profiles").select("*").eq("account_type", "artist").eq("artist_fee_paid", true).limit(8),
         supabase.from("challenges").select("*").eq("status", "active").order("created_at", { ascending: false }).limit(3),
         supabase.from("orders").select("quantity"),
       ]);
@@ -102,10 +102,10 @@ const Index = () => {
         <motion.div initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }} className="relative z-10 container">
           <p className="text-primary text-sm font-semibold mb-2">All in One Place.</p>
           <h1 className="font-display text-3xl md:text-5xl font-bold mb-3">Ticket . Entertainers . Challenges</h1>
-          <p className="text-hero-foreground/60 text-sm mb-6 max-w-md mx-auto">Discover events, book artists, and join music challenges.</p>
+          <p className="text-hero-foreground/60 text-sm mb-6 max-w-md mx-auto">Discover events, book entertainers, and join music challenges.</p>
           <div className="flex gap-3 justify-center flex-wrap">
             <Link to="/buy-tickets"><Button variant="outline" size="sm" className="rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs">Buy Ticket</Button></Link>
-            <Link to="/book-artist"><Button variant="outline" size="sm" className="rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs">Book Artist</Button></Link>
+            <Link to="/book-artist"><Button variant="outline" size="sm" className="rounded-full border-primary text-primary hover:bg-primary hover:text-primary-foreground text-xs">Book Entertainer</Button></Link>
             <Link to="/challenges"><Button size="sm" className="rounded-full text-xs">Join Challenge</Button></Link>
           </div>
         </motion.div>
@@ -126,7 +126,7 @@ const Index = () => {
 
       {/* Features */}
       <section className="container py-12">
-        <h2 className="font-display text-lg font-bold text-center mb-6">Discover and book Artists</h2>
+        <h2 className="font-display text-lg font-bold text-center mb-6">Discover and book Entertainers</h2>
         <motion.div initial="hidden" whileInView="show" viewport={{ once: true }} variants={stagger} className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {features.map((f) => (
             <motion.div key={f.title} variants={fadeUp} className="border border-border rounded-xl p-5 text-center hover:shadow-md transition-shadow">
@@ -178,7 +178,7 @@ const Index = () => {
       {artists.length > 0 && (
         <section className="bg-black text-white py-8 sm:py-12 md:py-16">
           <div className="container px-4 sm:px-6">
-            <h2 className="font-display text-lg sm:text-xl font-bold text-center mb-6 sm:mb-10">Hire our talented Artists</h2>
+            <h2 className="font-display text-lg sm:text-xl font-bold text-center mb-6 sm:mb-10">Hire our talented Entertainers</h2>
             <motion.div 
               initial="hidden" 
               whileInView="show" 
@@ -214,12 +214,12 @@ const Index = () => {
 
                     {/* Artist Name - Responsive text */}
                     <h3 className="font-bold text-xs sm:text-sm mb-0.5 sm:mb-1 truncate px-1">
-                      {artist.stage_name || artist.full_name || "Artist"}
+                      {artist.stage_name || artist.full_name || "Entertainer"}
                     </h3>
 
                     {/* Category - Hidden on smallest screens */}
                     <p className="text-gray-400 text-[10px] sm:text-xs mb-1 sm:mb-2 md:mb-3 hidden sm:block">
-                      {(artist as any).artist_category || artist.services?.[0] || "Artist"}
+                      {(artist as any).artist_category || artist.services?.[0] || "Entertainer"}
                     </p>
 
                     {/* Location - Simplified on mobile */}

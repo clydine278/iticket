@@ -2,39 +2,40 @@
 <!-- - admin should be able to make other users admin and also give me the code to update the database if needed -->
 <!-- - work on paystack and make sure it's working well -->
 <!-- - for the ticket page any tickect with the amount set to zero should be marked as free on the ticket purchase page and remove the purchase with paystack button and make it Get Ticket -->
-- for the ticket banner move the image down a bit like the posstion of the cover down not middle like let the top be showing
-- increse the width of the sidebar more so that longer text can fit in well
-- for the browse event page do not load all the events at once load like 6 first and as the user scrolls you more more 
--challenge creators should be able to delete and edit their challege and make the challenge page more mordern and add the image of the chalance somewhere on each challenge make it morden and responsive
-- paystcak payment for chalange,
-- change artist to entertainers on all pages
-- add space to add cetegory if it does not exist
-- on the Browse Challenges page if the user clicks on the challenge it should take them a a page that give more details about the challend and make that page responsive and morden something like this
-![alt text](image.png), and foe the amount part on the browse challenges page it should show the naira symbol and punctuate it well to should thousands or millions with a comma
-- there should be page for the challenge setters to see the appliacation for the challenge it should show the persons username email and phone number and they should be able to set the status of each application [winner, under review, rejected (there should be able to send a message tell them why it was rejected and the person that submitted the challenge would be able to see it on their my challenges page)]
-- make the my challenges page more morden remove the like and views make it more meaningfull 
-- the order history is blank it should show ticket bought for normal users, artist booked for organiser users
-- the admin panel is good but make the daiog box more morden and add an option to make other users admin
-- all the transactions should show on the transaction tab of the admin panel
-- for some reason the partner adding functionally cannot add a partner
-- the revenue is not wokring its not storing it well for the admin and the organisers
-- total orders shows 0 for the admin it should get the data from total number of ticket bought and bookings made by the organiser
-- on the profile page of all the user types change the city input to a state dropdown with all the nigerian states
-- remove the settings page
-- for the quick links section in the footer that have the auth links when the user is already authenticated
-- the footer should always be situated at the bottom no matter how short the content of the page is 
-- for the challenge page in the landing page section there should note be an upload option but instead a joint challeneg button that takes them to the challenge page details inside the dashboard and the ui or design should be like the one in the image i attatched 
-- fix the revenue tracker on the organiser account and dashboard
-- on the artist page remove the artist phone number and email, when the organiser books an artist and the artist accepts the booking on the organiser bookin page it should show booking accepted with a Make Payment button and when the organiser proceeds to make payment it should use paystack and use the booking amount as the amount to be paid on paystack and once the payment is confirmed it should show on the bookings page of the organiser as PAID and also of the booking request page of the artsit so make sure that all the details for the event of the booking should be entered, and once the booking has been made it should be stored and shown in the order section for some reason the booking page just keeps reloading it selft anytime i enter it fix that 
-- add a column for artist account number bank name and bank account name so that the money can be paid to the artist after the peprformance and add ther bank  account column for normal users and they should be able to update it in profile section
-- for the Hire our talented Artists section in the landing page make the arist shown ther 8 
-- the transaction page on the organisers page should show all the transactions of all the aritst paid 
-- remove the settings page for all the user types  
-- remove the my chalanges page for the artist account and make it a challangee submission page and do the same thing i stated above about managing chalange and challange submissions
-- remove the earnings page for artists
-- the tranasaction page for artist should show their transaction like payment for booking ticket purchases etc 
+<!-- - for the ticket banner move the image down a bit like the posstion of the cover down not middle like let the top be showing -->
+<!-- - increse the width of the sidebar more so that longer text can fit in well -->
+<!-- - for the browse event page do not load all the events at once load like 6 first and as the user scrolls you more more  -->
+<!-- -challenge creators should be able to delete and edit their challege and make the challenge page more mordern and add the image of the chalance somewhere on each challenge make it morden and responsive -->
+<!-- - paystack payment for chalange, -->
+<!-- - change artist to entertainers on all pages -->
+<!-- - add space to add cetegory if it does not exist -->
+<!-- - on the Browse Challenges page if the user clicks on the challenge it should take them a a page that give more details about the challend and make that page responsive and morden something like this -->
+<!-- ![alt text](image.png), and foe the amount part on the browse challenges page it should show the naira symbol and punctuate it well to should thousands or millions with a comma -->
+<!-- - there should be page for the challenge setters to see the appliacation for the challenge it should show the persons username email and phone number and they should be able to set the status of each application [winner, under review, rejected (there should be able to send a message tell them why it was rejected and the person that submitted the challenge would be able to see it on their my challenges page)] -->
+<!-- - make the my challenges page more morden remove the like and views make it more meaningfull  -->
+<!-- - the order history is blank it should show ticket bought for normal users, artist busersooked for organiser  -->
+<!-- - the admin panel is good but make the daiog box more morden and add an option to make other users admin -->
+<!-- - all the transactions should show on the transaction tab of the admin panel -->
+<!-- - for some reason the partner adding functionally cannot add a partner -->
+<!-- - the revenue is not wokring its not storing it well for the admin and the organisers -->
+<!-- - total orders shows 0 for the admin it should get the data from total number of ticket bought and bookings made by the organiser
+- on the profile page of all the user types change the city input to a state dropdown with all the nigerian states -->
+<!-- - remove the settings page -->
+<!-- - for the quick links section in the footer that have the auth links when the user is already authenticated -->
+<!-- - the footer should always be situated at the bottom no matter how short the content of the page is  -->
+<!-- - for the challenge page in the landing page section there should note be an upload option but instead a joint challeneg button that takes them to the challenge page details inside the dashboard and the ui or design should be like the one in the image i attatched  -->
+<!-- - fix the revenue tracker on the organiser account and dashboard -->
+<!-- - on the artist page remove the artist phone number and email, when the organiser books an artist and the artist accepts the booking on the organiser bookin page it should show booking accepted with a Make Payment button and when the organiser proceeds to make payment it should use paystack and use the booking amount as the amount to be paid on paystack and once the payment is confirmed it should show on the bookings page of the organiser as PAID and also of the booking request page of the artsit so make sure that all the details for the event of the booking should be entered, and once the booking has been made it should be stored and shown in the order section for some reason the booking page just keeps reloading it selft anytime i enter it fix that  -->
+<!-- - add a column for artist account number bank name and bank account name so that the money can be paid to the artist after the peprformance and add ther bank  account column for normal users and they should be able to update it in profile section -->
+<!-- - for the Hire our talented Artists section in the landing page make the arist shown ther 8  -->
+<!-- - the transaction page on the organisers page should show all the transactions of all the aritst paid  -->
+<!-- - remove the settings page for all the user types   -->
+<!-- - remove the my chalanges page for the artist account and make it a challangee submission page and do the same thing i stated above about managing chalange and challange submissions -->
+<!-- - remove the earnings page for artists -->
+<!-- - the tranasaction page for artist should show their transaction like payment for booking ticket purchases etc 
 - the analytics for the artist should be added up in amount only if the organizers have paid 
-- remove the total views and total likes from the analytics page 
+- remove the total views and total likes from the analytics page  -->
+
 
 
 - and most important tell me what you change

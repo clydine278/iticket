@@ -17,6 +17,7 @@ import ArtistProfile from "./pages/dashboard/ArtistProfile";
 import CreateAccount from "./pages/CreateAccount";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import ChallengeSubmissions from "./pages/ChallengeSubmissions";
 import MyTickets from "./pages/dashboard/MyTickets";
 import OrderHistory from "./pages/dashboard/OrderHistory";
 import Transactions from "./pages/dashboard/Transactions";
@@ -36,6 +37,7 @@ import AdminDashboard from "./pages/admin/AdminDashboard";
 import Partnerships from "./pages/Partnerships";
 import PaymentCallback from "./pages/dashboard/PaymentCallback";
 import VerifyTicket from "./pages/VerifyTicket";
+import Support from "./pages/Support";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -59,6 +61,7 @@ const App = () => (
               <Route path="/artist/:artistId" element={<ArtistDetail />} />
               <Route path="/create-account" element={<CreateAccount />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/dashboard/submissions" element={<ChallengeSubmissions />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/tickets" element={<MyTickets />} />
               <Route path="/dashboard/orders" element={<OrderHistory />} />
@@ -83,6 +86,7 @@ const App = () => (
               <Route path="/dashboard/sales" element={<Dashboard />} />
               <Route path="/dashboard/revenue" element={<Dashboard />} />
               <Route path="/partnerships" element={<Partnerships />} />
+              <Route path="/support" element={<Support />} />
               <Route path="/verify-ticket" element={<VerifyTicket />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="*" element={<NotFound />} />

@@ -4,14 +4,15 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { toast } from "sonner";
-import { ShieldAlert } from "lucide-react"; // Import a cool icon
 import { AdminStatsGrid } from "@/components/admin/AdminStatsGrid";
 import { AdminUserTable } from "@/components/admin/AdminUserTable";
 import { AdminEventList } from "@/components/admin/AdminEventList";
 import { AdminTransactionList } from "@/components/admin/AdminTransactionList";
 import { AdminPartnerList } from "@/components/admin/AdminPartnerList";
 import { AdminArtistFeeSettings } from "@/components/admin/AdminArtistFeeSettings";
-import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake, Sparkles, Activity } from "lucide-react";
+import { AdminChallengeApprovals } from "@/components/admin/AdminChallengeApprovals";
+import { AdminAllSubmissions } from "@/components/admin/AdminAllSubmissions";
+import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake, Sparkles, Activity, CheckCircle2, Trophy } from "lucide-react";
 
 export interface AdminProfile {
   id: string;
@@ -33,6 +34,8 @@ const tabs = [
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
   { id: "partners" as const, label: "Partners", icon: Handshake },
   { id: "artist-fees" as const, label: "Artist Fees", icon: Sparkles },
+  { id: "approvals" as const, label: "Approvals", icon: CheckCircle2 },
+  { id: "submissions" as const, label: "All Submissions", icon: Trophy },
   { id: "audit-logs" as const, label: "Audit Logs", icon: Activity },
 ];
 
@@ -45,11 +48,13 @@ const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<AdminProfile[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]); // <-- Added Transactions State
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
   
   const [isAdmin, setIsAdmin] = useState(false);
   const [checkingAdmin, setCheckingAdmin] = useState(true);
   const [activeTab, setActiveTab] = useState<TabId>("overview");
+  const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -58,54 +63,39 @@ const AdminDashboard = () => {
     }
     if (user) checkAdminRole();
   }, [user, loading]);
-  const [isProcessing, setIsProcessing] = useState<string | null>(null);
 
-const handleMakeAdmin = async (targetUserId: string, userName: string) => {
-  // Always confirm before doing something this powerful
-  if (!window.confirm(`Are you absolutely sure you want to make ${userName} an Admin? They will have full access to this dashboard.`)) {
-    return;
-  }
+  const handleMakeAdmin = async (targetUserId: string, userName: string) => {
+    if (!window.confirm(`Are you absolutely sure you want to make ${userName} an Admin? They will have full access to this dashboard.`)) {
+      return;
+    }
 
-  setIsProcessing(targetUserId);
-  toast.loading(`Promoting ${userName}...`, { id: "promo-toast" });
+    setIsProcessing(targetUserId);
+    toast.loading(`Promoting ${userName}...`, { id: "promo-toast" });
 
-  try {
-    const { data, error } = await supabase.functions.invoke("admin-actions", {
-      body: { 
-        action: "make_admin", 
-        targetId: targetUserId 
-      },
-    });
-
-    if (error) throw error;
-
-    toast.success(`${userName} is now an admin!`, { id: "promo-toast" });
-    
-    // If you passed onRefresh as a prop from AdminDashboard, call it here
-    // onRefresh(); 
-    
-  } catch (err: any) {
-    console.error("Promo Error:", err);
-    toast.error(err.message || "Failed to promote user.", { id: "promo-toast" });
-  } finally {
-    setIsProcessing(null);
-  }
-};
-const checkAdminRole = async () => {
     try {
-      console.log("Checking admin role for user ID:", user!.id);
-      
+      const { data, error } = await supabase.functions.invoke("admin-actions", {
+        body: { action: "make_admin", targetId: targetUserId },
+      });
+
+      if (error) throw error;
+      toast.success(`${userName} is now an admin!`, { id: "promo-toast" });
+    } catch (err: any) {
+      console.error("Promo Error:", err);
+      toast.error(err.message || "Failed to promote user.", { id: "promo-toast" });
+    } finally {
+      setIsProcessing(null);
+    }
+  };
+
+  const checkAdminRole = async () => {
+    try {
       const { data, error } = await supabase.rpc("has_role", {
         _user_id: user!.id,
         _role: "admin",
       });
       
-      console.log("Supabase RPC Response Data:", data);
-      
       if (error) {
-        console.error("Supabase RPC Error:", error);
         toast.error(`DB Error: ${error.message}`, { duration: 10000 });
-        // Notice: No navigate() here. You stay on the page.
         setCheckingAdmin(false);
         return; 
       }
@@ -115,7 +105,6 @@ const checkAdminRole = async () => {
         fetchData();
       } else {
         toast.error("Database returned false. You don't have the role.");
-        // Notice: No navigate() here either.
       }
     } catch (error: any) {
       console.error("Code Execution Error:", error);
@@ -126,17 +115,20 @@ const checkAdminRole = async () => {
   };
 
   const fetchData = async () => {
-    const [profilesRes, eventsRes, ordersRes, logsRes] = await Promise.all([
+    // We now fetch the permanent transactions ledger to calculate revenue accurately
+    const [profilesRes, eventsRes, ordersRes, logsRes, txRes] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("events").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
       supabase.from("admin_audit_logs").select("*").order("created_at", { ascending: false }).limit(30),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }),
     ]);
     
     if (profilesRes.data) setProfiles(profilesRes.data);
     if (eventsRes.data) setEvents(eventsRes.data);
     if (ordersRes.data) setOrders(ordersRes.data);
     if (logsRes.data) setAuditLogs(logsRes.data);
+    if (txRes.data) setTransactions(txRes.data);
   };
 
   if (loading || checkingAdmin) {
@@ -155,7 +147,11 @@ const checkAdminRole = async () => {
 
   if (!isAdmin) return null;
 
-  const totalRevenue = orders.reduce((sum, o) => sum + Number(o.total_amount || 0), 0);
+  // 🚀 THE FIX: Calculate revenue from the permanent transactions ledger!
+  // This will never delete when an event deletes, and it includes Challenge/Artist fees!
+  const totalRevenue = transactions
+    .filter(tx => tx.status === "completed" || tx.status === "success")
+    .reduce((sum, tx) => sum + Number(tx.amount || 0), 0);
 
   return (
     <DashboardLayout>
@@ -249,8 +245,19 @@ const checkAdminRole = async () => {
               <AdminArtistFeeSettings />
             </div>
           )}
+          
+          {activeTab === "approvals" && (
+            <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+              <AdminChallengeApprovals />
+            </div>
+          )}
 
-          {/* Audit Logs Section */}
+          {activeTab === "submissions" && (
+            <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+              <AdminAllSubmissions profiles={profiles} />
+            </div>
+          )}
+
           {activeTab === "audit-logs" && (
             <div className="space-y-4 animate-in slide-in-from-bottom-4 fade-in duration-500">
               <div className="flex items-center justify-between mb-6">

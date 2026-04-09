@@ -108,7 +108,7 @@ const handleArtistClick = (artistId: string) => {
             animate={{ opacity: 1, y: 0 }}
             className="font-display text-3xl font-bold mb-2"
           >
-            Book An Artist
+            Book An Entertainer
           </motion.h1>
           <p className="text-gray-400 text-sm">
             Discover and request bookings for the best talent in the industry.

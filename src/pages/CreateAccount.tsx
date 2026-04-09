@@ -78,7 +78,7 @@ const CreateAccount = () => {
   const [formData, setFormData] = useState({
     firstName: "", username: "", email: "", phone: "",
     country: "", state: "", dob: "", password: "", password2: "",
-    fullName: "", stageName: "", aboutYou: "", artistCategory: "",
+    fullName: "", stageName: "", aboutYou: "", artistCategory: "", customArtistCategory: "",
     socialFacebook: "", socialInstagram: "", socialTiktok: "", socialTwitter: "",
     videoUrl1: "", videoUrl2: "", videoUrl3: "",
     avatarUrl: "",
@@ -168,6 +168,7 @@ const CreateAccount = () => {
         },
       },
     });
+    
     if (error) {
       setLoading(false);
       toast.error(error.message);
@@ -193,6 +194,11 @@ const CreateAccount = () => {
         }
       }
 
+      // Determine final category: If "Other", use the custom input
+      const finalCategory = selectedType === "artist" 
+        ? (formData.artistCategory === "Other" && formData.customArtistCategory.trim() !== "" ? formData.customArtistCategory : formData.artistCategory)
+        : null;
+
       const newUser = data.user;
       if (newUser) {
         await supabase.from("profiles").update({
@@ -200,7 +206,7 @@ const CreateAccount = () => {
           video_urls: videoUrls,
           avatar_url: uploadedAvatarUrl,
           full_name: formData.fullName || formData.firstName || null,
-          artist_category: selectedType === "artist" ? formData.artistCategory || null : null,
+          artist_category: finalCategory || null,
         } as any).eq("id", newUser.id);
       }
       setLoading(false);
@@ -372,18 +378,40 @@ const CreateAccount = () => {
         </div>
       </motion.div>
 
-      <motion.div variants={itemFade}>
-        <label className="text-xs text-muted-foreground mb-1 block">Artist Category</label>
-        <Select value={formData.artistCategory} onValueChange={(v) => updateField("artistCategory", v)}>
-          <SelectTrigger className="h-10 text-sm border-border/50">
-            <SelectValue placeholder="Select your category" />
-          </SelectTrigger>
-          <SelectContent className="max-h-60">
-            {artistCategories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      <motion.div variants={itemFade} className="space-y-3">
+        <div>
+          <label className="text-xs text-muted-foreground mb-1 block">Artist Category</label>
+          <Select value={formData.artistCategory} onValueChange={(v) => updateField("artistCategory", v)}>
+            <SelectTrigger className="h-10 text-sm border-border/50">
+              <SelectValue placeholder="Select your category" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {artistCategories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Dynamic Category Input field that appears if "Other" is selected */}
+        <AnimatePresence>
+          {formData.artistCategory === "Other" && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden"
+            >
+              <label className="text-xs text-muted-foreground mb-1 block">Specify Category</label>
+              <Input 
+                placeholder="e.g. Beatboxer, Magician..." 
+                value={formData.customArtistCategory} 
+                onChange={(e) => updateField("customArtistCategory", e.target.value)} 
+                className="h-10 text-sm border-border/50" 
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       <motion.div variants={itemFade} className="grid grid-cols-1 sm:grid-cols-3 gap-3">

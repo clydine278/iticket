@@ -9,7 +9,7 @@ import ThemeToggle from "@/components/ThemeToggle";
 const navLinks = [
   { label: "Home", path: "/" },
   { label: "Buy Tickets", path: "/buy-tickets" },
-  { label: "Book Artist", path: "/book-artist" },
+  { label: "Book Entertainer", path: "/book-artist" },
   { label: "Join Challenge", path: "/challenges" },
 ];
 

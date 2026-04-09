@@ -32,7 +32,7 @@ import {
   Shield,
   ChevronRight,
   Sparkles,
-  Zap,
+  Zap,Users,
   ScanLine,
   type LucideIcon,
 } from "lucide-react";
@@ -61,7 +61,9 @@ const artistLinks: NavItem[] = [
   { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
   { title: "Challenge Submissions", url: "/dashboard/challenges", icon: Trophy },
   { title: "My Tickets", url: "/dashboard/tickets", icon: Ticket },
+  { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
+  { title: "Submissions", url: "/dashboard/submissions", icon: Users },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
 ];
 
@@ -70,7 +72,9 @@ const organizerLinks: NavItem[] = [
   { title: "Create Event", url: "/dashboard/create-event", icon: CalendarPlus },
   { title: "My Events", url: "/dashboard/events", icon: CalendarPlus },
   { title: "Hire Artist", url: "/dashboard/hire-artist", icon: Music },
+  { title: "Submissions", url: "/dashboard/submissions", icon: Users },
   { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
+    { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
   { title: "Bookings", url: "/dashboard/bookings", icon: Music },
   { title: "Order History", url: "/dashboard/orders", icon: ShoppingCart },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },

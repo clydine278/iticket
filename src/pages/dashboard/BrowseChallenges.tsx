@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -6,52 +6,244 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Trophy, Music, Users, Search, Upload } from "lucide-react";
-import { motion } from "framer-motion";
+import { 
+  Trophy, Music, Users, Search, Upload, CreditCard, 
+  Loader2, Clock, CheckCircle2, ArrowRight, ExternalLink
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "@/hooks/use-toast";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, 
+  DialogDescription, DialogTrigger 
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { useSearchParams } from "react-router-dom";
+
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  banner_url: string | null;
+  song_title: string | null;
+  entry_fee: number;
+  status: string;
+  created_at: string;
+  challenge_entries: { id: string; status: string; video_url: string | null }[];
+  prize_pool?: number;
+  end_date?: string;
+  creator_id?: string;
+}
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08, delayChildren: 0.1 },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 30, scale: 0.95 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { type: "spring", stiffness: 200, damping: 20 },
+  },
+};
 
 const BrowseChallenges = () => {
   const { user } = useAuth();
-  const [challenges, setChallenges] = useState<any[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [userPayments, setUserPayments] = useState<Set<string>>(new Set());
+  const [userEntries, setUserEntries] = useState<Map<string, { status: string; video_url: string | null }>>(new Map());
+  const [globalEntryFee, setGlobalEntryFee] = useState<number>(0);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [videoUrl, setVideoUrl] = useState("");
-  const [selectedChallenge, setSelectedChallenge] = useState<string | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
 
   useEffect(() => {
-    const fetchChallenges = async () => {
-      const { data } = await supabase
+    const reference = searchParams.get("reference");
+    const trxref = searchParams.get("trxref");
+    if (reference || trxref) {
+      verifyPaymentAndUnlock(reference || trxref);
+    }
+  }, [searchParams]);
+
+  const verifyPaymentAndUnlock = async (reference: string | null) => {
+    if (!reference || !user) return;
+    setProcessingPayment(true);
+    toast({ title: "Verifying payment...", description: "Please wait while we confirm your transaction." });
+    
+    try {
+      // SMART POLLING: Wait for the webhook to finish saving the receipt to the database
+      // Checks every 1.5 seconds (up to 4 times)
+      let paymentFound = false;
+      for (let i = 0; i < 4; i++) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        const { data } = await supabase
+          .from("challenge_payments")
+          .select("id")
+          .eq("payment_reference", reference)
+          .maybeSingle();
+
+        if (data) {
+          paymentFound = true;
+          break;
+        }
+      }
+      
+      if (paymentFound) {
+        toast({ 
+          title: "Payment Successful! 🎉", 
+          description: "You can now upload your video.",
+          variant: "default"
+        });
+      } else {
+        toast({ 
+          title: "Processing", 
+          description: "Your payment is taking a moment to process. Please refresh the page in a few seconds.",
+        });
+      }
+      
+      await fetchData();
+      setSearchParams({}); // Clear URL params
+    } catch (err) {
+      console.error("Verification error:", err);
+    } finally {
+      setProcessingPayment(false);
+    }
+  };
+
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: settings } = await supabase.from("platform_settings").select("challenge_entry_fee").single();
+      const fee = settings?.challenge_entry_fee || 0;
+      setGlobalEntryFee(fee);
+
+      const { data: challs, error: challError } = await supabase
         .from("challenges")
-        .select("*, challenge_entries(id)")
+        .select(`
+          id, title, description, banner_url, song_title, status, created_at, creator_id,
+          challenge_entries(id, status, video_url, user_id)
+        `)
         .eq("status", "active")
         .order("created_at", { ascending: false });
-      setChallenges(data || []);
-      setLoading(false);
-    };
-    fetchChallenges();
-  }, []);
+      
+      if (challError) throw challError;
+      
+      const challengesWithFee = (challs || []).map(c => {
+        const entries = c.challenge_entries || [];
+        return {
+          ...c,
+          entry_fee: fee,
+          prize_pool: fee > 0 ? entries.length * fee * 0.8 : 50000,
+          challenge_entries: entries
+        };
+      });
+      
+      setChallenges(challengesWithFee);
 
-  const filtered = challenges.filter((c) =>
-    c.title.toLowerCase().includes(search.toLowerCase())
-  );
+      if (user) {
+        const { data: payments } = await supabase
+          .from("challenge_payments")
+          .select("challenge_id")
+          .eq("user_id", user.id);
+        
+        // EXACT PER-CHALLENGE TRACKING
+        // Only unlock the specific challenges the user has paid for
+        setUserPayments(new Set((payments || []).map(p => p.challenge_id)));
+
+        const { data: entries } = await supabase
+          .from("challenge_entries")
+          .select("challenge_id, status, video_url")
+          .eq("user_id", user.id);
+        
+        const entriesMap = new Map();
+        (entries || []).forEach(e => entriesMap.set(e.challenge_id, { status: e.status, video_url: e.video_url }));
+        setUserEntries(entriesMap);
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => { fetchData(); }, [fetchData]);
+
+  const handlePayment = async (challenge: Challenge) => {
+    if (!user) {
+      toast({ title: "Please login first", variant: "destructive" });
+      return;
+    }
+    
+    setSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${session?.access_token}`,
+          },
+          body: JSON.stringify({
+            email: user.email,
+            amount: globalEntryFee,
+            callback_url: `${window.location.origin}/dashboard/browse-challenges`, 
+            metadata: {
+              user_id: user.id,
+              challenge_id: challenge.id, 
+              type: "challenge_entry", 
+            },
+          }),
+        }
+      );
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Payment initialization failed");
+      
+      window.location.href = data.authorization_url;
+    } catch (err: any) {
+      toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+      setSubmitting(false);
+    }
+  };
 
   const handleParticipate = async () => {
     if (!user || !selectedChallenge) return;
+    
+    const hasPaid = userPayments.has(selectedChallenge.id);
+    if (globalEntryFee > 0 && !hasPaid) {
+      toast({ title: "Payment required", description: "Please pay the entry fee first", variant: "destructive" });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const { error } = await supabase.from("challenge_entries").insert({
-        challenge_id: selectedChallenge,
+        challenge_id: selectedChallenge.id,
         user_id: user.id,
-        video_url: videoUrl || null,
-        status: "submitted",
+        video_url: videoUrl.trim() || null,
+        status: "pending_approval",
       });
+      
       if (error) throw error;
-      toast({ title: "Entry submitted!", description: "Your challenge entry is now live." });
+      
+      toast({ title: "Entry Submitted! 🚀", description: "Your submission is pending admin approval." });
       setVideoUrl("");
+      setDialogOpen(false);
       setSelectedChallenge(null);
+      fetchData();
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
@@ -59,90 +251,158 @@ const BrowseChallenges = () => {
     }
   };
 
+  const getUserChallengeStatus = (challengeId: string) => userEntries.get(challengeId);
+  const filtered = challenges.filter((c) => c.title.toLowerCase().includes(search.toLowerCase()) || c.description?.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <DashboardLayout>
-      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-primary" /> Browse Challenges
-          </h1>
-          <p className="text-muted-foreground text-sm mt-1">Discover trending challenges and participate</p>
-        </div>
+      <div className="min-h-screen bg-background">
+        <div className="border-b border-border/40 bg-card/30 backdrop-blur-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight text-foreground">Challenges</h1>
+                <p className="text-muted-foreground mt-1">{globalEntryFee === 0 ? "Free to join • Win amazing prizes" : "Stand a chance to Win amazing prizes"}</p>
+              </div>
+            </motion.div>
 
-        <div className="relative max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input placeholder="Search challenges..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" />
-        </div>
-
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }} className="mt-6 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input placeholder="Search challenges..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10 bg-background/50 border-border/50 focus:border-primary/50" />
+              </div>
+            </motion.div>
           </div>
-        ) : filtered.length === 0 ? (
-          <Card>
-            <CardContent className="py-12 text-center">
-              <Trophy className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-semibold text-lg">No challenges found</h3>
-              <p className="text-muted-foreground text-sm mt-1">Check back later for new challenges</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((challenge, i) => (
-              <motion.div key={challenge.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
-                  {challenge.banner_url && (
-                    <div className="h-36 overflow-hidden rounded-t-lg">
-                      <img src={challenge.banner_url} alt={challenge.title} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <CardContent className="p-4 flex-1 flex flex-col">
-                    <h3 className="font-semibold mb-1">{challenge.title}</h3>
-                    {challenge.description && (
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{challenge.description}</p>
-                    )}
-                    <div className="flex items-center gap-3 text-sm text-muted-foreground mb-3 flex-wrap">
-                      {challenge.song_title && (
-                        <span className="flex items-center gap-1"><Music className="w-3.5 h-3.5" />{challenge.song_title}</span>
-                      )}
-                      <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5" />{challenge.challenge_entries?.length || 0} entries</span>
-                    </div>
-                    <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
-                      {challenge.prize && <Badge variant="secondary" className="text-xs">{challenge.prize}</Badge>}
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <Button size="sm" onClick={() => setSelectedChallenge(challenge.id)}>
-                            <Upload className="w-3.5 h-3.5 mr-1" /> Participate
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Submit Your Entry</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 pt-2">
-                            <div className="space-y-2">
-                              <Label>Video URL</Label>
-                              <Input
-                                placeholder="Paste your video link..."
-                                value={videoUrl}
-                                onChange={(e) => setVideoUrl(e.target.value)}
-                              />
-                              <p className="text-xs text-muted-foreground">Share a link to your TikTok, Instagram, or YouTube video</p>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {loading || processingPayment ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="relative w-10 h-10">
+                <div className="absolute inset-0 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+              </div>
+              <p className="text-sm text-muted-foreground mt-4">{processingPayment ? "Verifying payment..." : "Loading challenges..."}</p>
+            </div>
+          ) : (
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              <AnimatePresence mode="popLayout">
+                {filtered.map((challenge) => {
+                  const userStatus = getUserChallengeStatus(challenge.id);
+                  const hasPaid = userPayments.has(challenge.id) || (globalEntryFee === 0);
+                  const isFree = globalEntryFee === 0;
+                  
+                  let buttonState: "pay" | "upload" | "pending" | "joined" = "pay";
+                  if (userStatus) {
+                    if (userStatus.status === "pending_approval") buttonState = "pending";
+                    else if (userStatus.status === "approved") buttonState = "joined";
+                    else buttonState = "upload";
+                  } else if (hasPaid) {
+                    buttonState = "upload";
+                  }
+
+                  return (
+                    <motion.div key={challenge.id} variants={cardVariants} layout>
+                      <Card className="group overflow-hidden bg-card border-border/40 hover:border-primary/30 hover:shadow-lg transition-all duration-300">
+                        <div className="relative aspect-[16/10] overflow-hidden bg-muted">
+                          {challenge.banner_url ? (
+                            <img src={challenge.banner_url} alt={challenge.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center">
+                              <Trophy className="w-12 h-12 text-primary/30" />
                             </div>
-                            <Button onClick={handleParticipate} disabled={submitting} className="w-full">
-                              {submitting ? "Submitting..." : "Submit Entry"}
-                            </Button>
+                          )}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+                          <div className="absolute top-3 left-3 flex gap-2">
+                            <Badge className="bg-white/90 text-foreground backdrop-blur-sm border-0 text-xs">
+                              <Trophy className="w-3 h-3 mr-1 text-amber-500" /> ₦{challenge.prize_pool?.toLocaleString()}
+                            </Badge>
                           </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </motion.div>
+                          
+                          {/* Payment Success Badge on the Image */}
+                          {hasPaid && !isFree && !userStatus && (
+                            <div className="absolute top-3 right-3">
+                              <Badge className="bg-emerald-500/90 text-white border-0"><CheckCircle2 className="w-3 h-3 mr-1" />Paid</Badge>
+                            </div>
+                          )}
+                          
+                          {userStatus && (
+                            <div className="absolute top-3 right-3">
+                              {userStatus.status === "pending_approval" ? (
+                                <Badge className="bg-amber-500/90 text-white border-0"><Clock className="w-3 h-3 mr-1" />Pending</Badge>
+                              ) : userStatus.status === "approved" ? (
+                                <Badge className="bg-green-500/90 text-white border-0"><CheckCircle2 className="w-3 h-3 mr-1" />Approved</Badge>
+                              ) : null}
+                            </div>
+                          )}
+                        </div>
+
+                        <CardContent className="p-5">
+                          <h3 className="font-semibold text-lg mb-2 line-clamp-1 group-hover:text-primary transition-colors">{challenge.title}</h3>
+                          <p className="text-sm text-muted-foreground line-clamp-2 mb-4">{challenge.description || "Join this challenge to showcase your talent!"}</p>
+                          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                            <span className="flex items-center gap-1.5"><Music className="w-3.5 h-3.5" />{challenge.song_title || "Original"}</span>
+                            <span className="flex items-center gap-1.5"><Users className="w-3.5 h-3.5" />{challenge.challenge_entries?.length || 0}</span>
+                          </div>
+
+                          {buttonState === "joined" ? (
+                            <Button variant="outline" className="w-full h-10 border-green-500/30 text-green-600 bg-green-500/5" disabled><CheckCircle2 className="w-4 h-4 mr-2" />Joined</Button>
+                          ) : buttonState === "pending" ? (
+                            <Button variant="outline" className="w-full h-10 border-amber-500/30 text-amber-600 bg-amber-500/5" disabled><Clock className="w-4 h-4 mr-2" />Awaiting Approval</Button>
+                          ) : buttonState === "upload" ? (
+                            <Dialog open={dialogOpen && selectedChallenge?.id === challenge.id} onOpenChange={(open) => {
+                              setDialogOpen(open);
+                              if (!open) { setSelectedChallenge(null); setVideoUrl(""); }
+                            }}>
+                              <DialogTrigger asChild>
+                                <Button className="w-full h-10 bg-primary hover:bg-primary/90" onClick={() => { setSelectedChallenge(challenge); setDialogOpen(true); }}>
+                                  <Upload className="w-4 h-4 mr-2" /> Upload Link
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-md">
+                                <DialogHeader>
+                                  <DialogTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-primary" /> Submit Your Entry</DialogTitle>
+                                  <DialogDescription>Enter your video link for <span className="font-semibold">{challenge.title}</span></DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4 pt-4">
+                                  <div className="space-y-2">
+                                    <Label className="flex items-center gap-2 text-sm"><ExternalLink className="w-4 h-4 text-muted-foreground" /> Video URL</Label>
+                                    <Input placeholder="https://tiktok.com/@username/video/..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
+                                    <p className="text-xs text-muted-foreground">Paste link from TikTok, Instagram, or YouTube</p>
+                                  </div>
+                                  <div className="flex gap-3">
+                                    <Button variant="outline" className="flex-1" onClick={() => { setDialogOpen(false); setSelectedChallenge(null); }}>Cancel</Button>
+                                    <Button className="flex-1 bg-primary" onClick={handleParticipate} disabled={submitting || !videoUrl.trim()}>
+                                      {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Submit <ArrowRight className="w-4 h-4 ml-2" /></>}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          ) : (
+                            <Button className="w-full h-10 bg-amber-500 hover:bg-amber-600 text-white" onClick={() => handlePayment(challenge)} disabled={submitting}>
+                              <CreditCard className="w-4 h-4 mr-2" /> Pay ₦{globalEntryFee.toLocaleString()}
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  );
+                })}
+              </AnimatePresence>
+            </motion.div>
+          )}
+
+          {!loading && filtered.length === 0 && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
+              <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
+                <Search className="w-8 h-8 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-lg">No challenges found</h3>
+              <p className="text-muted-foreground text-sm mt-1">Try adjusting your search</p>
+            </motion.div>
+          )}
+        </div>
+      </div>
     </DashboardLayout>
   );
 };

@@ -44,7 +44,7 @@ const Dashboard = () => {
 
   const displayName = user.user_metadata?.full_name || user.user_metadata?.username || user.email?.split("@")[0] || "User";
   const accountType: string = user.user_metadata?.account_type || "personal";
-  const roleLabel = accountType === "artist" ? "Artist Account" : accountType === "organizer" ? "Organizer Account" : "Personal Account";
+  const roleLabel = accountType === "artist" ? "Entertainer Account" : accountType === "organizer" ? "Organizer Account" : "Personal Account";
 
   return (
     <DashboardLayout>

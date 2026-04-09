@@ -98,10 +98,10 @@ const HireArtist = () => {
         {/* Header */}
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Music className="w-6 h-6 text-primary" /> Hire an Artist
+            <Music className="w-6 h-6 text-primary" /> Hire an Entertainer
           </h1>
           <p className="text-muted-foreground text-sm mt-1">
-            Discover and book talented artists for your events
+            Discover and book talented entertainers for your events
           </p>
         </div>
 
