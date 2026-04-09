@@ -1,5 +1,5 @@
-- make admin page more morden and responsive
-- admin should be able to make other users admin and also give me the code to update the database if needed
+<!-- - make admin page more morden and responsive -->
+<!-- - admin should be able to make other users admin and also give me the code to update the database if needed -->
 - work on paystack and make sure it's working well
 - for the ticket page any tickect with the amount set to zero should be marked as free on the ticket purchase page and remove the purchase with paystack button and make it Get Ticket
 - for the ticket banner move the image down a bit like the posstion of the cover down not middle like let the top be showing
