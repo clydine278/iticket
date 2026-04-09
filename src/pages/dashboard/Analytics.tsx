@@ -3,13 +3,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, TrendingUp, Users, Music, DollarSign, Eye, Heart, Calendar } from "lucide-react";
+import { BarChart3, TrendingUp, Music, DollarSign, Calendar, Users } from "lucide-react";
 
 const Analytics = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<any[]>([]);
   const [challenges, setChallenges] = useState<any[]>([]);
-  const [entries, setEntries] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -17,14 +16,12 @@ const Analytics = () => {
   }, [user]);
 
   const fetchData = async () => {
-    const [bookingsRes, challengesRes, entriesRes] = await Promise.all([
+    const [bookingsRes, challengesRes] = await Promise.all([
       supabase.from("bookings").select("*").eq("artist_id", user!.id),
       supabase.from("challenges").select("*").eq("creator_id", user!.id),
-      supabase.from("challenge_entries").select("*, challenges(title)").eq("user_id", user!.id),
     ]);
     setBookings(bookingsRes.data || []);
     setChallenges(challengesRes.data || []);
-    setEntries(entriesRes.data || []);
     setLoading(false);
   };
 
@@ -42,27 +39,19 @@ const Analytics = () => {
   const accepted = bookings.filter(b => b.status === "accepted").length;
   const pending = bookings.filter(b => b.status === "pending").length;
   const declined = bookings.filter(b => b.status === "declined").length;
-  const totalEarnings = bookings.filter(b => b.status === "accepted").reduce((sum, b) => sum + Number(b.offered_price || 0), 0);
-  const totalViews = entries.reduce((sum, e) => sum + (e.views || 0), 0);
-  const totalLikes = entries.reduce((sum, e) => sum + (e.likes || 0), 0);
+  // Only count earnings where payment_status is 'paid'
+  const totalEarnings = bookings
+    .filter(b => b.payment_status === "paid")
+    .reduce((sum, b) => sum + Number(b.offered_price || 0), 0);
 
   const stats = [
     { label: "Total Bookings", value: totalBookings, icon: Calendar, color: "text-primary" },
-    { label: "Accepted", value: accepted, icon: TrendingUp, color: "text-green-500" },
-    { label: "Pending", value: pending, icon: Music, color: "text-yellow-500" },
-    { label: "Earnings", value: `₦${totalEarnings.toLocaleString()}`, icon: DollarSign, color: "text-primary" },
+    { label: "Accepted", value: accepted, icon: TrendingUp, color: "text-emerald-500" },
+    { label: "Pending", value: pending, icon: Music, color: "text-amber-500" },
+    { label: "Earnings (Paid)", value: `₦${totalEarnings.toLocaleString()}`, icon: DollarSign, color: "text-primary" },
     { label: "Challenges Created", value: challenges.length, icon: BarChart3, color: "text-accent-foreground" },
-    { label: "Total Views", value: totalViews, icon: Eye, color: "text-primary" },
-    { label: "Total Likes", value: totalLikes, icon: Heart, color: "text-destructive" },
-    { label: "Entries Submitted", value: entries.length, icon: Users, color: "text-accent-foreground" },
+    { label: "Entries Submitted", value: bookings.filter(b => b.status === "accepted").length, icon: Users, color: "text-accent-foreground" },
   ];
-
-  // Monthly bookings breakdown
-  const monthlyData: Record<string, number> = {};
-  bookings.forEach(b => {
-    const month = new Date(b.created_at).toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-    monthlyData[month] = (monthlyData[month] || 0) + 1;
-  });
 
   return (
     <DashboardLayout>
@@ -71,11 +60,10 @@ const Analytics = () => {
           <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight flex items-center gap-2">
             <BarChart3 className="w-6 h-6 text-primary" /> Analytics
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">Track your performance and engagement</p>
+          <p className="text-sm text-muted-foreground mt-1">Track your performance and earnings</p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {stats.map((stat) => (
             <Card key={stat.label} className="border-border/50 hover:shadow-md transition-shadow">
               <CardContent className="p-4 flex flex-col gap-2">
@@ -89,7 +77,6 @@ const Analytics = () => {
           ))}
         </div>
 
-        {/* Booking Performance */}
         <Card className="border-border/50">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-display">Booking Performance</CardTitle>
@@ -102,15 +89,14 @@ const Analytics = () => {
               </div>
             ) : (
               <div className="space-y-4">
-                <ProgressBar label="Accepted" value={accepted} total={totalBookings} color="bg-green-500" />
-                <ProgressBar label="Pending" value={pending} total={totalBookings} color="bg-yellow-500" />
+                <ProgressBar label="Accepted" value={accepted} total={totalBookings} color="bg-emerald-500" />
+                <ProgressBar label="Pending" value={pending} total={totalBookings} color="bg-amber-500" />
                 <ProgressBar label="Declined" value={declined} total={totalBookings} color="bg-destructive" />
               </div>
             )}
           </CardContent>
         </Card>
 
-        {/* Recent Bookings & Challenges side by side */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="border-border/50">
             <CardHeader className="pb-3">
@@ -129,7 +115,7 @@ const Analytics = () => {
                         <p className="text-sm font-medium truncate">{b.event_name || "Untitled Event"}</p>
                         <p className="text-xs text-muted-foreground">{b.venue || "—"}</p>
                       </div>
-                      <StatusBadge status={b.status} />
+                      <StatusBadge status={b.payment_status === "paid" ? "paid" : b.status} />
                     </div>
                   ))}
                 </div>
@@ -169,10 +155,10 @@ const Analytics = () => {
 
 function StatusBadge({ status }: { status: string }) {
   const cls =
-    status === "accepted" || status === "active"
-      ? "bg-green-500/10 text-green-600"
+    status === "accepted" || status === "active" || status === "paid"
+      ? "bg-emerald-500/10 text-emerald-600"
       : status === "pending"
-      ? "bg-yellow-500/10 text-yellow-600"
+      ? "bg-amber-500/10 text-amber-600"
       : "bg-muted text-muted-foreground";
   return <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium whitespace-nowrap ${cls}`}>{status}</span>;
 }

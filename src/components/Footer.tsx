@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Footer = () => {
+  const { user } = useAuth();
+
   return (
-    <footer className="bg-nav text-nav-foreground pt-10 pb-6">
+    <footer className="bg-nav text-nav-foreground pt-10 pb-6 mt-auto">
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
           <div className="col-span-2 md:col-span-1">
@@ -34,8 +37,17 @@ const Footer = () => {
             <h4 className="font-bold text-xs mb-3 text-nav-foreground/80">Quick Links</h4>
             <ul className="space-y-2 text-xs text-nav-foreground/60">
               <li><Link to="/" className="hover:text-primary transition-colors">Home</Link></li>
-              <li><Link to="/login" className="hover:text-primary transition-colors">Login</Link></li>
-              <li><Link to="/create-account" className="hover:text-primary transition-colors">Create Account</Link></li>
+              {user ? (
+                <>
+                  <li><Link to="/dashboard" className="hover:text-primary transition-colors">Dashboard</Link></li>
+                  <li><Link to="/dashboard/profile" className="hover:text-primary transition-colors">Profile</Link></li>
+                </>
+              ) : (
+                <>
+                  <li><Link to="/login" className="hover:text-primary transition-colors">Login</Link></li>
+                  <li><Link to="/create-account" className="hover:text-primary transition-colors">Create Account</Link></li>
+                </>
+              )}
             </ul>
           </div>
         </div>

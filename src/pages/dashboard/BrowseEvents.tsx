@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -10,23 +10,52 @@ import { Ticket, MapPin, Calendar, Search } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 
+const PAGE_SIZE = 6;
+
 const BrowseEvents = () => {
   const [events, setEvents] = useState<any[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const observerRef = useRef<HTMLDivElement>(null);
+
+  const fetchEvents = useCallback(async (offset = 0) => {
+    const { data } = await supabase
+      .from("events")
+      .select("*, ticket_types(id, name, price, quantity, sold)")
+      .eq("status", "published")
+      .order("date", { ascending: true })
+      .range(offset, offset + PAGE_SIZE - 1);
+    
+    if (data) {
+      if (offset === 0) {
+        setEvents(data);
+      } else {
+        setEvents(prev => [...prev, ...data]);
+      }
+      setHasMore(data.length === PAGE_SIZE);
+    }
+    setLoading(false);
+    setLoadingMore(false);
+  }, []);
+
+  useEffect(() => { fetchEvents(0); }, [fetchEvents]);
+
+  const loadMore = useCallback(() => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    fetchEvents(events.length);
+  }, [loadingMore, hasMore, events.length, fetchEvents]);
 
   useEffect(() => {
-    const fetchEvents = async () => {
-      const { data } = await supabase
-        .from("events")
-        .select("*, ticket_types(id, name, price, quantity, sold)")
-        .eq("status", "published")
-        .order("date", { ascending: true });
-      setEvents(data || []);
-      setLoading(false);
-    };
-    fetchEvents();
-  }, []);
+    const observer = new IntersectionObserver(
+      (entries) => { if (entries[0].isIntersecting && !search) loadMore(); },
+      { threshold: 0.1 }
+    );
+    if (observerRef.current) observer.observe(observerRef.current);
+    return () => observer.disconnect();
+  }, [loadMore, search]);
 
   const filtered = events.filter(
     (e) =>
@@ -64,45 +93,55 @@ const BrowseEvents = () => {
             <p className="text-muted-foreground text-sm mt-1">Check back later for upcoming events</p>
           </CardContent></Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((event, i) => (
-              <motion.div key={event.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
-                <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
-                  {event.banner_url && (
-                    <div className="h-36 overflow-hidden rounded-t-lg">
-                      <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <CardContent className="p-4 flex-1 flex flex-col">
-                    <div className="flex items-center gap-2 flex-wrap mb-2">
-                      <Badge variant="secondary" className="text-xs capitalize">{event.category}</Badge>
-                    </div>
-                    <h3 className="font-semibold mb-1 line-clamp-2">{event.title}</h3>
-                    <div className="space-y-1 text-sm text-muted-foreground mb-3">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {format(new Date(event.date), "MMM d, yyyy · h:mm a")}
+          <>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {filtered.map((event, i) => (
+                <motion.div key={event.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}>
+                  <Card className="hover:shadow-md transition-shadow h-full flex flex-col">
+                    {event.banner_url && (
+                      <div className="h-36 overflow-hidden rounded-t-lg">
+                        <img src={event.banner_url} alt={event.title} className="w-full h-full object-cover object-top" />
                       </div>
-                      {event.venue && (
+                    )}
+                    <CardContent className="p-4 flex-1 flex flex-col">
+                      <div className="flex items-center gap-2 flex-wrap mb-2">
+                        <Badge variant="secondary" className="text-xs capitalize">{event.category}</Badge>
+                      </div>
+                      <h3 className="font-semibold mb-1 line-clamp-2">{event.title}</h3>
+                      <div className="space-y-1 text-sm text-muted-foreground mb-3">
                         <div className="flex items-center gap-1">
-                          <MapPin className="w-3.5 h-3.5" />
-                          {event.venue}{event.city ? `, ${event.city}` : ""}
+                          <Calendar className="w-3.5 h-3.5" />
+                          {format(new Date(event.date), "MMM d, yyyy · h:mm a")}
                         </div>
-                      )}
-                    </div>
-                    <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
-                      <span className="font-bold text-primary">
-                        {cheapestPrice(event) > 0 ? `From ₦${cheapestPrice(event).toLocaleString()}` : "Free"}
-                      </span>
-                      <Button size="sm" asChild>
-                        <Link to={`/dashboard/event/${event.id}`}>Buy Tickets</Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+                        {event.venue && (
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3.5 h-3.5" />
+                            {event.venue}{event.city ? `, ${event.city}` : ""}
+                          </div>
+                        )}
+                      </div>
+                      <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
+                        <span className="font-bold text-primary">
+                          {cheapestPrice(event) > 0 ? `From ₦${cheapestPrice(event).toLocaleString()}` : "Free"}
+                        </span>
+                        <Button size="sm" asChild>
+                          <Link to={`/dashboard/event/${event.id}`}>
+                            {cheapestPrice(event) > 0 ? "Buy Tickets" : "Get Ticket"}
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+            {!search && (
+              <div ref={observerRef} className="flex justify-center py-4">
+                {loadingMore && <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />}
+                {!hasMore && events.length > 0 && <p className="text-xs text-muted-foreground">All events loaded</p>}
+              </div>
+            )}
+          </>
         )}
       </motion.div>
     </DashboardLayout>
