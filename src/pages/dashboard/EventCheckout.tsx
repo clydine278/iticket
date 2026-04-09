@@ -35,11 +35,8 @@ const EventCheckout = () => {
         setEvent(data);
         const types = data.ticket_types || [];
         setTicketTypes(types);
-        // Default quantity to 1 for each ticket type
         const defaultQty: Record<string, number> = {};
-        types.forEach((t: any) => {
-          defaultQty[t.id] = 1;
-        });
+        types.forEach((t: any) => { defaultQty[t.id] = 1; });
         setQuantities(defaultQty);
       }
       setLoading(false);
@@ -58,16 +55,52 @@ const EventCheckout = () => {
   const selectedTickets = ticketTypes.filter(t => (quantities[t.id] || 0) > 0);
   const total = ticketTypes.reduce((sum, t) => sum + (quantities[t.id] || 0) * t.price, 0);
   const hasItems = selectedTickets.length > 0;
+  const isFreeOrder = total === 0 && hasItems;
 
   const handleShare = async () => {
     const url = window.location.href;
     if (navigator.share) {
-      try {
-        await navigator.share({ title: event?.title, text: `Check out ${event?.title}!`, url });
-      } catch {}
+      try { await navigator.share({ title: event?.title, text: `Check out ${event?.title}!`, url }); } catch {}
     } else {
       await navigator.clipboard.writeText(url);
       toast({ title: "Link copied!", description: "Event link copied to clipboard." });
+    }
+  };
+
+  const handleFreeTicket = async () => {
+    if (!user || !event) return;
+    setPurchasing(true);
+    try {
+      const tickets = selectedTickets.map(t => ({
+        ticket_type_id: t.id,
+        quantity: quantities[t.id],
+        total: 0,
+      }));
+
+      for (const ticket of tickets) {
+        for (let i = 0; i < ticket.quantity; i++) {
+          const ticketCode = `TKT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+          await supabase.from("orders").insert({
+            user_id: user.id,
+            event_id: event.id,
+            ticket_type_id: ticket.ticket_type_id,
+            quantity: 1,
+            total_amount: 0,
+            status: "confirmed",
+            payment_method: "free",
+            qr_code: crypto.randomUUID(),
+            ticket_code: ticketCode,
+          });
+        }
+        await supabase.rpc("increment_sold", { _ticket_type_id: ticket.ticket_type_id, _qty: ticket.quantity });
+      }
+
+      toast({ title: "Ticket claimed!", description: "Your free ticket has been confirmed." });
+      navigate("/dashboard/tickets");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setPurchasing(false);
     }
   };
 
@@ -75,7 +108,6 @@ const EventCheckout = () => {
     if (!user || !event) return;
     setPurchasing(true);
     try {
-      // Get user email
       const { data: { session } } = await supabase.auth.getSession();
       const email = session?.user?.email;
       if (!email) throw new Error("No email found for your account");
@@ -86,7 +118,6 @@ const EventCheckout = () => {
         total: quantities[t.id] * t.price,
       }));
 
-      // Initialize Paystack transaction via edge function
       const funcUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`;
       const res = await fetch(funcUrl, {
         method: "POST",
@@ -108,8 +139,6 @@ const EventCheckout = () => {
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to initialize payment");
-
-      // Redirect to Paystack checkout
       window.location.href = data.authorization_url;
     } catch (err: any) {
       toast({ title: "Payment Error", description: err.message, variant: "destructive" });
@@ -128,18 +157,17 @@ const EventCheckout = () => {
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
-        {/* Event Hero - image only */}
+        {/* Event Hero - banner with top position */}
         {event.banner_url && (
           <div className="relative rounded-2xl overflow-hidden mb-4 cursor-pointer" onClick={() => setImageOpen(true)}>
             <img
               src={event.banner_url}
               alt={event.title}
-              className="w-full h-40 sm:h-56 object-cover hover:scale-105 transition-transform duration-300"
+              className="w-full h-40 sm:h-56 object-cover object-top hover:scale-105 transition-transform duration-300"
             />
           </div>
         )}
 
-        {/* Event Details - below the image for visibility */}
         <Card className="mb-6 border-border/40">
           <CardContent className="p-4 sm:p-5">
             <div className="flex items-start justify-between gap-3">
@@ -160,19 +188,11 @@ const EventCheckout = () => {
           </CardContent>
         </Card>
 
-        {/* Image Popup */}
         <Dialog open={imageOpen} onOpenChange={setImageOpen}>
           <DialogContent className="max-w-3xl p-0 bg-transparent border-none shadow-none [&>button]:hidden">
             <div className="relative">
-              <img
-                src={event.banner_url}
-                alt={event.title}
-                className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl"
-              />
-              <button
-                onClick={() => setImageOpen(false)}
-                className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors shadow-md"
-              >
+              <img src={event.banner_url} alt={event.title} className="w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl" />
+              <button onClick={() => setImageOpen(false)} className="absolute top-3 right-3 w-8 h-8 rounded-full bg-background/80 backdrop-blur-sm flex items-center justify-center hover:bg-background transition-colors shadow-md">
                 <X className="w-4 h-4" />
               </button>
             </div>
@@ -180,13 +200,12 @@ const EventCheckout = () => {
         </Dialog>
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          {/* Ticket Selection */}
           <div className="lg:col-span-3 space-y-3">
             <h2 className="font-display font-semibold text-base flex items-center gap-2">
               <Ticket className="w-4 h-4 text-primary" /> Choose your tickets
             </h2>
             <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-              <Info className="w-3 h-3" /> Use the + or − buttons to adjust the number of tickets you want to buy.
+              <Info className="w-3 h-3" /> Use the + or − buttons to adjust the number of tickets.
             </p>
             {ticketTypes.length === 0 ? (
               <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">No tickets available</CardContent></Card>
@@ -195,6 +214,7 @@ const EventCheckout = () => {
                 const available = ticket.quantity - (ticket.sold || 0);
                 const qty = quantities[ticket.id] || 0;
                 const isSelected = qty > 0;
+                const isFree = Number(ticket.price) === 0;
                 return (
                   <Card key={ticket.id} className={`transition-all ${isSelected ? "border-primary/50 shadow-md" : "border-border/40"}`}>
                     <CardContent className="p-4">
@@ -202,12 +222,15 @@ const EventCheckout = () => {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <h3 className="font-semibold text-sm">{ticket.name}</h3>
+                            {isFree && <Badge className="bg-emerald-500/20 text-emerald-600 border-emerald-500/30 text-[10px]">FREE</Badge>}
                             {available <= 10 && available > 0 && (
                               <span className="text-[10px] bg-destructive/10 text-destructive px-1.5 py-0.5 rounded-full">{available} left</span>
                             )}
                           </div>
                           {ticket.description && <p className="text-xs text-muted-foreground mb-2">{ticket.description}</p>}
-                          <p className="text-lg font-bold text-primary">₦{Number(ticket.price).toLocaleString()}</p>
+                          <p className="text-lg font-bold text-primary">
+                            {isFree ? "Free" : `₦${Number(ticket.price).toLocaleString()}`}
+                          </p>
                         </div>
                         <div className="flex items-center gap-1.5 bg-muted rounded-full p-1">
                           <Button size="icon" variant="ghost" className="h-7 w-7 rounded-full" onClick={() => updateQty(ticket.id, -1)} disabled={qty <= 0}>
@@ -226,7 +249,6 @@ const EventCheckout = () => {
             )}
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-2">
             <div className="sticky top-4">
               <Card className="border-border/40">
@@ -240,23 +262,36 @@ const EventCheckout = () => {
                         {selectedTickets.map(t => (
                           <div key={t.id} className="flex justify-between text-sm">
                             <span className="text-muted-foreground">{quantities[t.id]}× {t.name}</span>
-                            <span className="font-medium">₦{(quantities[t.id] * t.price).toLocaleString()}</span>
+                            <span className="font-medium">
+                              {Number(t.price) === 0 ? "Free" : `₦${(quantities[t.id] * t.price).toLocaleString()}`}
+                            </span>
                           </div>
                         ))}
                       </div>
                       <Separator />
                       <div className="flex justify-between items-center">
                         <span className="font-semibold">Total</span>
-                        <span className="text-xl font-bold text-primary">₦{total.toLocaleString()}</span>
+                        <span className="text-xl font-bold text-primary">
+                          {isFreeOrder ? "Free" : `₦${total.toLocaleString()}`}
+                        </span>
                       </div>
-                      <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
-                        <CreditCard className="w-4 h-4" />
-                        {purchasing ? "Redirecting to Paystack..." : "Pay with Paystack"}
-                      </Button>
-                      <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
-                        <ShieldCheck className="w-3 h-3" />
-                        Secured by Paystack
-                      </div>
+                      {isFreeOrder ? (
+                        <Button size="lg" className="w-full gap-2" onClick={handleFreeTicket} disabled={purchasing}>
+                          <Ticket className="w-4 h-4" />
+                          {purchasing ? "Getting Ticket..." : "Get Ticket"}
+                        </Button>
+                      ) : (
+                        <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
+                          <CreditCard className="w-4 h-4" />
+                          {purchasing ? "Redirecting to Paystack..." : "Pay with Paystack"}
+                        </Button>
+                      )}
+                      {!isFreeOrder && (
+                        <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
+                          <ShieldCheck className="w-3 h-3" />
+                          Secured by Paystack
+                        </div>
+                      )}
                     </>
                   )}
                 </CardContent>

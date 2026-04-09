@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import type { TablesUpdate } from "@/integrations/supabase/types";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,12 +9,13 @@ import { Progress } from "@/components/ui/progress";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, MapPin, Globe, Music, Briefcase, Save, Sparkles, Facebook, Instagram, Twitter, Video, ChevronDown, ChevronUp, Check, Camera } from "lucide-react";
-import { countries } from "@/lib/countries";
+import { User, Mail, Phone, MapPin, Globe, Music, Briefcase, Save, Sparkles, Facebook, Instagram, Twitter, Video, ChevronDown, ChevronUp, Check, Camera, Landmark } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { useR2Upload } from "@/hooks/use-r2-upload";
+import { nigerianStates } from "@/lib/nigerianStates";
+import { countries } from "@/lib/countries";
 
 const TikTokIcon = () => (
   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="currentColor">
@@ -46,36 +46,43 @@ const ProfileSettings = () => {
     setLoading(false);
   };
   
-const handleSave = async () => {
-  setSaving(true);
-  const updates = {  // Remove : TablesUpdate<"profiles">
-    full_name: profile?.full_name || null,
-    username: profile?.username || null,
-    phone: profile?.phone || null,
-    city: profile?.city || null,
-    country: profile?.country || null,
-    bio: profile?.bio || null,
-    booking_price: profile?.booking_price || null,
-    social_links: profile?.social_links || {},
-    video_urls: profile?.video_urls || [],
-    avatar_url: profile?.avatar_url || null,
-    artist_category: profile?.artist_category || null,
-    gallery_images: profile?.gallery_images || [], // Now should work
-    stage_name: profile?.account_type === "artist" ? profile?.stage_name || null : undefined,
-    services: profile?.account_type === "artist" || profile?.account_type === "organizer"
-      ? (profile?.services?.length ? profile.services : null)
-      : undefined,
-  };
-  
-  const { error } = await supabase
-    .from("profiles")
-    .update(updates)
-    .eq("id", user!.id);
+  const handleSave = async () => {
+    setSaving(true);
+    const accountType = profile?.account_type || "personal";
     
-  setSaving(false);
-  if (error) toast.error(error.message);
-  else toast.success("Profile updated!");
-};
+    const updates: Record<string, any> = {
+      full_name: profile?.full_name || null,
+      username: profile?.username || null,
+      phone: profile?.phone || null,
+      city: profile?.city || null,
+      country: profile?.country || null,
+      bio: profile?.bio || null,
+      booking_price: profile?.booking_price || null,
+      social_links: profile?.social_links || {},
+      video_urls: profile?.video_urls || [],
+      avatar_url: profile?.avatar_url || null,
+      artist_category: profile?.artist_category || null,
+      bank_name: profile?.bank_name || null,
+      bank_account_name: profile?.bank_account_name || null,
+      bank_account_number: profile?.bank_account_number || null,
+    };
+    
+    if (accountType === "artist") {
+      updates.stage_name = profile?.stage_name || null;
+      updates.services = profile?.services?.length ? profile.services : null;
+    } else if (accountType === "organizer") {
+      updates.services = profile?.services?.length ? profile.services : null;
+    }
+    
+    const { error } = await supabase
+      .from("profiles")
+      .update(updates)
+      .eq("id", user!.id);
+      
+    setSaving(false);
+    if (error) toast.error(error.message);
+    else toast.success("Profile updated!");
+  };
 
   const update = (field: string, value: any) =>
     setProfile((p: any) => ({ ...p, [field]: value }));
@@ -96,14 +103,12 @@ const handleSave = async () => {
   const handleAvatarFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
     try {
       const url = await uploadAvatar(file, { folder: "avatars", maxSizeMB: 5, acceptedTypes: ["image/"] });
       if (url) update("avatar_url", url);
     } catch (err: any) {
       toast.error(err.message);
     }
-
     e.target.value = "";
   };
 
@@ -208,7 +213,21 @@ const handleSave = async () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Field label="City" icon={<MapPin className="w-3.5 h-3.5" />} value={profile?.city || ""} onChange={(v) => update("city", v)} placeholder="Lagos" />
+              <div>
+                <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5" /> State
+                </label>
+                <Select value={profile?.city || ""} onValueChange={(v) => update("city", v)}>
+                  <SelectTrigger className="h-10 text-sm">
+                    <SelectValue placeholder="Select state" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-60">
+                    {nigerianStates.map((s) => (
+                      <SelectItem key={s} value={s}>{s}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1.5">
                   <Globe className="w-3.5 h-3.5" /> Country
@@ -228,19 +247,32 @@ const handleSave = async () => {
           </CardContent>
         </Card>
 
+        {/* Bank Account Details */}
+        <Card className="border-border/40">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-display flex items-center gap-2">
+              <Landmark className="w-4 h-4 text-primary" /> Bank Account
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Field label="Bank Name" icon={<Landmark className="w-3.5 h-3.5" />} value={profile?.bank_name || ""} onChange={(v) => update("bank_name", v)} placeholder="e.g. GTBank" />
+              <Field label="Account Name" icon={<User className="w-3.5 h-3.5" />} value={profile?.bank_account_name || ""} onChange={(v) => update("bank_account_name", v)} placeholder="Account holder name" />
+              <Field label="Account Number" icon={<Landmark className="w-3.5 h-3.5" />} value={profile?.bank_account_number || ""} onChange={(v) => update("bank_account_number", v)} placeholder="0123456789" />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Artist-specific fields */}
         {accountType === "artist" && (
           <>
-          {/* Social Links & Gallery */}
             <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-display flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-primary" />Gallery Photos
+                  <Globe className="w-4 h-4 text-primary" /> Gallery Photos
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-
-                {/* Gallery Images */}
                 <div className="space-y-3">
                   <label className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
                     <Camera className="w-3.5 h-3.5" /> Gallery Photos (3 max)
@@ -249,16 +281,11 @@ const handleSave = async () => {
                     {[0, 1, 2].map((index) => {
                       const galleryImages = profile?.gallery_images || [];
                       const imageUrl = galleryImages[index];
-                      
                       return (
                         <div key={index} className="relative aspect-square rounded-lg border border-border/50 overflow-hidden bg-muted/30 group">
                           {imageUrl ? (
                             <>
-                              <img 
-                                src={imageUrl} 
-                                alt={`Gallery ${index + 1}`} 
-                                className="w-full h-full object-cover"
-                              />
+                              <img src={imageUrl} alt={`Gallery ${index + 1}`} className="w-full h-full object-cover" />
                               <button
                                 type="button"
                                 onClick={() => {
@@ -292,13 +319,8 @@ const handleSave = async () => {
                             onChange={async (e) => {
                               const file = e.target.files?.[0];
                               if (!file) return;
-                              
                               try {
-                                const url = await uploadAvatar(file, { 
-                                  folder: "gallery", 
-                                  maxSizeMB: 5, 
-                                  acceptedTypes: ["image/"] 
-                                });
+                                const url = await uploadAvatar(file, { folder: "gallery", maxSizeMB: 5, acceptedTypes: ["image/"] });
                                 if (url) {
                                   const currentImages = [...(profile?.gallery_images || [])];
                                   currentImages[index] = url;
@@ -323,6 +345,7 @@ const handleSave = async () => {
                 </div>
               </CardContent>
             </Card>
+
             <Card className="border-border/40">
               <CardHeader className="pb-3">
                 <CardTitle className="text-sm font-display flex items-center gap-2">
@@ -360,8 +383,6 @@ const handleSave = async () => {
                 </div>
               </CardContent>
             </Card>
-            
-            
 
             {/* Social Links */}
             <Card className="border-border/40">
@@ -445,8 +466,6 @@ const handleSave = async () => {
                 ))}
               </CardContent>
             </Card>
-
-
           </>
         )}
 
