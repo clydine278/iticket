@@ -53,8 +53,10 @@ const EventCheckout = () => {
   };
 
   const selectedTickets = ticketTypes.filter(t => (quantities[t.id] || 0) > 0);
-  const total = ticketTypes.reduce((sum, t) => sum + (quantities[t.id] || 0) * t.price, 0);
+  const total = ticketTypes.reduce((sum, t) => sum + (quantities[t.id] || 0) * Number(t.price), 0);
   const hasItems = selectedTickets.length > 0;
+  
+  // Magic variable: Is the entire cart totally free?
   const isFreeOrder = total === 0 && hasItems;
 
   const handleShare = async () => {
@@ -67,37 +69,48 @@ const EventCheckout = () => {
     }
   };
 
+  // --- NEW: DIRECT FREE TICKET CLAIM ---
   const handleFreeTicket = async () => {
     if (!user || !event) return;
     setPurchasing(true);
+    
     try {
-      const tickets = selectedTickets.map(t => ({
-        ticket_type_id: t.id,
-        quantity: quantities[t.id],
-        total: 0,
-      }));
+      const generateTicketCode = () => {
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "TKT-";
+        for (let i = 0; i < 8; i++) code += chars.charAt(Math.floor(Math.random() * chars.length));
+        return code;
+      };
 
-      for (const ticket of tickets) {
-        for (let i = 0; i < ticket.quantity; i++) {
-          const ticketCode = `TKT-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
-          await supabase.from("orders").insert({
+      for (const t of selectedTickets) {
+        const qty = quantities[t.id];
+        
+        for (let i = 0; i < qty; i++) {
+          const { error } = await supabase.from("orders").insert({
             user_id: user.id,
             event_id: event.id,
-            ticket_type_id: ticket.ticket_type_id,
+            ticket_type_id: t.id,
             quantity: 1,
             total_amount: 0,
             status: "confirmed",
-            payment_method: "free",
+            payment_method: "free_claim",
+            payment_reference: `FREE-${Date.now()}-${i}`,
             qr_code: crypto.randomUUID(),
-            ticket_code: ticketCode,
+            ticket_code: generateTicketCode(),
           });
+
+          if (error) throw error;
         }
-        await supabase.rpc("increment_sold", { _ticket_type_id: ticket.ticket_type_id, _qty: ticket.quantity });
+        
+        // Update ticket availability
+        await supabase.rpc("increment_sold", { _ticket_type_id: t.id, _qty: qty });
       }
 
-      toast({ title: "Ticket claimed!", description: "Your free ticket has been confirmed." });
-      navigate("/dashboard/tickets");
+      toast({ title: "Ticket claimed!", description: "Your free ticket is ready." });
+      navigate("/dashboard/tickets"); // Adjust if your route is /dashboard/my-tickets
+      
     } catch (err: any) {
+      console.error("Free ticket error:", err);
       toast({ title: "Error", description: err.message, variant: "destructive" });
     } finally {
       setPurchasing(false);
@@ -115,7 +128,7 @@ const EventCheckout = () => {
       const tickets = selectedTickets.map(t => ({
         ticket_type_id: t.id,
         quantity: quantities[t.id],
-        total: quantities[t.id] * t.price,
+        total: quantities[t.id] * Number(t.price),
       }));
 
       const funcUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/paystack?action=initialize`;
@@ -130,6 +143,7 @@ const EventCheckout = () => {
           amount: total,
           callback_url: `${window.location.origin}/dashboard/payment-callback`,
           metadata: {
+            user_id: user.id, // Ensures webhook creates the ticket correctly
             event_id: event.id,
             event_title: event.title,
             tickets,
@@ -157,7 +171,7 @@ const EventCheckout = () => {
   return (
     <DashboardLayout>
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto">
-        {/* Event Hero - banner with top position */}
+        
         {event.banner_url && (
           <div className="relative rounded-2xl overflow-hidden mb-4 cursor-pointer" onClick={() => setImageOpen(true)}>
             <img
@@ -215,6 +229,7 @@ const EventCheckout = () => {
                 const qty = quantities[ticket.id] || 0;
                 const isSelected = qty > 0;
                 const isFree = Number(ticket.price) === 0;
+
                 return (
                   <Card key={ticket.id} className={`transition-all ${isSelected ? "border-primary/50 shadow-md" : "border-border/40"}`}>
                     <CardContent className="p-4">
@@ -275,10 +290,12 @@ const EventCheckout = () => {
                           {isFreeOrder ? "Free" : `₦${total.toLocaleString()}`}
                         </span>
                       </div>
+
+                      {/* SMART BUTTON SWAP */}
                       {isFreeOrder ? (
-                        <Button size="lg" className="w-full gap-2" onClick={handleFreeTicket} disabled={purchasing}>
+                        <Button size="lg" className="w-full gap-2 bg-emerald-600 hover:bg-emerald-700 text-white" onClick={handleFreeTicket} disabled={purchasing}>
                           <Ticket className="w-4 h-4" />
-                          {purchasing ? "Getting Ticket..." : "Get Ticket"}
+                          {purchasing ? "Securing Ticket..." : "Get Ticket for Free"}
                         </Button>
                       ) : (
                         <Button size="lg" className="w-full gap-2" onClick={handlePurchase} disabled={purchasing}>
@@ -286,6 +303,7 @@ const EventCheckout = () => {
                           {purchasing ? "Redirecting to Paystack..." : "Pay with Paystack"}
                         </Button>
                       )}
+
                       {!isFreeOrder && (
                         <div className="flex items-center justify-center gap-1.5 text-[11px] text-muted-foreground">
                           <ShieldCheck className="w-3 h-3" />

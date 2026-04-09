@@ -25,18 +25,31 @@ const MyTickets = () => {
   const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
-    if (user) fetchOrders();
+    if (user) {
+      fetchOrders();
+    } else {
+      setLoading(false); 
+    }
   }, [user]);
 
   const fetchOrders = async () => {
-    const { data } = await supabase
-      .from("orders")
-      .select("*, events(*), ticket_types(*)")
-      .eq("user_id", user!.id)
-      .eq("status", "confirmed")
-      .order("created_at", { ascending: false });
-    setOrders(data || []);
-    setLoading(false);
+    try {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*, events(*), ticket_types(*)")
+        .eq("user_id", user!.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Supabase Error fetching orders:", error);
+        return;
+      }
+      setOrders(data || []);
+    } catch (err) {
+      console.error("Unexpected code execution error:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const isExpired = (order: any) => {
@@ -92,7 +105,6 @@ const MyTickets = () => {
     setDownloading(false);
   }, [selectedOrder]);
 
-  // Ticket detail view
   if (selectedOrder) {
     const order = selectedOrder;
     const expired = isExpired(order);
@@ -121,29 +133,36 @@ const MyTickets = () => {
               width: "100%",
             }}
           >
-            {/* Banner */}
+            {/* --- BULLETPROOF IMAGE WRAPPER --- */}
             <div style={{ position: "relative", width: "100%", height: "180px", overflow: "hidden" }}>
-              {order.events?.banner_url ? (
+              
+              {/* 1. Always render the fallback background behind everything */}
+              <div style={{
+                position: "absolute", inset: 0,
+                background: "linear-gradient(135deg, #8b5cf6, #4f46e5)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+              }}>
+                <Ticket style={{ width: 48, height: 48, color: "rgba(255,255,255,0.3)" }} />
+              </div>
+
+              {/* 2. Layer the image on top. If it fails, hide it to reveal the fallback. */}
+              {order.events?.banner_url && (
                 <img
                   src={order.events.banner_url}
                   alt={order.events?.title}
-                  crossOrigin="anonymous"
-                  style={{ width: "100%", height: "180px", objectFit: "cover", objectPosition: "center top", display: "block" }}
+                  onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center top", zIndex: 1 }}
                 />
-              ) : (
-                <div style={{
-                  width: "100%", height: "100%",
-                  background: "linear-gradient(135deg, #8b5cf6, #4f46e5)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  <Ticket style={{ width: 48, height: 48, color: "rgba(255,255,255,0.3)" }} />
-                </div>
               )}
+
+              {/* 3. Always render the dark gradient overlay on top of everything for text readability */}
               <div style={{
-                position: "absolute", inset: 0,
+                position: "absolute", inset: 0, zIndex: 2,
                 background: "linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0.1), transparent)",
               }} />
-              <div style={{ position: "absolute", bottom: 14, left: 16, right: 16 }}>
+
+              {/* Text Information */}
+              <div style={{ position: "absolute", bottom: 14, left: 16, right: 16, zIndex: 3 }}>
                 <p style={{
                   fontWeight: 700, color: "#fff", fontSize: 18,
                   lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
@@ -170,7 +189,7 @@ const MyTickets = () => {
 
               {expired && (
                 <div style={{
-                  position: "absolute", top: 12, right: 12,
+                  position: "absolute", top: 12, right: 12, zIndex: 4,
                   backgroundColor: "#dc2626", color: "#fff", fontSize: 11,
                   fontWeight: 600, padding: "4px 12px", borderRadius: 999,
                   display: "flex", alignItems: "center", gap: 4,
@@ -180,7 +199,7 @@ const MyTickets = () => {
               )}
               {approved && !expired && (
                 <div style={{
-                  position: "absolute", top: 12, right: 12,
+                  position: "absolute", top: 12, right: 12, zIndex: 4,
                   backgroundColor: "#059669", color: "#fff", fontSize: 11,
                   fontWeight: 600, padding: "4px 12px", borderRadius: 999,
                   display: "flex", alignItems: "center", gap: 4,
@@ -189,6 +208,7 @@ const MyTickets = () => {
                 </div>
               )}
             </div>
+            {/* --- END IMAGE WRAPPER --- */}
 
             {/* Perforated divider */}
             <div style={{ position: "relative", height: 1, overflow: "visible" }}>
@@ -335,19 +355,19 @@ const MyTickets = () => {
                     >
                       <CardContent className="p-0">
                         <div className="flex items-stretch">
-                          <div className="w-20 shrink-0 relative overflow-hidden rounded-l-xl">
-                            {order.events?.banner_url ? (
+                          {/* LIST VIEW IMAGE FALLBACK FIX */}
+                          <div className="w-20 shrink-0 relative overflow-hidden rounded-l-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                            <Ticket className="w-5 h-5 text-primary/30 absolute" />
+                            {order.events?.banner_url && (
                               <img
                                 src={order.events.banner_url}
                                 alt=""
-                                className="w-full h-full object-cover min-h-[80px]"
+                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                className="absolute inset-0 w-full h-full object-cover z-10"
                               />
-                            ) : (
-                              <div className="w-full h-full min-h-[80px] bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-                                <Ticket className="w-5 h-5 text-primary/30" />
-                              </div>
                             )}
                           </div>
+                          
                           <div className="flex-1 p-3 flex flex-col justify-center min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <p className="font-semibold text-sm truncate">

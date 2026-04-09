@@ -1,11 +1,14 @@
 <!-- - make admin page more morden and responsive -->
 <!-- - admin should be able to make other users admin and also give me the code to update the database if needed -->
-- work on paystack and make sure it's working well
-- for the ticket page any tickect with the amount set to zero should be marked as free on the ticket purchase page and remove the purchase with paystack button and make it Get Ticket
+<!-- - work on paystack and make sure it's working well -->
+<!-- - for the ticket page any tickect with the amount set to zero should be marked as free on the ticket purchase page and remove the purchase with paystack button and make it Get Ticket -->
 - for the ticket banner move the image down a bit like the posstion of the cover down not middle like let the top be showing
 - increse the width of the sidebar more so that longer text can fit in well
 - for the browse event page do not load all the events at once load like 6 first and as the user scrolls you more more 
 -challenge creators should be able to delete and edit their challege and make the challenge page more mordern and add the image of the chalance somewhere on each challenge make it morden and responsive
+- paystcak payment for chalange,
+- change artist to entertainers on all pages
+- add space to add cetegory if it does not exist
 - on the Browse Challenges page if the user clicks on the challenge it should take them a a page that give more details about the challend and make that page responsive and morden something like this
 ![alt text](image.png), and foe the amount part on the browse challenges page it should show the naira symbol and punctuate it well to should thousands or millions with a comma
 - there should be page for the challenge setters to see the appliacation for the challenge it should show the persons username email and phone number and they should be able to set the status of each application [winner, under review, rejected (there should be able to send a message tell them why it was rejected and the person that submitted the challenge would be able to see it on their my challenges page)]
