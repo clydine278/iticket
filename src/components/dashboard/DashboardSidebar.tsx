@@ -21,9 +21,7 @@ import {
   Ticket,
   ShoppingCart,
   Receipt,
-  Wallet,
   User,
-  Settings,
   LogOut,
   Sun,
   Moon,
@@ -61,9 +59,8 @@ const artistLinks: NavItem[] = [
   { title: "Browse Events", url: "/dashboard/browse-events", icon: Ticket },
   { title: "Booking Requests", url: "/dashboard/bookings", icon: CalendarPlus },
   { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
-  { title: "My Challenges", url: "/dashboard/challenges", icon: Trophy },
+  { title: "Challenge Submissions", url: "/dashboard/challenges", icon: Trophy },
   { title: "My Tickets", url: "/dashboard/tickets", icon: Ticket },
-  { title: "Earnings", url: "/dashboard/earnings", icon: Wallet },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
   { title: "Analytics", url: "/dashboard/analytics", icon: BarChart3 },
 ];
@@ -75,12 +72,12 @@ const organizerLinks: NavItem[] = [
   { title: "Hire Artist", url: "/dashboard/hire-artist", icon: Music },
   { title: "Create Challenge", url: "/dashboard/create-challenge", icon: Trophy },
   { title: "Bookings", url: "/dashboard/bookings", icon: Music },
+  { title: "Order History", url: "/dashboard/orders", icon: ShoppingCart },
   { title: "Transactions", url: "/dashboard/transactions", icon: Receipt },
 ];
 
 const settingsLinks: NavItem[] = [
   { title: "Profile", url: "/dashboard/profile", icon: User },
-  { title: "Settings", url: "/dashboard/settings", icon: Settings },
 ];
 
 export function DashboardSidebar() {
@@ -92,7 +89,6 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isMod, setIsMod] = useState(false);
-  const [roleDebug, setRoleDebug] = useState<string | null>(null);
 
   const accountType = user?.user_metadata?.account_type || "personal";
   const displayName =
@@ -113,52 +109,17 @@ export function DashboardSidebar() {
 
   useEffect(() => {
     if (!user) {
-      console.log("[Sidebar] No user — skipping role check");
       setIsAdmin(false);
       setIsMod(false);
-      setRoleDebug("No user logged in");
       return;
     }
-
-    console.log("[Sidebar] Checking roles for user:", user.id, user.email);
 
     Promise.all([
       supabase.rpc("has_role", { _user_id: user.id, _role: "admin" }),
       supabase.rpc("has_role", { _user_id: user.id, _role: "moderator" }),
     ]).then(([adminRes, modRes]) => {
-      console.log("[Sidebar] admin RPC response:", {
-        data: adminRes.data,
-        error: adminRes.error,
-      });
-      console.log("[Sidebar] moderator RPC response:", {
-        data: modRes.data,
-        error: modRes.error,
-      });
-
-      const adminResult = Boolean(adminRes.data);
-      const modResult = Boolean(modRes.data);
-
-      setIsAdmin(adminResult);
-      setIsMod(modResult);
-
-      // Build a human-readable debug string shown in the sidebar (dev only)
-      const debugLines = [
-        `User: ${user.email}`,
-        `ID: ${user.id}`,
-        `isAdmin RPC: data=${adminRes.data}, error=${adminRes.error?.message ?? "none"}`,
-        `isMod RPC:   data=${modRes.data}, error=${modRes.error?.message ?? "none"}`,
-        `Result: isAdmin=${adminResult}, isMod=${modResult}`,
-      ];
-      console.log("[Sidebar] Role check summary:\n" + debugLines.join("\n"));
-      setRoleDebug(debugLines.join("\n"));
-
-      // If there's an RPC error, it's likely a permissions issue
-      if (adminRes.error) {
-        console.error("[Sidebar] ❌ has_role('admin') failed:", adminRes.error);
-      }
-      if (modRes.error) {
-        console.error("[Sidebar] ❌ has_role('moderator') failed:", modRes.error);
-      }
+      setIsAdmin(Boolean(adminRes.data));
+      setIsMod(Boolean(modRes.data));
     });
   }, [user]);
 
@@ -172,7 +133,7 @@ export function DashboardSidebar() {
   const RoleIcon = roleIcon;
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar">
+    <Sidebar collapsible="icon" className="border-r border-sidebar-border bg-sidebar" style={{ "--sidebar-width": "280px" } as React.CSSProperties}>
       <SidebarHeader className="p-5 border-b border-sidebar-border/60">
         <Link to="/" className="flex items-center gap-3 group">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-sm transition-transform group-hover:scale-105">
@@ -219,7 +180,7 @@ export function DashboardSidebar() {
             Menu
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
+            <SidebarMenu className="gap-1.5">
               {mainLinks.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
@@ -252,7 +213,7 @@ export function DashboardSidebar() {
               Staff
             </SidebarGroupLabel>
             <SidebarGroupContent>
-              <SidebarMenu className="gap-2">
+              <SidebarMenu className="gap-1.5">
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     asChild
@@ -305,7 +266,7 @@ export function DashboardSidebar() {
             Account
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="gap-2">
+            <SidebarMenu className="gap-1.5">
               {settingsLinks.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton

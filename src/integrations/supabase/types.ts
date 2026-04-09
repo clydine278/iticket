@@ -46,6 +46,8 @@ export type Database = {
           message: string | null
           offered_price: number | null
           organizer_id: string
+          payment_reference: string | null
+          payment_status: string | null
           status: string | null
           updated_at: string | null
           venue: string | null
@@ -60,6 +62,8 @@ export type Database = {
           message?: string | null
           offered_price?: number | null
           organizer_id: string
+          payment_reference?: string | null
+          payment_status?: string | null
           status?: string | null
           updated_at?: string | null
           venue?: string | null
@@ -74,6 +78,8 @@ export type Database = {
           message?: string | null
           offered_price?: number | null
           organizer_id?: string
+          payment_reference?: string | null
+          payment_status?: string | null
           status?: string | null
           updated_at?: string | null
           venue?: string | null
@@ -109,6 +115,7 @@ export type Database = {
           id: string
           likes: number | null
           rank: number | null
+          rejection_message: string | null
           status: string | null
           user_id: string
           video_url: string | null
@@ -120,6 +127,7 @@ export type Database = {
           id?: string
           likes?: number | null
           rank?: number | null
+          rejection_message?: string | null
           status?: string | null
           user_id: string
           video_url?: string | null
@@ -131,6 +139,7 @@ export type Database = {
           id?: string
           likes?: number | null
           rank?: number | null
+          rejection_message?: string | null
           status?: string | null
           user_id?: string
           video_url?: string | null
@@ -371,6 +380,9 @@ export type Database = {
           artist_category: string | null
           artist_fee_paid: boolean
           avatar_url: string | null
+          bank_account_name: string | null
+          bank_account_number: string | null
+          bank_name: string | null
           bio: string | null
           booking_price: string | null
           city: string | null
@@ -393,6 +405,9 @@ export type Database = {
           artist_category?: string | null
           artist_fee_paid?: boolean
           avatar_url?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           bio?: string | null
           booking_price?: string | null
           city?: string | null
@@ -415,6 +430,9 @@ export type Database = {
           artist_category?: string | null
           artist_fee_paid?: boolean
           avatar_url?: string | null
+          bank_account_name?: string | null
+          bank_account_number?: string | null
+          bank_name?: string | null
           bio?: string | null
           booking_price?: string | null
           city?: string | null
