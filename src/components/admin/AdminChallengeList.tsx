@@ -172,20 +172,6 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    Entry Fee (₦)
-                  </Label>
-                  <Input 
-                    type="number"
-                    min="0"
-                    value={formData.entry_fee}
-                    onChange={e => setFormData({...formData, entry_fee: Number(e.target.value)})}
-                    placeholder="0 for free"
-                  />
-                  <p className="text-xs text-muted-foreground">Set 0 for free entry</p>
-                </div>
               </div>
 
               <div className="space-y-2">

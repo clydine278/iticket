@@ -88,9 +88,9 @@ const BrowseChallenges = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         const { data } = await supabase
-          .from("challenge_payments")
+          .from("transactions")
           .select("id")
-          .eq("payment_reference", reference)
+          .eq("reference_id", reference as any)
           .maybeSingle();
 
         if (data) {
@@ -124,8 +124,13 @@ const BrowseChallenges = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: settings } = await supabase.from("platform_settings").select("challenge_entry_fee").single();
-      const fee = settings?.challenge_entry_fee || 0;
+      // Fetch fee from app_settings
+      const { data: feeData } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "challenge_entry_fee")
+        .maybeSingle();
+      const fee = feeData ? Number(feeData.value) : 0;
       setGlobalEntryFee(fee);
 
       const { data: challs, error: challError } = await supabase
@@ -152,14 +157,13 @@ const BrowseChallenges = () => {
       setChallenges(challengesWithFee);
 
       if (user) {
-        const { data: payments } = await supabase
-          .from("challenge_payments")
+        // Check entries as proxy for "paid" challenges
+        const { data: entries } = await supabase
+          .from("challenge_entries")
           .select("challenge_id")
           .eq("user_id", user.id);
         
-        // EXACT PER-CHALLENGE TRACKING
-        // Only unlock the specific challenges the user has paid for
-        setUserPayments(new Set((payments || []).map(p => p.challenge_id)));
+        setUserPayments(new Set((entries || []).map((e: any) => e.challenge_id)));
 
         const { data: entries } = await supabase
           .from("challenge_entries")
