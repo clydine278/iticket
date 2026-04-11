@@ -283,7 +283,11 @@ const Index = () => {
                   <div className="p-4">
                     <div className="flex justify-between items-start">
                       <h3 className="font-display font-bold text-sm">{ch.title}</h3>
-                      {ch.prize && <p className="font-bold text-sm">{ch.prize}</p>}
+                      {ch.prize && (
+                        <span className="bg-primary text-primary-foreground text-[10px] font-bold px-2 py-0.5 rounded-full whitespace-nowrap">
+                          ₦{Number(ch.prize).toLocaleString()}
+                        </span>
+                      )}
                     </div>
                     <p className="text-primary text-[10px] font-medium">{ch.participants_count || 0} participants</p>
                     <p className="text-muted-foreground text-[10px] my-1 line-clamp-2">{ch.description || ""}</p>
