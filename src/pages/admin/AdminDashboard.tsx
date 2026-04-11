@@ -120,15 +120,15 @@ const AdminDashboard = () => {
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("events").select("*").order("created_at", { ascending: false }),
       supabase.from("orders").select("*").order("created_at", { ascending: false }),
-      supabase.from("admin_audit_logs").select("*").order("created_at", { ascending: false }).limit(30),
+      supabase.from("transactions").select("*").order("created_at", { ascending: false }).limit(30),
       supabase.from("transactions").select("*").order("created_at", { ascending: false }),
     ]);
     
     if (profilesRes.data) setProfiles(profilesRes.data);
     if (eventsRes.data) setEvents(eventsRes.data);
     if (ordersRes.data) setOrders(ordersRes.data);
-    if (logsRes.data) setAuditLogs(logsRes.data);
-    if (txRes.data) setTransactions(txRes.data);
+    if (logsRes.data) setAuditLogs(logsRes.data as any[]);
+    if (txRes.data) setTransactions(txRes.data as any[]);
   };
 
   if (loading || checkingAdmin) {

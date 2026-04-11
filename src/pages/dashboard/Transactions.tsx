@@ -31,7 +31,7 @@ const Transactions = () => {
           // Fetch all bookings where this organizer is the organizer
           const { data: bookings } = await supabase
             .from("bookings")
-            .select("artist_id, amount, status, created_at")
+            .select("artist_id, offered_price, status, created_at")
             .eq("organizer_id", user.id)
             .eq("status", "paid");
 

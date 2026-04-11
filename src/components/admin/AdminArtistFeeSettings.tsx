@@ -21,19 +21,17 @@ export const AdminArtistFeeSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      // Fetch both fees from platform_settings
-      const { data: settingsData, error: settingsError } = await supabase
-        .from("platform_settings")
-        .select("artist_fee, challenge_entry_fee")
-        .single();
+      // Fetch fees from app_settings
+      const { data: feeData } = await supabase
+        .from("app_settings")
+        .select("key, value")
+        .in("key", ["artist_fee", "challenge_entry_fee"]);
 
-      if (settingsError && settingsError.code !== 'PGRST116') {
-        console.error("Settings fetch error:", settingsError);
-      }
-
-      if (settingsData) {
-        setArtistFee(settingsData.artist_fee || 10000);
-        setChallengeEntryFee(settingsData.challenge_entry_fee || 0);
+      if (feeData) {
+        feeData.forEach((s: any) => {
+          if (s.key === "artist_fee") setArtistFee(Number(s.value) || 10000);
+          if (s.key === "challenge_entry_fee") setChallengeEntryFee(Number(s.value) || 0);
+        });
       }
       
       setLoading(false);
