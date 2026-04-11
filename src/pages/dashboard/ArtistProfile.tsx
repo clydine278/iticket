@@ -79,9 +79,6 @@ const ArtistProfile = () => {
       event_date: bookingForm.event_date ? new Date(bookingForm.event_date).toISOString() : null,
       offered_price: bookingForm.offered_price ? Number(bookingForm.offered_price) : null,
       message: bookingForm.message || null,
-      expected_audience_size: bookingForm.expected_audience_size ? Number(bookingForm.expected_audience_size) : null,
-      deposit_available: bookingForm.deposit_available,
-      event_type: bookingForm.event_type,
       status: "pending",
     });
 

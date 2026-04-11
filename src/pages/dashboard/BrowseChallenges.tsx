@@ -88,9 +88,9 @@ const BrowseChallenges = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         const { data } = await supabase
-          .from("challenge_payments")
+          .from("transactions")
           .select("id")
-          .eq("payment_reference", reference)
+          .eq("reference_id", reference as any)
           .maybeSingle();
 
         if (data) {
@@ -124,14 +124,19 @@ const BrowseChallenges = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: settings } = await supabase.from("platform_settings").select("challenge_entry_fee").single();
-      const fee = settings?.challenge_entry_fee || 0;
+      // Fetch fee from app_settings
+      const { data: feeData } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", "challenge_entry_fee")
+        .maybeSingle();
+      const fee = feeData ? Number(feeData.value) : 0;
       setGlobalEntryFee(fee);
 
       const { data: challs, error: challError } = await supabase
         .from("challenges")
         .select(`
-          id, title, description, banner_url, song_title, status, created_at, creator_id,
+          id, title, description, banner_url, song_title, song_url, rules, status, created_at, creator_id,
           challenge_entries(id, status, video_url, user_id)
         `)
         .eq("status", "active")
@@ -152,22 +157,15 @@ const BrowseChallenges = () => {
       setChallenges(challengesWithFee);
 
       if (user) {
-        const { data: payments } = await supabase
-          .from("challenge_payments")
-          .select("challenge_id")
-          .eq("user_id", user.id);
-        
-        // EXACT PER-CHALLENGE TRACKING
-        // Only unlock the specific challenges the user has paid for
-        setUserPayments(new Set((payments || []).map(p => p.challenge_id)));
-
-        const { data: entries } = await supabase
+        const { data: userEntriesData } = await supabase
           .from("challenge_entries")
           .select("challenge_id, status, video_url")
           .eq("user_id", user.id);
         
+        setUserPayments(new Set((userEntriesData || []).map((e: any) => e.challenge_id)));
+
         const entriesMap = new Map();
-        (entries || []).forEach(e => entriesMap.set(e.challenge_id, { status: e.status, video_url: e.video_url }));
+        (userEntriesData || []).forEach((e: any) => entriesMap.set(e.challenge_id, { status: e.status, video_url: e.video_url }));
         setUserEntries(entriesMap);
       }
     } catch (err) {
@@ -364,6 +362,24 @@ const BrowseChallenges = () => {
                                   <DialogDescription>Enter your video link for <span className="font-semibold">{challenge.title}</span></DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 pt-4">
+                                  {/* Rules & Song Info */}
+                                  {(challenge as any).description && (
+                                    <div className="p-3 bg-muted rounded-lg text-xs text-muted-foreground">
+                                      <p className="font-medium text-foreground mb-1">📋 Challenge Rules</p>
+                                      <p className="leading-relaxed">{(challenge as any).description}</p>
+                                    </div>
+                                  )}
+                                  {challenge.song_title && (
+                                    <div className="p-3 bg-muted rounded-lg text-xs">
+                                      <p className="font-medium text-foreground mb-1">🎵 Song</p>
+                                      <p className="text-muted-foreground">{challenge.song_title}</p>
+                                      {(challenge as any).song_url && (
+                                        <a href={(challenge as any).song_url} target="_blank" rel="noopener noreferrer" className="text-primary flex items-center gap-1 mt-1 hover:underline">
+                                          <ExternalLink className="w-3 h-3" /> Listen to song
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
                                   <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-sm"><ExternalLink className="w-4 h-4 text-muted-foreground" /> Video URL</Label>
                                     <Input placeholder="https://tiktok.com/@username/video/..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />

@@ -20,10 +20,12 @@ interface Challenge {
   description: string;
   banner_url: string | null;
   song_title: string | null;
-  entry_fee: number;
-  status: "active" | "inactive" | "completed";
+  status: string;
   created_at: string;
   end_date: string | null;
+  prize: string | null;
+  rules: string | null;
+  creator_id: string;
 }
 
 export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => {
@@ -36,10 +38,9 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
     title: "",
     description: "",
     song_title: "",
-    entry_fee: 0,
     banner_url: "",
     end_date: "",
-    status: "active" as const
+    status: "active"
   });
 
   useEffect(() => {
@@ -51,7 +52,7 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
       .from("challenges")
       .select("*")
       .order("created_at", { ascending: false });
-    setChallenges(data || []);
+    setChallenges((data as Challenge[]) || []);
     setLoading(false);
   };
 
@@ -60,20 +61,17 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
     setIsCreating(true);
     
     try {
-      const payload = {
-        ...formData,
-        entry_fee: Number(formData.entry_fee) || 0
-      };
+      const payload: Record<string, any> = { ...formData };
 
       if (editingChallenge) {
         const { error } = await supabase
           .from("challenges")
-          .update(payload)
+          .update(payload as any)
           .eq("id", editingChallenge.id);
         if (error) throw error;
         toast({ title: "Challenge updated successfully" });
       } else {
-        const { error } = await supabase.from("challenges").insert(payload);
+        const { error } = await supabase.from("challenges").insert(payload as any);
         if (error) throw error;
         toast({ title: "Challenge created successfully" });
       }
@@ -82,7 +80,6 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
         title: "",
         description: "",
         song_title: "",
-        entry_fee: 0,
         banner_url: "",
         end_date: "",
         status: "active"
@@ -175,20 +172,6 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
                   />
                 </div>
                 
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2">
-                    <DollarSign className="w-4 h-4" />
-                    Entry Fee (₦)
-                  </Label>
-                  <Input 
-                    type="number"
-                    min="0"
-                    value={formData.entry_fee}
-                    onChange={e => setFormData({...formData, entry_fee: Number(e.target.value)})}
-                    placeholder="0 for free"
-                  />
-                  <p className="text-xs text-muted-foreground">Set 0 for free entry</p>
-                </div>
               </div>
 
               <div className="space-y-2">
@@ -242,13 +225,6 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
                       <Badge variant={challenge.status === "active" ? "default" : "secondary"}>
                         {challenge.status}
                       </Badge>
-                      {!challenge.entry_fee ? (
-                        <Badge variant="outline" className="text-green-600 border-green-600">FREE</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-amber-600 border-amber-600">
-                          ₦{challenge.entry_fee}
-                        </Badge>
-                      )}
                     </div>
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                       {challenge.description}
@@ -280,7 +256,6 @@ export const AdminChallengeList = ({ onRefresh }: { onRefresh: () => void }) => 
                         title: challenge.title,
                         description: challenge.description || "",
                         song_title: challenge.song_title || "",
-                        entry_fee: challenge.entry_fee || 0,
                         banner_url: challenge.banner_url || "",
                         end_date: challenge.end_date || "",
                         status: challenge.status

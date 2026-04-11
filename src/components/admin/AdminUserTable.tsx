@@ -5,7 +5,7 @@ import {
   ShieldAlert, Mail, MapPin, Calendar, Phone, 
   X, UserCog, Ban, AlertTriangle, Activity, Search
 } from "lucide-react";
-import { AdminProfile } from "@/pages/AdminDashboard";
+import { AdminProfile } from "@/pages/admin/AdminDashboard";
 
 interface AdminUserTableProps {
   profiles: AdminProfile[];

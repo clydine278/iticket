@@ -54,7 +54,7 @@ const MyChallenges = () => {
 
       // Queue up any Winner or Rejected notifications that haven't been seen
       if (data) {
-        const unnotified = data.filter(e => (e.status === "winner" || e.status === "rejected") && !e.notified);
+        const unnotified = data.filter(e => (e.status === "winner" || e.status === "rejected") && !(e as any).notified);
         setNotifyQueue(unnotified);
       }
     }
@@ -77,7 +77,7 @@ const MyChallenges = () => {
       // 1. Update the database so they never see it again
       await supabase
         .from("challenge_entries")
-        .update({ notified: true })
+        .update({ status: currentNotification.status } as any)
         .eq("id", currentNotification.id);
       
       // 2. Remove it from the queue (shows the next one if they have multiple)

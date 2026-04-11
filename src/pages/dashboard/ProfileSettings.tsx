@@ -76,7 +76,7 @@ const ProfileSettings = () => {
     
     const { error } = await supabase
       .from("profiles")
-      .update(updates)
+      .update(updates as any)
       .eq("id", user!.id);
       
     setSaving(false);
