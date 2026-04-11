@@ -136,7 +136,7 @@ const BrowseChallenges = () => {
       const { data: challs, error: challError } = await supabase
         .from("challenges")
         .select(`
-          id, title, description, banner_url, song_title, status, created_at, creator_id,
+          id, title, description, banner_url, song_title, song_url, rules, status, created_at, creator_id,
           challenge_entries(id, status, video_url, user_id)
         `)
         .eq("status", "active")
