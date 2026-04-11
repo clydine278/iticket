@@ -157,21 +157,15 @@ const BrowseChallenges = () => {
       setChallenges(challengesWithFee);
 
       if (user) {
-        // Check entries as proxy for "paid" challenges
-        const { data: entries } = await supabase
-          .from("challenge_entries")
-          .select("challenge_id")
-          .eq("user_id", user.id);
-        
-        setUserPayments(new Set((entries || []).map((e: any) => e.challenge_id)));
-
-        const { data: entries } = await supabase
+        const { data: userEntriesData } = await supabase
           .from("challenge_entries")
           .select("challenge_id, status, video_url")
           .eq("user_id", user.id);
         
+        setUserPayments(new Set((userEntriesData || []).map((e: any) => e.challenge_id)));
+
         const entriesMap = new Map();
-        (entries || []).forEach(e => entriesMap.set(e.challenge_id, { status: e.status, video_url: e.video_url }));
+        (userEntriesData || []).forEach((e: any) => entriesMap.set(e.challenge_id, { status: e.status, video_url: e.video_url }));
         setUserEntries(entriesMap);
       }
     } catch (err) {
