@@ -243,31 +243,6 @@ const Index = () => {
                     <p className="text-primary text-[10px] sm:text-xs font-medium mb-1 sm:mb-2">
                       {artist.artist_category || artist.services?.[0] || "Artist"}
                     </p>
-                    <div className="flex items-center justify-center gap-1 sm:gap-1.5 mb-1 sm:mb-2 md:mb-3">
-                      <svg 
-                        className="w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-3.5 md:h-3.5 text-gray-500 flex-shrink-0" 
-                        fill="none" 
-                        stroke="currentColor" 
-                        viewBox="0 0 24 24"
-                      >
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" 
-                        />
-                        <path 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round" 
-                          strokeWidth={2} 
-                          d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" 
-                        />
-                      </svg>
-                      <span className="text-gray-400 text-[10px] sm:text-xs truncate max-w-[60px] sm:max-w-[80px] md:max-w-none">
-                        {[artist.city, artist.country].filter(Boolean).join(", ").substring(0, 15) || "N/A"}
-                        {[artist.city, artist.country].filter(Boolean).join(", ").length > 15 ? "..." : ""}
-                      </span>
-                    </div>
 
                     {/* Price Tag - Responsive */}
                     <div className="inline-flex items-center bg-gray-800 rounded-full px-2 sm:px-3 md:px-4 py-1 sm:py-1 md:py-1.5">
