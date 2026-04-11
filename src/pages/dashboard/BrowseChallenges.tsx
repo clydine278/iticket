@@ -362,6 +362,24 @@ const BrowseChallenges = () => {
                                   <DialogDescription>Enter your video link for <span className="font-semibold">{challenge.title}</span></DialogDescription>
                                 </DialogHeader>
                                 <div className="space-y-4 pt-4">
+                                  {/* Rules & Song Info */}
+                                  {(challenge as any).description && (
+                                    <div className="p-3 bg-muted rounded-lg text-xs text-muted-foreground">
+                                      <p className="font-medium text-foreground mb-1">📋 Challenge Rules</p>
+                                      <p className="leading-relaxed">{(challenge as any).description}</p>
+                                    </div>
+                                  )}
+                                  {challenge.song_title && (
+                                    <div className="p-3 bg-muted rounded-lg text-xs">
+                                      <p className="font-medium text-foreground mb-1">🎵 Song</p>
+                                      <p className="text-muted-foreground">{challenge.song_title}</p>
+                                      {(challenge as any).song_url && (
+                                        <a href={(challenge as any).song_url} target="_blank" rel="noopener noreferrer" className="text-primary flex items-center gap-1 mt-1 hover:underline">
+                                          <ExternalLink className="w-3 h-3" /> Listen to song
+                                        </a>
+                                      )}
+                                    </div>
+                                  )}
                                   <div className="space-y-2">
                                     <Label className="flex items-center gap-2 text-sm"><ExternalLink className="w-4 h-4 text-muted-foreground" /> Video URL</Label>
                                     <Input placeholder="https://tiktok.com/@username/video/..." value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} />
