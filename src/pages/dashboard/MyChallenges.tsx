@@ -258,9 +258,12 @@ const MyChallenges = () => {
                         </div>
                         
                         <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                          <span>{new Date(entry.created_at).toLocaleDateString()}</span>
-                          <span className="flex items-center gap-1"><Eye className="w-3 h-3" /> {entry.views || 0}</span>
-                          <span className="flex items-center gap-1"><Heart className="w-3 h-3" /> {entry.likes || 0}</span>
+                          <span>Submitted {new Date(entry.created_at).toLocaleDateString()}</span>
+                          {entry.challenges?.prize && (
+                            <span className="flex items-center gap-1 text-amber-600 dark:text-amber-500 font-medium">
+                              <Trophy className="w-3 h-3" /> {entry.challenges.prize}
+                            </span>
+                          )}
                         </div>
                       </div>
 
