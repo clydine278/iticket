@@ -119,7 +119,7 @@ const Challenges = () => {
                     {/* Prize badge - now with solid contrast */}
                     {ch.prize && (
                       <div className="absolute top-3 left-3">
-                        <Badge className="bg-amber-500 hover:bg-amber-500 text-white border-0 shadow-lg font-semibold gap-1 px-2.5 py-1">
+                        <Badge className="bg-orange-500 hover:bg-orange-500 text-white border-0 shadow-lg font-semibold gap-1 px-2.5 py-1">
                           <Trophy className="w-3.5 h-3.5" />
                           ₦{Number(ch.prize).toLocaleString()}
                         </Badge>
