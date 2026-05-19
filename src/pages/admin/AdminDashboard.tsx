@@ -12,6 +12,7 @@ import { AdminPartnerList } from "@/components/admin/AdminPartnerList";
 import { AdminArtistFeeSettings } from "@/components/admin/AdminArtistFeeSettings";
 import { AdminChallengeApprovals } from "@/components/admin/AdminChallengeApprovals";
 import { AdminAllSubmissions } from "@/components/admin/AdminAllSubmissions";
+import { AdminChallengeList } from "@/components/admin/AdminChallengeList";
 import { Shield, BarChart3, Users, CalendarPlus, DollarSign, Handshake, Sparkles, Activity, CheckCircle2, Trophy } from "lucide-react";
 
 export interface AdminProfile {
@@ -31,6 +32,7 @@ const tabs = [
   { id: "overview" as const, label: "Overview", icon: BarChart3 },
   { id: "users" as const, label: "Users", icon: Users },
   { id: "events" as const, label: "Events", icon: CalendarPlus },
+  { id: "challenges" as const, label: "Challenges", icon: Trophy },
   { id: "transactions" as const, label: "Transactions", icon: DollarSign },
   { id: "partners" as const, label: "Partners", icon: Handshake },
   { id: "artist-fees" as const, label: "Artist Fees", icon: Sparkles },
@@ -225,6 +227,12 @@ const AdminDashboard = () => {
           {activeTab === "events" && (
             <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
               <AdminEventList events={events} onRefresh={fetchData} />
+            </div>
+          )}
+
+          {activeTab === "challenges" && (
+            <div className="animate-in slide-in-from-bottom-4 fade-in duration-500">
+              <AdminChallengeList onRefresh={fetchData} />
             </div>
           )}
 
